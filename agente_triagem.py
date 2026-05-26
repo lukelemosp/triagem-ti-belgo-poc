@@ -12,7 +12,58 @@ except ImportError:
 
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
-def _analisar_com_api(descricao: str) -> dict:
+# ── Constantes de CoT ────────────────────────────────────────────────────────
+_COT_HDR = (
+    '<div class="cot-container">'
+    '<div class="cot-title">Raciocínio do Agente</div>'
+    '<div class="cot-steps">'
+)
+_COT_FTR = '</div></div>'
+_COT_THINKING = (
+    '<div class="cot-step">'
+    '<div class="cot-dot" style="opacity:0.25;background:#9BB5BC;"></div>'
+    '<div>'
+    '<div class="cot-label" style="color:#9BB5BC;">Analisando chamado</div>'
+    '<div class="cot-thinking"><span></span><span></span><span></span></div>'
+    '</div></div>'
+)
+
+def _cot_step(p: dict, animated: bool = False) -> str:
+    dot_cls = "cot-dot cot-dot-final" if p.get("final") else "cot-dot"
+    style = ' style="animation:cot-appear 0.4s cubic-bezier(0.22,1,0.36,1);"' if animated else ""
+    return (
+        f'<div class="cot-step"{style}>'
+        f'<div class="{dot_cls}"></div>'
+        f'<div class="cot-label">{p["label"]}</div>'
+        f'<div class="cot-text">{p["texto"]}</div>'
+        f'</div>'
+    )
+
+def _extract_steps(text: str) -> list:
+    """Retorna passos de pensamento completos já gerados no stream parcial."""
+    m = re.search(r'"pensamento"\s*:\s*\[', text)
+    if not m:
+        return []
+    arr = text[m.end():]
+    steps, depth, start = [], 0, None
+    for i, ch in enumerate(arr):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start is not None:
+                rest = arr[i + 1:].lstrip()
+                if rest and rest[0] in (",", "]"):
+                    try:
+                        steps.append(json.loads(arr[start:i + 1]))
+                    except Exception:
+                        pass
+                start = None
+    return steps
+
+def _analisar_com_api(descricao: str, cot_slot=None) -> dict:
     import anthropic
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
     system = """\
@@ -23,25 +74,48 @@ Classifique o chamado como N1 (helpdesk resolve) ou N2 (requer especialista) e s
 N1 — problemas individuais, senha/acesso, Office/hardware simples, solicitações de provisionamento de rotina.
 N2 — sistemas críticos indisponíveis, múltiplos usuários afetados, infraestrutura de produção/planta, redes OT/IT, servidores SAP em produção.
 
-Responda APENAS com JSON válido, sem markdown, no formato:
+Responda APENAS com JSON válido, sem markdown. Coloque "pensamento" PRIMEIRO para que
+os passos apareçam em tempo real. Formato:
 {
+  "pensamento": [
+    {"label": "label do passo", "texto": "explicação do raciocínio"},
+    {"label": "Decisão → N1", "texto": "justificativa final", "final": true}
+  ],
   "nivel": "N1",
   "confianca": 94,
   "tempo": "15 – 30 min",
   "sugestao": "texto da sugestão de resolução",
-  "acao": "texto curto da ação recomendada",
-  "pensamento": [
-    {"label": "label do passo", "texto": "explicação do raciocínio"},
-    {"label": "Decisão → N1", "texto": "justificativa final", "final": true}
-  ]
+  "acao": "texto curto da ação recomendada"
 }"""
-    msg = client.messages.create(
+
+    if cot_slot:
+        cot_slot.markdown(_COT_HDR + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
+
+    full_text = ""
+    shown: list = []
+    steps_html = ""
+
+    with client.messages.stream(
         model="claude-sonnet-4-6",
         max_tokens=1024,
         system=system,
         messages=[{"role": "user", "content": descricao}],
-    )
-    raw = msg.content[0].text.strip()
+    ) as stream:
+        for delta in stream.text_stream:
+            full_text += delta
+            if not cot_slot:
+                continue
+            current = _extract_steps(full_text)
+            while len(current) > len(shown):
+                p = current[len(shown)]
+                if p.get("final") and steps_html:
+                    cot_slot.markdown(_COT_HDR + steps_html + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
+                    time.sleep(0.3)
+                cot_slot.markdown(_COT_HDR + steps_html + _cot_step(p, animated=True) + _COT_FTR, unsafe_allow_html=True)
+                steps_html += _cot_step(p)
+                shown.append(p)
+
+    raw = full_text.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw.strip())
@@ -599,6 +673,10 @@ TICKETS = {
 # ── Estado da sessão ────────────────────────────────────────────────────────
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
+if "processando" not in st.session_state:
+    st.session_state.processando = False
+if "pending_input" not in st.session_state:
+    st.session_state.pending_input = None
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -627,27 +705,41 @@ with col_esq:
         height=160,
         placeholder="Ex.: Impressora da sala de reunião não imprime após troca de cartucho...",
         label_visibility="collapsed",
+        disabled=st.session_state.processando,
     )
 
-    analisar = st.button("🔍  Analisar chamado", type="primary", use_container_width=True)
+    analisar = st.button(
+        "🔍  Analisar chamado",
+        type="primary",
+        use_container_width=True,
+        disabled=st.session_state.processando,
+    )
 
 with col_dir:
-    # Dispara análise
-    if analisar and ticket_input.strip():
+    # ── Fase 1: captura o clique e enfileira ──────────────────────────────
+    if analisar and ticket_input.strip() and not st.session_state.processando:
+        st.session_state.pending_input = ticket_input.strip()
+        st.session_state.processando = True
+        st.session_state.resultado = None
+        st.session_state.ticket_input = ""
+        st.rerun()
+
+    # ── Fase 2: executa análise (streaming ou demo) ───────────────────────
+    if st.session_state.processando and st.session_state.pending_input:
+        texto = st.session_state.pending_input
+        resultado = None
+
         if ANTHROPIC_KEY and ANTHROPIC_KEY != "cole_sua_chave_aqui":
-            # ── Modo API real ──────────────────────────────────────────────
-            with st.spinner("Analisando chamado..."):
-                try:
-                    resultado = _analisar_com_api(ticket_input.strip())
-                    st.session_state.new_analysis = True
-                except Exception as e:
-                    st.error(f"Erro na API: {e}")
-                    resultado = None
+            # API real — CoT aparece token a token via streaming
+            cot_slot = st.empty()
+            try:
+                resultado = _analisar_com_api(texto, cot_slot=cot_slot)
+            except Exception as e:
+                st.error(f"Erro na API: {e}")
         else:
-            # ── Modo demo (hardcoded) ──────────────────────────────────────
-            resultado = None
+            # Demo — animação fake com os dados hardcoded
             for dados in TICKETS.values():
-                if ticket_input.strip() == dados["descricao"]:
+                if texto == dados["descricao"]:
                     resultado = dados
                     break
             if resultado is None:
@@ -661,15 +753,33 @@ with col_dir:
                     ),
                     "acao": "Revisar manualmente — confiança abaixo do limiar automático",
                 }
-            with st.spinner("Analisando chamado..."):
-                time.sleep(0.5)
-            st.session_state.new_analysis = True
-        st.session_state.resultado = resultado
+            if resultado.get("pensamento"):
+                cot_slot = st.empty()
+                cot_slot.markdown(_COT_HDR + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
+                time.sleep(0.8)
+                steps_html = ""
+                for p in resultado["pensamento"]:
+                    if p.get("final") and steps_html:
+                        cot_slot.markdown(_COT_HDR + steps_html + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
+                        time.sleep(0.7)
+                    cot_slot.markdown(_COT_HDR + steps_html + _cot_step(p, animated=True) + _COT_FTR, unsafe_allow_html=True)
+                    steps_html += _cot_step(p)
+                    time.sleep(0.55)
 
-    # Exibe resultado
-    if st.session_state.resultado:
-        animate = st.session_state.pop("new_analysis", False)
+        st.session_state.resultado = resultado
+        st.session_state.pending_input = None
+        st.session_state.processando = False
+        st.rerun()
+
+    # ── Fase 3: exibe resultado estático ─────────────────────────────────
+    elif st.session_state.resultado:
         r = st.session_state.resultado
+
+        # CoT acima do card de resultado
+        if r.get("pensamento"):
+            steps_html = "".join(_cot_step(p) for p in r["pensamento"])
+            st.markdown(_COT_HDR + steps_html + _COT_FTR, unsafe_allow_html=True)
+
         nivel = r["nivel"]
         badge_class = "badge-n1" if nivel == "N1" else "badge-n2"
         bar_class   = "conf-bar-fill-n1" if nivel == "N1" else "conf-bar-fill-n2"
@@ -705,68 +815,7 @@ with col_dir:
         </div>
         """, unsafe_allow_html=True)
 
-        # Chain of thought
-        if r.get("pensamento"):
-            _hdr = (
-                '<div class="cot-container">'
-                '<div class="cot-title">Raciocínio do Agente</div>'
-                '<div class="cot-steps">'
-            )
-            _ftr = '</div></div>'
-            cot_slot = st.empty()
-
-            _thinking_row = (
-                '<div class="cot-step">'
-                '<div class="cot-dot" style="opacity:0.25;background:#9BB5BC;"></div>'
-                '<div>'
-                '<div class="cot-label" style="color:#9BB5BC;">Analisando chamado</div>'
-                '<div class="cot-thinking"><span></span><span></span><span></span></div>'
-                '</div></div>'
-            )
-
-            if animate:
-                cot_slot.markdown(_hdr + _thinking_row + _ftr, unsafe_allow_html=True)
-                time.sleep(0.8)
-                steps_html = ""
-                for p in r["pensamento"]:
-                    is_final = p.get("final", False)
-                    dot_cls = "cot-dot cot-dot-final" if is_final else "cot-dot"
-
-                    # Pausa dramática antes da decisão final
-                    if is_final and steps_html:
-                        cot_slot.markdown(_hdr + steps_html + _thinking_row + _ftr, unsafe_allow_html=True)
-                        time.sleep(0.7)
-
-                    # Passo atual com slide-in; os anteriores ficam estáticos
-                    animated = (
-                        f'<div class="cot-step" style="animation:cot-appear 0.4s cubic-bezier(0.22,1,0.36,1);">'
-                        f'<div class="{dot_cls}"></div>'
-                        f'<div class="cot-label">{p["label"]}</div>'
-                        f'<div class="cot-text">{p["texto"]}</div>'
-                        f'</div>'
-                    )
-                    static = (
-                        f'<div class="cot-step">'
-                        f'<div class="{dot_cls}"></div>'
-                        f'<div class="cot-label">{p["label"]}</div>'
-                        f'<div class="cot-text">{p["texto"]}</div>'
-                        f'</div>'
-                    )
-                    cot_slot.markdown(_hdr + steps_html + animated + _ftr, unsafe_allow_html=True)
-                    steps_html += static
-                    time.sleep(0.55)
-            else:
-                steps_html = "".join(
-                    f'<div class="cot-step">'
-                    f'<div class="{"cot-dot cot-dot-final" if p.get("final") else "cot-dot"}"></div>'
-                    f'<div class="cot-label">{p["label"]}</div>'
-                    f'<div class="cot-text">{p["texto"]}</div>'
-                    f'</div>'
-                    for p in r["pensamento"]
-                )
-                cot_slot.markdown(_hdr + steps_html + _ftr, unsafe_allow_html=True)
-
-    elif not analisar:
+    elif not st.session_state.processando:
         st.markdown("""
         <div style="
             border: 2px dashed #C5D8DC;
