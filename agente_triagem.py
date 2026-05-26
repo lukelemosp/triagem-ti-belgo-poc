@@ -42,9 +42,6 @@ Responda APENAS com JSON válido, sem markdown, no formato:
     )
     return json.loads(msg.content[0].text)
 
-# ── Roteamento por query param (?p=arq) ──────────────────────────────────────
-_PAGE = st.query_params.get("p", "")
-
 st.set_page_config(
     page_title="Agente de Triagem TI — Belgo",
     page_icon="⚙️",
@@ -112,6 +109,25 @@ st.markdown("""
         font-weight: 600;
         color: rgba(255,255,255,0.85);
         white-space: nowrap;
+    }
+
+    /* Botão de arquitetura no rodapé */
+    div[data-testid="stButton"][data-key="btn_arq"] > button,
+    button[data-testid="baseButton-secondary"][aria-label*="Arquitetura"] {
+        background: transparent !important;
+        border: none !important;
+        color: #003B4A !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        font-family: 'Montserrat', sans-serif !important;
+        padding: 2px 0 !important;
+        text-decoration: none;
+        box-shadow: none !important;
+        width: auto !important;
+    }
+    div[data-testid="stButton"][data-key="btn_arq"] > button:hover {
+        color: #ED1C24 !important;
+        background: transparent !important;
     }
 
     /* Botão primário "Analisar" */
@@ -274,18 +290,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Página de Arquitetura (?p=arq) ────────────────────────────────────────────
-if _PAGE == "arq":
+# ── Modal de Arquitetura ──────────────────────────────────────────────────────
+@st.dialog("📐 Arquitetura da Solução", width="large")
+def _modal_arquitetura():
     st.markdown("""
-    <div style="margin-bottom:24px;">
-      <a href="/" style="font-size:0.85rem;color:#003B4A;font-family:'Montserrat',sans-serif;
-         font-weight:600;text-decoration:none;">← Voltar ao Agente de Triagem</a>
-    </div>
-    <div style="border-bottom:3px solid #ED1C24;padding-bottom:12px;margin-bottom:32px;">
-      <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        📐 Arquitetura da Solução
-      </h2>
-      <p style="margin:6px 0 0;color:#5A7E88;font-size:0.9rem;font-family:'Montserrat',sans-serif;">
+    <div style="border-bottom:3px solid #ED1C24;padding-bottom:10px;margin-bottom:24px;">
+      <p style="margin:0;color:#5A7E88;font-size:0.9rem;font-family:'Montserrat',sans-serif;">
         Agente de Triagem N1/N2 · Belgo Arames, 2026
       </p>
     </div>
@@ -445,21 +455,6 @@ Mais rápido de ajustar; zero custo de treinamento.
 **Prompts como código** — Toda mudança no comportamento do agente passa por Pull Request no Git.
 Rastreabilidade total e rollback em segundos.
 """)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("""
-    <div style="border-top:1px solid #D6E2E5;padding:14px 0 6px;display:flex;
-         justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <span style="background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;
-          padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;
-          letter-spacing:0.06em;text-transform:uppercase;">⚠ Uso Interno — Não Divulgar</span>
-      <span style="font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;">
-        Desenvolvido por <strong style="color:#003B4A;">Lucas Lemos</strong> &nbsp;·&nbsp;
-        Belgo Arames, 2026
-      </span>
-    </div>
-    """, unsafe_allow_html=True)
-    st.stop()
 
 # ── Dados dos tickets de exemplo ──────────────────────────────────────────────
 
@@ -741,49 +736,29 @@ with col_dir:
         """, unsafe_allow_html=True)
 
 st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown("""
-<div style="
-    border-top: 1px solid #D6E2E5;
-    padding: 16px 4px 8px 4px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="
-          background: #FEE8E8;
-          border: 1px solid #ED1C24;
-          color: #B8000A;
-          border-radius: 4px;
-          padding: 3px 10px;
-          font-size: 0.72rem;
-          font-weight: 700;
-          font-family: 'Montserrat', sans-serif;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-      ">⚠ Uso Interno — Não Divulgar</span>
-      <a href="?p=arq" style="
-          font-size: 0.78rem;
-          color: #003B4A;
-          font-family: 'Montserrat', sans-serif;
-          font-weight: 600;
-          text-decoration: none;
-          border-bottom: 1.5px solid #C5D8DC;
-          padding-bottom: 1px;
-      ">📐 Arquitetura da Solução</a>
+st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;margin:0 0 10px;">', unsafe_allow_html=True)
+ft_l, ft_r = st.columns([2, 1])
+with ft_l:
+    c_badge, c_btn = st.columns([1.4, 1], gap="small")
+    with c_badge:
+        st.markdown("""
+        <span style="background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;
+            padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;
+            letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">
+            ⚠ Uso Interno — Não Divulgar
+        </span>
+        """, unsafe_allow_html=True)
+    with c_btn:
+        if st.button("📐 Arquitetura", key="btn_arq"):
+            _modal_arquitetura()
+with ft_r:
+    st.markdown("""
+    <div style="text-align:right;padding-top:4px;">
+        <span style="font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;">
+            Desenvolvido por <strong style="color:#003B4A;">Lucas Lemos</strong> &nbsp;·&nbsp;
+            Belgo Arames, 2026
+        </span>
     </div>
-    <span style="
-        font-size: 0.78rem;
-        color: #7A9EA6;
-        font-family: 'Montserrat', sans-serif;
-        text-align: right;
-    ">
-        Desenvolvido por <strong style="color:#003B4A;">Lucas Lemos</strong> &nbsp;·&nbsp;
-        Belgo Arames, 2026
-    </span>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 
