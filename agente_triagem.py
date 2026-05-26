@@ -677,6 +677,8 @@ if "processando" not in st.session_state:
     st.session_state.processando = False
 if "pending_input" not in st.session_state:
     st.session_state.pending_input = None
+if "clear_input" not in st.session_state:
+    st.session_state.clear_input = False
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -698,6 +700,11 @@ st.markdown("""
 col_esq, col_dir = st.columns([1, 1.2], gap="large")
 
 with col_esq:
+    # Limpa a caixa antes de instanciar o widget (Streamlit não permite depois)
+    if st.session_state.clear_input:
+        st.session_state.pop("ticket_input", None)
+        st.session_state.clear_input = False
+
     st.markdown("**Descreva o chamado:**")
     ticket_input = st.text_area(
         label="Descrição",
@@ -721,7 +728,7 @@ with col_dir:
         st.session_state.pending_input = ticket_input.strip()
         st.session_state.processando = True
         st.session_state.resultado = None
-        st.session_state.ticket_input = ""
+        st.session_state.clear_input = True   # limpo antes do próximo render
         st.rerun()
 
     # ── Fase 2: executa análise (streaming ou demo) ───────────────────────
