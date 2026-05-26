@@ -6,8 +6,8 @@ __pycache__/
 # Chave de API — nunca commitar
 .env
 
-# Streamlit
-.streamlit/
+# Streamlit — só ignora secrets, config.toml precisa ir pro repo
+.streamlit/secrets.toml
 
 # Arquivos temporários de screenshots e verificação
 verify_*.png
