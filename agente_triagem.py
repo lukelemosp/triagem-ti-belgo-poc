@@ -644,6 +644,7 @@ with col_dir:
             with st.spinner("Analisando chamado..."):
                 try:
                     resultado = _analisar_com_api(ticket_input.strip())
+                    st.session_state.new_analysis = True
                 except Exception as e:
                     st.error(f"Erro na API: {e}")
                     resultado = None
@@ -666,11 +667,13 @@ with col_dir:
                     "acao": "Revisar manualmente — confiança abaixo do limiar automático",
                 }
             with st.spinner("Analisando chamado..."):
-                time.sleep(1.4)
+                time.sleep(0.5)
+            st.session_state.new_analysis = True
         st.session_state.resultado = resultado
 
     # Exibe resultado
     if st.session_state.resultado:
+        animate = st.session_state.pop("new_analysis", False)
         r = st.session_state.resultado
         nivel = r["nivel"]
         badge_class = "badge-n1" if nivel == "N1" else "badge-n2"
@@ -709,22 +712,46 @@ with col_dir:
 
         # Chain of thought
         if r.get("pensamento"):
-            passos_html = ""
-            for i, p in enumerate(r["pensamento"]):
-                final = p.get("final", False)
-                dot_class = "cot-dot cot-dot-final" if final else "cot-dot"
-                passos_html += f"""
-                <div class="cot-step">
-                  <div class="{dot_class}"></div>
-                  <div class="cot-label">{p['label']}</div>
-                  <div class="cot-text">{p['texto']}</div>
-                </div>"""
-            st.markdown(f"""
-            <div class="cot-container">
-              <div class="cot-title">Raciocínio do Agente</div>
-              <div class="cot-steps">{passos_html}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            _hdr = (
+                '<div class="cot-container">'
+                '<div class="cot-title">Raciocínio do Agente</div>'
+                '<div class="cot-steps">'
+            )
+            _ftr = '</div></div>'
+            cot_slot = st.empty()
+
+            if animate:
+                cot_slot.markdown(
+                    _hdr
+                    + '<div class="cot-step"><div class="cot-dot" style="opacity:0.3;"></div>'
+                    '<div class="cot-text" style="color:#9BB5BC;font-style:italic;">'
+                    'Processando raciocínio...</div></div>'
+                    + _ftr,
+                    unsafe_allow_html=True,
+                )
+                time.sleep(0.35)
+                steps_html = ""
+                for p in r["pensamento"]:
+                    dot_cls = "cot-dot cot-dot-final" if p.get("final") else "cot-dot"
+                    steps_html += (
+                        f'<div class="cot-step">'
+                        f'<div class="{dot_cls}"></div>'
+                        f'<div class="cot-label">{p["label"]}</div>'
+                        f'<div class="cot-text">{p["texto"]}</div>'
+                        f'</div>'
+                    )
+                    cot_slot.markdown(_hdr + steps_html + _ftr, unsafe_allow_html=True)
+                    time.sleep(0.45)
+            else:
+                steps_html = "".join(
+                    f'<div class="cot-step">'
+                    f'<div class="{"cot-dot cot-dot-final" if p.get("final") else "cot-dot"}"></div>'
+                    f'<div class="cot-label">{p["label"]}</div>'
+                    f'<div class="cot-text">{p["texto"]}</div>'
+                    f'</div>'
+                    for p in r["pensamento"]
+                )
+                cot_slot.markdown(_hdr + steps_html + _ftr, unsafe_allow_html=True)
 
     elif not analisar:
         st.markdown("""
