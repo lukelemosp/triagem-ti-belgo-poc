@@ -76,6 +76,7 @@ Classifique o chamado como N1 (helpdesk resolve) ou N2 (requer especialista) e s
 
 N1 — problemas individuais, senha/acesso, Office/hardware simples, solicitações de provisionamento de rotina.
 N2 — sistemas críticos indisponíveis, múltiplos usuários afetados, infraestrutura de produção/planta, redes OT/IT, servidores SAP em produção.
+FORA_DE_ESCOPO — qualquer coisa que não seja um chamado de TI legítimo (ex.: código de programação, questões pessoais, perguntas gerais, tarefas não relacionadas a suporte de TI).
 
 Responda APENAS com JSON válido, sem markdown. Coloque "pensamento" PRIMEIRO para que
 os passos apareçam em tempo real. Formato:
@@ -89,7 +90,9 @@ os passos apareçam em tempo real. Formato:
   "tempo": "15 – 30 min",
   "sugestao": "texto da sugestão de resolução",
   "acao": "texto curto da ação recomendada"
-}"""
+}
+
+Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99."""
 
     if cot_slot:
         cot_slot.markdown(_COT_HDR + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
@@ -790,11 +793,8 @@ with col_dir:
             steps_html = "".join(_cot_step(p) for p in r["pensamento"])
             st.markdown(_COT_HDR + steps_html + _COT_FTR, unsafe_allow_html=True)
 
-        nivel = r["nivel"]
-        badge_class = "badge-n1" if nivel == "N1" else "badge-n2"
-        bar_class   = "conf-bar-fill-n1" if nivel == "N1" else "conf-bar-fill-n2"
-        acao_class  = "acao-n1" if nivel == "N1" else "acao-n2"
-        label_nivel = "N1 — Helpdesk" if nivel == "N1" else "N2 — Especialista"
+        nivel = r.get("nivel", "N1")
+        fora_de_escopo = nivel == "FORA_DE_ESCOPO"
 
         # Escapa tudo que vem da API para não quebrar o HTML
         sugestao_safe = _html.escape(str(r.get("sugestao", ""))).replace("\n", "<br>")
@@ -802,34 +802,60 @@ with col_dir:
         tempo_safe    = _html.escape(str(r.get("tempo", "")))
         confianca     = int(r.get("confianca", 0))
 
-        st.markdown(f"""
-        <div class="result-card">
-          <span class="{badge_class}">{nivel}</span>&nbsp;&nbsp;
-          <span style="font-size:1.1rem;font-weight:600;color:#334155;">{label_nivel}</span>
+        if fora_de_escopo:
+            st.markdown(f"""
+            <div class="result-card" style="border-top-color:#F37021;">
+              <span style="display:inline-block;background:#FFF4E5;color:#B45309;border:2px solid #F37021;
+                border-radius:8px;padding:6px 20px;font-size:1.4rem;font-weight:800;margin-bottom:12px;
+                font-family:'Montserrat',sans-serif;letter-spacing:0.02em;">⚠ Fora do Escopo</span>
 
-          <div style="margin-top:18px;">
-            <div class="result-label">Confiança da classificação</div>
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div class="conf-bar-bg" style="flex:1;">
-                <div class="{bar_class}" style="width:{confianca}%;"></div>
+              <div style="margin-top:6px;margin-bottom:18px;">
+                <div class="result-label">O que foi enviado</div>
+                <div class="result-value">{sugestao_safe if sugestao_safe else
+                    "Esse chamado não parece ser um problema de TI. Por favor, descreva uma solicitação ou incidente de TI para que o agente possa classificá-lo corretamente."}</div>
               </div>
-              <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
+
+              <div style="background:#FFF4E5;border-left:4px solid #F37021;padding:10px 14px;
+                border-radius:0 8px 8px 0;color:#92400E;font-size:0.9rem;font-weight:600;
+                font-family:'Montserrat',sans-serif;">
+                ⚡ {acao_safe if acao_safe else "Reenviar como chamado de TI válido"}
+              </div>
             </div>
-          </div>
+            """, unsafe_allow_html=True)
+        else:
+            badge_class = "badge-n1" if nivel == "N1" else "badge-n2"
+            bar_class   = "conf-bar-fill-n1" if nivel == "N1" else "conf-bar-fill-n2"
+            acao_class  = "acao-n1" if nivel == "N1" else "acao-n2"
+            label_nivel = "N1 — Helpdesk" if nivel == "N1" else "N2 — Especialista"
+            tempo_html  = f"""
+              <div style="margin-top:18px;">
+                <div class="result-label">Tempo estimado de resolução</div>
+                <div class="result-value">{tempo_safe}</div>
+              </div>""" if tempo_safe and tempo_safe != "N/A" else ""
 
-          <div style="margin-top:18px;">
-            <div class="result-label">Tempo estimado de resolução</div>
-            <div class="result-value">{tempo_safe}</div>
-          </div>
+            st.markdown(f"""
+            <div class="result-card">
+              <span class="{badge_class}">{nivel}</span>&nbsp;&nbsp;
+              <span style="font-size:1.1rem;font-weight:600;color:#334155;">{label_nivel}</span>
 
-          <div>
-            <div class="result-label">Sugestão de resolução</div>
-            <div class="result-value">{sugestao_safe}</div>
-          </div>
+              <div style="margin-top:18px;">
+                <div class="result-label">Confiança da classificação</div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="conf-bar-bg" style="flex:1;">
+                    <div class="{bar_class}" style="width:{confianca}%;"></div>
+                  </div>
+                  <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
+                </div>
+              </div>
+              {tempo_html}
+              <div style="margin-top:18px;">
+                <div class="result-label">Sugestão de resolução</div>
+                <div class="result-value">{sugestao_safe}</div>
+              </div>
 
-          <div class="{acao_class}">⚡ {acao_safe}</div>
-        </div>
-        """, unsafe_allow_html=True)
+              <div class="{acao_class}">⚡ {acao_safe}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
     elif not st.session_state.processando:
         st.markdown("""

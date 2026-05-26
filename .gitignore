@@ -21,6 +21,13 @@ arq_*.png
 logo_b64.txt
 ~$*.pptx
 
+# Preparação pessoal — não vai pro repo
+perguntas_diretoria.txt
+prep_apresentacao.docx
+
+# Utilitário local de geração do docx
+_gerar_docx.py
+
 # OS
 .DS_Store
 Thumbs.db
