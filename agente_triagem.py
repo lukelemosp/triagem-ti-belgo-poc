@@ -592,8 +592,6 @@ TICKETS = {
 }
 
 # ── Estado da sessão ────────────────────────────────────────────────────────
-if "ticket_text" not in st.session_state:
-    st.session_state.ticket_text = ""
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
 
@@ -620,14 +618,14 @@ with col_esq:
     st.markdown("**Exemplos de chamados**")
     for nome, dados in TICKETS.items():
         if st.button(nome, key=f"btn_{nome}"):
-            st.session_state.ticket_text = dados["descricao"]
+            st.session_state.ticket_input = dados["descricao"]
             st.session_state.resultado = None
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("**Ou descreva um chamado:**")
     ticket_input = st.text_area(
         label="Descrição",
-        value=st.session_state.ticket_text,
+        key="ticket_input",
         height=130,
         placeholder="Ex.: Impressora da sala de reunião não imprime após troca de cartucho...",
         label_visibility="collapsed",
@@ -638,7 +636,6 @@ with col_esq:
 with col_dir:
     # Dispara análise
     if analisar and ticket_input.strip():
-        st.session_state.ticket_text = ticket_input
         if ANTHROPIC_KEY and ANTHROPIC_KEY != "cole_sua_chave_aqui":
             # ── Modo API real ──────────────────────────────────────────────
             with st.spinner("Analisando chamado..."):
