@@ -114,26 +114,6 @@ st.markdown("""
         white-space: nowrap;
     }
 
-    /* Botões de exemplo */
-    div[data-testid="stButton"] > button {
-        width: 100%;
-        text-align: left;
-        background: #F0F5F6;
-        border: 1px solid #C5D8DC;
-        border-radius: 8px;
-        padding: 10px 14px;
-        font-size: 0.88rem;
-        font-family: 'Montserrat', sans-serif;
-        color: #003B4A;
-        font-weight: 500;
-        margin-bottom: 4px;
-        transition: background 0.15s, border-color 0.15s;
-    }
-    div[data-testid="stButton"] > button:hover {
-        background: #D6E8EC;
-        border-color: #003B4A;
-    }
-
     /* Botão primário "Analisar" */
     div[data-testid="stButton"] > button[kind="primary"],
     div[data-testid="stBaseButton-primary"] {
@@ -615,18 +595,11 @@ st.markdown("""
 col_esq, col_dir = st.columns([1, 1.2], gap="large")
 
 with col_esq:
-    st.markdown("**Exemplos de chamados**")
-    for nome, dados in TICKETS.items():
-        if st.button(nome, key=f"btn_{nome}"):
-            st.session_state.ticket_input = dados["descricao"]
-            st.session_state.resultado = None
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("**Ou descreva um chamado:**")
+    st.markdown("**Descreva o chamado:**")
     ticket_input = st.text_area(
         label="Descrição",
         key="ticket_input",
-        height=130,
+        height=160,
         placeholder="Ex.: Impressora da sala de reunião não imprime após troca de cartucho...",
         label_visibility="collapsed",
     )
@@ -762,7 +735,7 @@ with col_dir:
         ">
             <div style="font-size:2.5rem;margin-bottom:12px;">⚙️</div>
             <div style="font-size:0.97rem;font-family:'Montserrat',sans-serif;font-weight:500;">
-                Selecione um exemplo ou descreva um chamado<br>e clique em <strong style="color:#003B4A;">Analisar</strong>
+                Descreva um chamado de TI ao lado<br>e clique em <strong style="color:#003B4A;">Analisar</strong>
             </div>
         </div>
         """, unsafe_allow_html=True)
