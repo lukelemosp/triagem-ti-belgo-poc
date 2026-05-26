@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+
+# Streamlit
+.streamlit/
+
+# Arquivos temporários de screenshots e verificação
+verify_*.png
+brand_*.png
+logo_*.png
+footer_*.png
+cot_*.png
+arq_*.png
+
+# Arquivos de trabalho / temporários
+logo_b64.txt
+~$*.pptx
+
+# OS
+.DS_Store
+Thumbs.db
