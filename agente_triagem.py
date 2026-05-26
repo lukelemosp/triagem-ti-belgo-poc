@@ -1,5 +1,46 @@
 import streamlit as st
 import time
+import os
+import json
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+def _analisar_com_api(descricao: str) -> dict:
+    import anthropic
+    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+    system = """\
+Você é um agente de triagem de chamados de TI da Belgo Arames, empresa siderúrgica brasileira.
+
+Classifique o chamado como N1 (helpdesk resolve) ou N2 (requer especialista) e sugira a resolução.
+
+N1 — problemas individuais, senha/acesso, Office/hardware simples, solicitações de provisionamento de rotina.
+N2 — sistemas críticos indisponíveis, múltiplos usuários afetados, infraestrutura de produção/planta, redes OT/IT, servidores SAP em produção.
+
+Responda APENAS com JSON válido, sem markdown, no formato:
+{
+  "nivel": "N1",
+  "confianca": 94,
+  "tempo": "15 – 30 min",
+  "sugestao": "texto da sugestão de resolução",
+  "acao": "texto curto da ação recomendada",
+  "pensamento": [
+    {"label": "label do passo", "texto": "explicação do raciocínio"},
+    {"label": "Decisão → N1", "texto": "justificativa final", "final": true}
+  ]
+}"""
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=system,
+        messages=[{"role": "user", "content": descricao}],
+    )
+    return json.loads(msg.content[0].text)
 
 # ── Roteamento por query param (?p=arq) ──────────────────────────────────────
 _PAGE = st.query_params.get("p", "")
@@ -598,26 +639,34 @@ with col_dir:
     # Dispara análise
     if analisar and ticket_input.strip():
         st.session_state.ticket_text = ticket_input
-        # Procura resposta correspondente ao exemplo
-        resultado = None
-        for dados in TICKETS.values():
-            if ticket_input.strip() == dados["descricao"]:
-                resultado = dados
-                break
-        # Se for texto livre, usa resposta genérica de N1
-        if resultado is None:
-            resultado = {
-                "nivel": "N1",
-                "confianca": 78,
-                "tempo": "30 – 60 min",
-                "sugestao": (
-                    "Chamado recebido e registrado. Avaliar descrição com o técnico "
-                    "responsável para confirmação do nível e roteamento correto."
-                ),
-                "acao": "Revisar manualmente — confiança abaixo do limiar automático",
-            }
-        with st.spinner("Analisando chamado..."):
-            time.sleep(1.4)
+        if ANTHROPIC_KEY and ANTHROPIC_KEY != "cole_sua_chave_aqui":
+            # ── Modo API real ──────────────────────────────────────────────
+            with st.spinner("Analisando chamado..."):
+                try:
+                    resultado = _analisar_com_api(ticket_input.strip())
+                except Exception as e:
+                    st.error(f"Erro na API: {e}")
+                    resultado = None
+        else:
+            # ── Modo demo (hardcoded) ──────────────────────────────────────
+            resultado = None
+            for dados in TICKETS.values():
+                if ticket_input.strip() == dados["descricao"]:
+                    resultado = dados
+                    break
+            if resultado is None:
+                resultado = {
+                    "nivel": "N1",
+                    "confianca": 78,
+                    "tempo": "30 – 60 min",
+                    "sugestao": (
+                        "Chamado recebido e registrado. Avaliar descrição com o técnico "
+                        "responsável para confirmação do nível e roteamento correto."
+                    ),
+                    "acao": "Revisar manualmente — confiança abaixo do limiar automático",
+                }
+            with st.spinner("Analisando chamado..."):
+                time.sleep(1.4)
         st.session_state.resultado = resultado
 
     # Exibe resultado
