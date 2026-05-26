@@ -3,6 +3,7 @@ import time
 import os
 import json
 import re
+import html as _html
 
 try:
     from dotenv import load_dotenv
@@ -31,11 +32,13 @@ _COT_THINKING = (
 def _cot_step(p: dict, animated: bool = False) -> str:
     dot_cls = "cot-dot cot-dot-final" if p.get("final") else "cot-dot"
     style = ' style="animation:cot-appear 0.4s cubic-bezier(0.22,1,0.36,1);"' if animated else ""
+    label = _html.escape(str(p.get("label", "")))
+    texto = _html.escape(str(p.get("texto", "")))
     return (
         f'<div class="cot-step"{style}>'
         f'<div class="{dot_cls}"></div>'
-        f'<div class="cot-label">{p["label"]}</div>'
-        f'<div class="cot-text">{p["texto"]}</div>'
+        f'<div class="cot-label">{label}</div>'
+        f'<div class="cot-text">{texto}</div>'
         f'</div>'
     )
 
@@ -793,6 +796,12 @@ with col_dir:
         acao_class  = "acao-n1" if nivel == "N1" else "acao-n2"
         label_nivel = "N1 — Helpdesk" if nivel == "N1" else "N2 — Especialista"
 
+        # Escapa tudo que vem da API para não quebrar o HTML
+        sugestao_safe = _html.escape(str(r.get("sugestao", ""))).replace("\n", "<br>")
+        acao_safe     = _html.escape(str(r.get("acao", "")))
+        tempo_safe    = _html.escape(str(r.get("tempo", "")))
+        confianca     = int(r.get("confianca", 0))
+
         st.markdown(f"""
         <div class="result-card">
           <span class="{badge_class}">{nivel}</span>&nbsp;&nbsp;
@@ -802,23 +811,23 @@ with col_dir:
             <div class="result-label">Confiança da classificação</div>
             <div style="display:flex;align-items:center;gap:12px;">
               <div class="conf-bar-bg" style="flex:1;">
-                <div class="{bar_class}" style="width:{r['confianca']}%;"></div>
+                <div class="{bar_class}" style="width:{confianca}%;"></div>
               </div>
-              <span style="font-weight:700;color:#1E293B;">{r['confianca']}%</span>
+              <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
             </div>
           </div>
 
           <div style="margin-top:18px;">
             <div class="result-label">Tempo estimado de resolução</div>
-            <div class="result-value">{r['tempo']}</div>
+            <div class="result-value">{tempo_safe}</div>
           </div>
 
           <div>
             <div class="result-label">Sugestão de resolução</div>
-            <div class="result-value">{r['sugestao']}</div>
+            <div class="result-value">{sugestao_safe}</div>
           </div>
 
-          <div class="{acao_class}">⚡ {r['acao']}</div>
+          <div class="{acao_class}">⚡ {acao_safe}</div>
         </div>
         """, unsafe_allow_html=True)
 
