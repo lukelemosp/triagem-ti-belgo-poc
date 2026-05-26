@@ -2,6 +2,7 @@ import streamlit as st
 import time
 import os
 import json
+import re
 
 try:
     from dotenv import load_dotenv
@@ -40,7 +41,10 @@ Responda APENAS com JSON válido, sem markdown, no formato:
         system=system,
         messages=[{"role": "user", "content": descricao}],
     )
-    return json.loads(msg.content[0].text)
+    raw = msg.content[0].text.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    return json.loads(raw.strip())
 
 st.set_page_config(
     page_title="Agente de Triagem TI — Belgo",
@@ -269,6 +273,32 @@ st.markdown("""
         box-shadow: 0 0 0 2px #C5D8DC;
     }
     .cot-dot-final { background: #ED1C24; box-shadow: 0 0 0 2px #F5C0C2; }
+
+    /* Animações do chain of thought */
+    @keyframes cot-appear {
+        from { opacity: 0; transform: translateX(-12px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes cot-dot-pulse {
+        0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+        40%           { opacity: 1;   transform: scale(1.1); }
+    }
+    .cot-thinking {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+    }
+    .cot-thinking span {
+        display: inline-block;
+        width: 7px; height: 7px;
+        background: #003B4A;
+        border-radius: 50%;
+    }
+    .cot-thinking span:nth-child(1) { animation: cot-dot-pulse 1.4s ease-in-out infinite 0.0s; }
+    .cot-thinking span:nth-child(2) { animation: cot-dot-pulse 1.4s ease-in-out infinite 0.2s; }
+    .cot-thinking span:nth-child(3) { animation: cot-dot-pulse 1.4s ease-in-out infinite 0.4s; }
+
     .cot-label {
         font-size: 0.8rem;
         font-weight: 700;
@@ -685,28 +715,46 @@ with col_dir:
             _ftr = '</div></div>'
             cot_slot = st.empty()
 
+            _thinking_row = (
+                '<div class="cot-step">'
+                '<div class="cot-dot" style="opacity:0.25;background:#9BB5BC;"></div>'
+                '<div>'
+                '<div class="cot-label" style="color:#9BB5BC;">Analisando chamado</div>'
+                '<div class="cot-thinking"><span></span><span></span><span></span></div>'
+                '</div></div>'
+            )
+
             if animate:
-                cot_slot.markdown(
-                    _hdr
-                    + '<div class="cot-step"><div class="cot-dot" style="opacity:0.3;"></div>'
-                    '<div class="cot-text" style="color:#9BB5BC;font-style:italic;">'
-                    'Processando raciocínio...</div></div>'
-                    + _ftr,
-                    unsafe_allow_html=True,
-                )
-                time.sleep(0.35)
+                cot_slot.markdown(_hdr + _thinking_row + _ftr, unsafe_allow_html=True)
+                time.sleep(0.8)
                 steps_html = ""
                 for p in r["pensamento"]:
-                    dot_cls = "cot-dot cot-dot-final" if p.get("final") else "cot-dot"
-                    steps_html += (
+                    is_final = p.get("final", False)
+                    dot_cls = "cot-dot cot-dot-final" if is_final else "cot-dot"
+
+                    # Pausa dramática antes da decisão final
+                    if is_final and steps_html:
+                        cot_slot.markdown(_hdr + steps_html + _thinking_row + _ftr, unsafe_allow_html=True)
+                        time.sleep(0.7)
+
+                    # Passo atual com slide-in; os anteriores ficam estáticos
+                    animated = (
+                        f'<div class="cot-step" style="animation:cot-appear 0.4s cubic-bezier(0.22,1,0.36,1);">'
+                        f'<div class="{dot_cls}"></div>'
+                        f'<div class="cot-label">{p["label"]}</div>'
+                        f'<div class="cot-text">{p["texto"]}</div>'
+                        f'</div>'
+                    )
+                    static = (
                         f'<div class="cot-step">'
                         f'<div class="{dot_cls}"></div>'
                         f'<div class="cot-label">{p["label"]}</div>'
                         f'<div class="cot-text">{p["texto"]}</div>'
                         f'</div>'
                     )
-                    cot_slot.markdown(_hdr + steps_html + _ftr, unsafe_allow_html=True)
-                    time.sleep(0.45)
+                    cot_slot.markdown(_hdr + steps_html + animated + _ftr, unsafe_allow_html=True)
+                    steps_html += static
+                    time.sleep(0.55)
             else:
                 steps_html = "".join(
                     f'<div class="cot-step">'
