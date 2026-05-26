@@ -4,6 +4,7 @@ import os
 import json
 import re
 import html as _html
+import threading
 
 try:
     from dotenv import load_dotenv
@@ -12,6 +13,42 @@ except ImportError:
     pass
 
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+_COOLDOWN_S       = 12   # segundos mínimos entre requisições na mesma sessão
+_MAX_GLOBAL_HOUR  = 40   # requisições máximas por hora em todas as sessões
+
+@st.cache_resource
+def _global_rate_store() -> dict:
+    """Shared across all sessions on the same server instance."""
+    return {"times": [], "lock": threading.Lock()}
+
+def _check_rate_limit() -> tuple[bool, str | None]:
+    """Returns (allowed, error_message). Does NOT record the request."""
+    now = time.time()
+    sess = [t for t in st.session_state.get("request_times", []) if now - t < 3600]
+    st.session_state.request_times = sess
+
+    if sess and (now - sess[-1]) < _COOLDOWN_S:
+        wait = int(_COOLDOWN_S - (now - sess[-1])) + 1
+        return False, f"⏱ Aguarde **{wait}s** antes da próxima análise."
+
+    store = _global_rate_store()
+    with store["lock"]:
+        store["times"] = [t for t in store["times"] if now - t < 3600]
+        if len(store["times"]) >= _MAX_GLOBAL_HOUR:
+            reset = int(3600 - (now - min(store["times"])))
+            m, s = divmod(reset, 60)
+            return False, f"🚫 Limite de uso atingido ({_MAX_GLOBAL_HOUR} req/hora). Disponível em {m}min {s}s."
+
+    return True, None
+
+def _record_request():
+    now = time.time()
+    st.session_state.request_times.append(now)
+    store = _global_rate_store()
+    with store["lock"]:
+        store["times"].append(now)
 
 # ── Constantes de CoT ────────────────────────────────────────────────────────
 _COT_HDR = (
@@ -685,6 +722,8 @@ if "pending_input" not in st.session_state:
     st.session_state.pending_input = None
 if "clear_input" not in st.session_state:
     st.session_state.clear_input = False
+if "request_times" not in st.session_state:
+    st.session_state.request_times = []
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -728,14 +767,34 @@ with col_esq:
         disabled=st.session_state.processando,
     )
 
+    # Indicador de cooldown / uso
+    _now = time.time()
+    _sess_recent = [t for t in st.session_state.request_times if _now - t < 3600]
+    _store = _global_rate_store()
+    with _store["lock"]:
+        _global_count = len([t for t in _store["times"] if _now - t < 3600])
+    _remaining = _MAX_GLOBAL_HOUR - _global_count
+    if _sess_recent and (_now - _sess_recent[-1]) < _COOLDOWN_S:
+        _wait = int(_COOLDOWN_S - (_now - _sess_recent[-1])) + 1
+        st.caption(f"⏱ Cooldown: {_wait}s · {_remaining} req disponíveis esta hora")
+    elif _remaining <= 0:
+        st.caption("🚫 Limite de uso atingido esta hora")
+    elif _global_count > 0:
+        st.caption(f"✓ {_remaining}/{_MAX_GLOBAL_HOUR} análises disponíveis esta hora")
+
 with col_dir:
     # ── Fase 1: captura o clique e enfileira ──────────────────────────────
     if analisar and ticket_input.strip() and not st.session_state.processando:
-        st.session_state.pending_input = ticket_input.strip()
-        st.session_state.processando = True
-        st.session_state.resultado = None
-        st.session_state.clear_input = True   # limpo antes do próximo render
-        st.rerun()
+        allowed, reason = _check_rate_limit()
+        if not allowed:
+            st.warning(reason)
+        else:
+            _record_request()
+            st.session_state.pending_input = ticket_input.strip()
+            st.session_state.processando = True
+            st.session_state.resultado = None
+            st.session_state.clear_input = True
+            st.rerun()
 
     # ── Fase 2: executa análise (streaming ou demo) ───────────────────────
     if st.session_state.processando and st.session_state.pending_input:
