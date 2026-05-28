@@ -197,6 +197,34 @@ _COT_THINKING = (
     '</div></div>'
 )
 
+def _skeleton_card_html() -> str:
+    return (
+        '<div class="result-card" style="border-top-color:#D6E2E5;">'
+
+        # badge + label
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
+        '<div class="skeleton-line" style="width:68px;height:34px;border-radius:8px;"></div>'
+        '<div class="skeleton-line" style="width:140px;height:15px;"></div>'
+        '</div>'
+
+        # confidence label + bar
+        '<div class="skeleton-line" style="width:160px;height:11px;margin-bottom:8px;"></div>'
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
+        '<div class="skeleton-line" style="flex:1;height:10px;border-radius:999px;"></div>'
+        '<div class="skeleton-line" style="width:32px;height:13px;"></div>'
+        '</div>'
+
+        # sugestão label + linhas de texto
+        '<div class="skeleton-line" style="width:130px;height:11px;margin-bottom:10px;"></div>'
+        '<div class="skeleton-line" style="width:100%;height:12px;margin-bottom:7px;"></div>'
+        '<div class="skeleton-line" style="width:90%;height:12px;margin-bottom:7px;"></div>'
+        '<div class="skeleton-line" style="width:72%;height:12px;margin-bottom:22px;"></div>'
+
+        # ação
+        '<div class="skeleton-line" style="width:100%;height:40px;border-radius:0 8px 8px 0;"></div>'
+        '</div>'
+    )
+
 def _clean_label(label: str) -> str:
     # Normaliza variantes geradas pelo modelo (FORA_DE_ESCOPO, Fora_De_Escopo…)
     return re.sub(r'(?i)\bfora[_\s]+de[_\s]+escopo\b', 'Fora de escopo', label)
@@ -625,6 +653,18 @@ st.markdown("""
         to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Skeleton loading */
+    @keyframes shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position:  600px 0; }
+    }
+    .skeleton-line {
+        background: linear-gradient(90deg, #E8F0F2 25%, #C5D8DC 50%, #E8F0F2 75%);
+        background-size: 1200px 100%;
+        animation: shimmer 1.8s infinite ease-in-out;
+        border-radius: 4px;
+    }
+
     /* Animações do chain of thought */
     @keyframes cot-appear {
         from { opacity: 0; transform: translateX(-12px); }
@@ -968,11 +1008,14 @@ with col_dir:
         resultado = None
 
         if ANTHROPIC_KEY and ANTHROPIC_KEY != "cole_sua_chave_aqui":
-            cot_slot = st.empty()
+            cot_slot      = st.empty()
+            result_slot   = st.empty()
+            result_slot.markdown(_skeleton_card_html(), unsafe_allow_html=True)
             try:
                 resultado = _analisar_com_api(texto, cot_slot=cot_slot)
             except Exception as e:
                 print(f"[ERROR] _analisar_com_api: {e}")  # log server-side apenas
+                result_slot.empty()
                 st.error("Erro ao processar a análise. Tente novamente em alguns instantes.")
         else:
             st.warning("⚠ Chave da API Anthropic não configurada. Defina a variável de ambiente `ANTHROPIC_API_KEY` para usar o agente.")
