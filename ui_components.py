@@ -364,21 +364,32 @@ BELGO_CSS = """
         padding: 6px 4px !important;
         text-align: center !important;
     }
-    [data-testid="stPageLink"] a:hover {
-        background: rgba(255,255,255,0.13) !important;
-        color: white !important;
-    }
-    [data-testid="stPageLink"] p {
-        color: inherit !important;
-        font-family: inherit !important;
-        font-weight: inherit !important;
-        font-size: inherit !important;
+    [data-testid="stPageLink"] a *,
+    [data-testid="stPageLink"] a p,
+    [data-testid="stPageLink"] a span,
+    [data-testid="stPageLink"] a div {
+        color: rgba(255,255,255,0.88) !important;
+        font-family: 'Montserrat',sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 0.78rem !important;
         margin: 0 !important;
         line-height: 1.3 !important;
     }
+    [data-testid="stPageLink"] a:hover,
+    [data-testid="stPageLink"] a:hover * {
+        background: transparent !important;
+        color: white !important;
+    }
+    [data-testid="stPageLink"] a:hover {
+        background: rgba(255,255,255,0.13) !important;
+    }
+    [data-testid="stPageLink"] a[aria-current="page"],
+    [data-testid="stPageLink"] a[aria-current="page"] * {
+        background: transparent !important;
+        color: white !important;
+    }
     [data-testid="stPageLink"] a[aria-current="page"] {
         background: rgba(255,255,255,0.18) !important;
-        color: white !important;
     }
 </style>
 """
