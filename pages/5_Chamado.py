@@ -146,4 +146,4 @@ if st.button(_label):
     elif _origin == "n1":
         st.switch_page("pages/3_Fila_N1.py")
     else:
-        st.switch_page("app.py")
+        st.switch_page(st.session_state.get("_p_home", "pages/3_Fila_N1.py"))

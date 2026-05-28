@@ -123,6 +123,7 @@ def _dashboard():
 
 # ── Páginas registradas ───────────────────────────────────────────────────────
 p_home     = st.Page(_dashboard,                title="Dashboard",    default=True)
+st.session_state["_p_home"] = p_home
 p_novo     = st.Page("pages/2_Novo_Chamado.py", title="Novo Chamado", url_path="novo")
 p_n1       = st.Page("pages/3_Fila_N1.py",      title="Fila N1",      url_path="n1")
 p_n2       = st.Page("pages/4_Fila_N2.py",      title="Fila N2",      url_path="n2")
