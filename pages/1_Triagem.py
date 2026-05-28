@@ -15,7 +15,7 @@ st.set_page_config(
     page_title="Agente de Triagem TI — Belgo",
     page_icon="⚙️",
     layout="wide",
-    initial_sidebar_bar="collapsed",
+    initial_sidebar_state="collapsed",
 )
 
 _PLACEHOLDERS = [

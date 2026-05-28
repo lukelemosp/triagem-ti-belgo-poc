@@ -1,3 +1,4 @@
+import base64 as _base64
 import html as _html
 import re as _re
 import pathlib as _pathlib
@@ -6,10 +7,13 @@ import pathlib as _pathlib
 def _load_logo() -> str:
     src = _pathlib.Path(__file__).parent / "agente_triagem.py"
     m = _re.search(r'base64,([A-Za-z0-9+/=]+)"', src.read_text(encoding="utf-8"))
-    return m.group(1) if m else ""
+    if not m:
+        return ""
+    svg = _base64.b64decode(m.group(1)).decode("utf-8").strip()
+    return _re.sub(r'^<svg ', '<svg style="height:38px;width:auto;" ', svg, count=1)
 
 
-_LOGO_B64 = _load_logo()
+_LOGO_SVG = _load_logo()
 
 
 BELGO_CSS = """
@@ -333,12 +337,12 @@ BELGO_CSS = """
 def header_html(title: str = "Agente de Triagem TI", subtitle: str = None, tag: str = None) -> str:
     sub = subtitle or "Agente de triagem exposto via MCP — classifica chamados N1/N2 em tempo real"
     tag_html = f'<span class="header-tag">{_html.escape(tag)}</span>' if tag else ""
+    logo = f'<div style="flex-shrink:0;">{_LOGO_SVG}</div>'
     return f"""
 <div class="header-box">
   <div class="header-accent"></div>
   <div class="header-content">
-    <img src="data:image/svg+xml;base64,{_LOGO_B64}"
-         style="height:38px;width:auto;flex-shrink:0;" alt="Belgo" />
+    {logo}
     <div style="width:1px;height:36px;background:rgba(255,255,255,0.2);margin:0 4px;flex-shrink:0;"></div>
     <div class="header-text">
       <h1>{_html.escape(title)}</h1>
