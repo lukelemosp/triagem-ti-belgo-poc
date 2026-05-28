@@ -610,115 +610,6 @@ Rastreabilidade total e rollback em segundos.
 **Exposição via MCP** — Esta skill será publicada no Catálogo MCP da Belgo no Azure DevOps, com dono, SLA e custo/mês documentados — primeira entrada do catálogo.
 """)
 
-# ── Dados dos tickets de exemplo ──────────────────────────────────────────────
-
-TICKETS = {
-    "🔑  SAP — Erro de login": {
-        "descricao": "Não consigo fazer login no SAP. Aparece erro 'Senha inválida', mas tenho certeza que está correta.",
-        "nivel": "N1",
-        "confianca": 94,
-        "tempo": "15 – 30 min",
-        "sugestao": (
-            "Resetar senha do usuário no Active Directory e sincronizar com SAP "
-            "via transação SU01. Verificar se a conta está bloqueada por tentativas "
-            "excessivas (SU01 → aba Logon Data)."
-        ),
-        "acao": "Atender no próximo ciclo — helpdesk resolve",
-        "pensamento": [
-            {"label": "Sistema identificado", "texto": '"SAP" detectado → ERP crítico, mas contexto é de acesso individual a uma conta.'},
-            {"label": "Escopo do impacto", "texto": 'Pronome "não consigo" → usuário único afetado. Nenhuma menção a outros usuários, produção ou serviços downstream.'},
-            {"label": "Padrão de ocorrência", "texto": 'Erro de senha/login representa ~38% dos chamados N1 históricos. Alta frequência, baixa complexidade técnica.'},
-            {"label": "Ausência de urgência", "texto": 'Sem palavras-chave críticas: "produção parada", "down para todos", "impacto em SLA de negócio". Sem risco operacional imediato.'},
-            {"label": "Decisão → N1", "texto": 'Perfil clássico de N1: resolvível pelo helpdesk via reset no AD + transação SU01. Sem necessidade de especialista ou escalonamento.', "final": True},
-        ],
-    },
-    "🔴  ERP — Servidor fora em produção": {
-        "descricao": (
-            "Servidor de produção do ERP caiu. Mais de 200 usuários sem acesso "
-            "há 2 horas. Impacto direto na linha de produção."
-        ),
-        "nivel": "N2",
-        "confianca": 98,
-        "tempo": "1 – 4 horas",
-        "sugestao": (
-            "Escalar imediatamente para infraestrutura. Verificar logs do servidor "
-            "de aplicação SAP, status dos work processes (SM50/SM66) e acionar DBA "
-            "se houver indício de problema no banco. Abrir bridge de crise."
-        ),
-        "acao": "Escalar agora — especialista de infraestrutura + DBA",
-        "pensamento": [
-            {"label": "Sistema identificado", "texto": '"ERP de produção" + "servidor caiu" → infraestrutura crítica de missão. Nível de risco máximo desde a primeira leitura.'},
-            {"label": "Escopo do impacto", "texto": '"200 usuários" + "linha de produção" → impacto massivo e operacional. Não é falha isolada; afeta continuidade do negócio.'},
-            {"label": "Tempo de indisponibilidade", "texto": '"2 horas" → SLA de N1 já extrapolado (threshold: 30 min). Escalonamento se torna obrigatório independente de outros fatores.'},
-            {"label": "Convergência de sinais críticos", "texto": 'Três indicadores simultâneos de alta urgência: sistema down + múltiplos usuários + impacto em produção. Qualquer um isolado já justificaria N2.'},
-            {"label": "Decisão → N2", "texto": 'Escalonamento imediato: especialista de infraestrutura SAP + DBA + abertura de bridge de crise. Helpdesk não tem autonomia para resolver.', "final": True},
-        ],
-    },
-    "👤  Acesso — Novo colaborador": {
-        "descricao": (
-            "Colaborador admitido hoje precisa de acesso ao sistema de RH "
-            "e ao e-mail corporativo."
-        ),
-        "nivel": "N1",
-        "confianca": 97,
-        "tempo": "30 – 60 min",
-        "sugestao": (
-            "Criar conta no Active Directory conforme perfil do cargo. "
-            "Provisionar acesso ao sistema de RH com perfil padrão de consulta. "
-            "Enviar credenciais para o gestor por e-mail."
-        ),
-        "acao": "Atender no próximo ciclo — helpdesk resolve",
-        "pensamento": [
-            {"label": "Tipo de solicitação", "texto": '"Acesso" + "e-mail corporativo" → requisição de provisionamento. Não é falha, não é indisponibilidade.'},
-            {"label": "Natureza administrativa", "texto": 'Pedido de rotina para colaborador recém-admitido. Processo padronizado, sem decisão técnica complexa envolvida.'},
-            {"label": "Fluxo existente no helpdesk", "texto": 'Provisionamento de novos colaboradores tem procedimento documentado: AD → perfil de cargo → sistema de RH → e-mail ao gestor.'},
-            {"label": "Decisão → N1", "texto": 'Atendimento padrão pelo helpdesk. Alta confiança (97%) por ser o tipo mais estruturado e previsível de chamado.', "final": True},
-        ],
-    },
-    "🏭  Rede — Planta de laminação": {
-        "descricao": (
-            "Rede da planta de laminação com quedas intermitentes desde as 06h. "
-            "Afeta a comunicação entre CLPs e os sistemas de controle de produção."
-        ),
-        "nivel": "N2",
-        "confianca": 96,
-        "tempo": "2 – 6 horas",
-        "sugestao": (
-            "Acionar equipe de redes OT/IT. Verificar switches de borda da planta, "
-            "logs de CLP e status dos links redundantes. Possível falha em equipamento "
-            "de rede industrial — isolar segmento afetado e acionar fornecedor se necessário."
-        ),
-        "acao": "Escalar agora — equipe de redes + OT",
-        "pensamento": [
-            {"label": "Contexto identificado", "texto": '"Planta de laminação" + "CLPs" → ambiente OT (Operational Technology). Regras de escalonamento são mais conservadoras em OT por risco de segurança física.'},
-            {"label": "Duração do impacto", "texto": '"Desde as 06h" → indisponibilidade prolongada antes mesmo da abertura do chamado. Janela de resolução já comprimida.'},
-            {"label": "Sistemas afetados", "texto": '"CLPs e sistemas de controle de produção" → falha pode travar linha de produção ou criar risco operacional. Escopo maior do que parece.'},
-            {"label": "Especialização necessária", "texto": 'Redes OT/IT industriais requerem certificação e conhecimento específico de protocolos (Profibus, Modbus). Fora do escopo do helpdesk.'},
-            {"label": "Decisão → N2", "texto": 'Acionar equipe de redes com expertise em OT. Possível envolvimento de fornecedor de switch industrial se for falha de hardware.', "final": True},
-        ],
-    },
-    "💻  Office — Outlook não abre": {
-        "descricao": (
-            "Outlook não abre no notebook após atualização automática do Windows "
-            "realizada ontem à noite."
-        ),
-        "nivel": "N1",
-        "confianca": 91,
-        "tempo": "20 – 45 min",
-        "sugestao": (
-            "Executar reparo rápido do Office via Painel de Controle → Programas. "
-            "Se não resolver, limpar perfil do Outlook (%localappdata%\\Microsoft\\Outlook) "
-            "e reconfigurar a conta. Verificar compatibilidade do KB instalado."
-        ),
-        "acao": "Atender no próximo ciclo — helpdesk resolve",
-        "pensamento": [
-            {"label": "Causa raiz provável", "texto": '"Após atualização do Windows" → quebra de compatibilidade entre KB instalado e versão do Office. Causa conhecida com resolução documentada.'},
-            {"label": "Escopo", "texto": '"Meu notebook" → usuário único afetado. Sem menção a outros usuários com o mesmo problema ou impacto em sistemas compartilhados.'},
-            {"label": "Confiança levemente reduzida", "texto": 'Confiança em 91% (não 97%+) porque o KB específico que causou o problema não foi informado. Pode exigir tentativa e erro no reparo.'},
-            {"label": "Decisão → N1", "texto": 'Helpdesk resolve com procedimento padrão: reparo do Office → limpeza de perfil do Outlook → reconfiguração. Nenhum especialista necessário.', "final": True},
-        ],
-    },
-}
 
 # ── Estado da sessão ────────────────────────────────────────────────────────
 if "resultado" not in st.session_state:
@@ -809,41 +700,13 @@ with col_dir:
         resultado = None
 
         if ANTHROPIC_KEY and ANTHROPIC_KEY != "cole_sua_chave_aqui":
-            # API real — CoT aparece token a token via streaming
             cot_slot = st.empty()
             try:
                 resultado = _analisar_com_api(texto, cot_slot=cot_slot)
             except Exception as e:
                 st.error(f"Erro na API: {e}")
         else:
-            # Demo — animação fake com os dados hardcoded
-            for dados in TICKETS.values():
-                if texto == dados["descricao"]:
-                    resultado = dados
-                    break
-            if resultado is None:
-                resultado = {
-                    "nivel": "N1",
-                    "confianca": 78,
-                    "tempo": "30 – 60 min",
-                    "sugestao": (
-                        "Chamado recebido e registrado. Avaliar descrição com o técnico "
-                        "responsável para confirmação do nível e roteamento correto."
-                    ),
-                    "acao": "Revisar manualmente — confiança abaixo do limiar automático",
-                }
-            if resultado.get("pensamento"):
-                cot_slot = st.empty()
-                cot_slot.markdown(_COT_HDR + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
-                time.sleep(0.8)
-                steps_html = ""
-                for p in resultado["pensamento"]:
-                    if p.get("final") and steps_html:
-                        cot_slot.markdown(_COT_HDR + steps_html + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
-                        time.sleep(0.7)
-                    cot_slot.markdown(_COT_HDR + steps_html + _cot_step(p, animated=True) + _COT_FTR, unsafe_allow_html=True)
-                    steps_html += _cot_step(p)
-                    time.sleep(0.55)
+            st.warning("⚠ Chave da API Anthropic não configurada. Defina a variável de ambiente `ANTHROPIC_API_KEY` para usar o agente.")
 
         st.session_state.resultado = resultado
         st.session_state.pending_input = None
