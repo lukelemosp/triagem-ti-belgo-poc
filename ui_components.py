@@ -458,7 +458,7 @@ def inc_id(ticket_id) -> str:
 
 
 def recent_tickets_html(recentes: list) -> str:
-    NIVEL_EMOJI = {"N1": "🔵", "N2": "🔴", "FORA_DE_ESCOPO": "🟠"}
+    NIVEL_EMOJI = {"N1": "\U0001F535", "N2": "\U0001F534", "FORA_DE_ESCOPO": "\U0001F7E0"}
     STATUS_LABEL = {
         "ABERTO": "Aberto",
         "EM_ATENDIMENTO": "Em atendimento",
@@ -470,33 +470,42 @@ def recent_tickets_html(recentes: list) -> str:
         nivel = t.get("nivel") or "—"
         emoji = NIVEL_EMOJI.get(nivel, "⚪")
         iid = inc_id(t["id"])
+        tid = int(t["id"])
+        auto_str = "Sim" if t.get("auto_resolvido") else "N\xe3o"
+        status_str = STATUS_LABEL.get(t["status"], t["status"])
+        titulo_str = _html.escape(t["titulo"])
+        dt_str = fmt_dt(t.get("criado_em") or "")
         rows += (
-            f'<tr>'
-            f'<td><a href="/chamado?id={t["id"]}" style="color:#003B4A;font-weight:700;'
-            f'text-decoration:none;font-family:Montserrat,sans-serif;">{iid}</a></td>'
-            f'<td>{emoji} {nivel}</td>'
-            f'<td style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
-            f'{_html.escape(t["titulo"])}</td>'
-            f'<td>{STATUS_LABEL.get(t["status"], t["status"])}</td>'
-            f'<td>{"Sim" if t.get("auto_resolvido") else "Não"}</td>'
-            f'<td>{fmt_dt(t.get("criado_em",""))}</td>'
-            f'</tr>'
+            "<tr>"
+            "<td><a href=\"/chamado?id=" + str(tid) + "\" style=\"color:#003B4A;font-weight:700;"
+            "text-decoration:none;font-family:Montserrat,sans-serif;\">" + iid + "</a></td>"
+            "<td>" + emoji + " " + nivel + "</td>"
+            "<td style=\"max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">"
+            + titulo_str + "</td>"
+            "<td>" + status_str + "</td>"
+            "<td>" + auto_str + "</td>"
+            "<td>" + dt_str + "</td>"
+            "</tr>"
         )
-    return (
-        '<style>'
-        '.inc-tbl{width:100%;border-collapse:collapse;font-family:Montserrat,sans-serif;font-size:0.84rem;}'
-        '.inc-tbl th{background:#003B4A;color:#fff;padding:7px 12px;text-align:left;font-size:0.73rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}'
-        '.inc-tbl td{padding:7px 12px;border-bottom:1px solid #E2EEF0;color:#1A2E33;vertical-align:middle;}'
-        '.inc-tbl tr:hover td{background:#F0F7F9;}'
-        '</style>'
-        '<table class="inc-tbl">'
-        '<thead><tr>'
-        '<th>Chamado</th><th>Nível</th><th>Título</th>'
-        '<th>Status</th><th>Auto-res.</th><th>Criado em</th>'
-        '</tr></thead>'
-        f'<tbody>{rows}</tbody>'
-        '</table>'
+    css = (
+        "<style>"
+        ".inc-tbl{width:100%;border-collapse:collapse;font-family:Montserrat,sans-serif;font-size:0.84rem;}"
+        ".inc-tbl th{background:#003B4A;color:#fff;padding:7px 12px;text-align:left;"
+        "font-size:0.73rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}"
+        ".inc-tbl td{padding:7px 12px;border-bottom:1px solid #E2EEF0;color:#1A2E33;vertical-align:middle;}"
+        ".inc-tbl tr:hover td{background:#F0F7F9;}"
+        "</style>"
     )
+    table = (
+        "<table class=\"inc-tbl\">"
+        "<thead><tr>"
+        "<th>Chamado</th><th>N\xedvel</th><th>T\xedtulo</th>"
+        "<th>Status</th><th>Auto-res.</th><th>Criado em</th>"
+        "</tr></thead>"
+        "<tbody>" + rows + "</tbody>"
+        "</table>"
+    )
+    return css + table
 
 
 def enter_to_submit_js() -> str:
