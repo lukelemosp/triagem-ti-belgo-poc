@@ -158,12 +158,13 @@ os passos apareçam em tempo real. Formato:
   ],
   "nivel": "N1",
   "confianca": 94,
+  "motivo_confianca": "Frase curta (1-2 linhas) explicando objetivamente por que a confiança é esse valor — ex.: quais características do chamado tornaram a classificação clara ou ambígua.",
   "tempo": "15 – 30 min",
   "sugestao": "Cada etapa em linha separada, terminada por ponto e vírgula; o step anterior ao último deve ser encerrado com '; e'; o último step termina com ponto final. Exemplo:\nVerificar se o cabo está conectado;\nReiniciar a impressora;\ne confirmar na fila de impressão do Windows.",
   "acao": "texto curto da ação recomendada"
 }
 
-Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99."""
+Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99, "motivo_confianca": "explicação"."""
 
     # Exibe o indicador de "pensando..." antes do primeiro token chegar.
     _hdr = _cot_header(descricao)
@@ -382,6 +383,42 @@ st.markdown("""
         font-weight: 600;
         font-family: 'Montserrat', sans-serif;
     }
+
+    /* Tooltip de confiança */
+    .conf-tooltip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        cursor: help;
+    }
+    .conf-tooltip-icon {
+        color: #7A9EA6;
+        font-size: 0.8rem;
+        margin-left: 5px;
+        line-height: 1;
+    }
+    .conf-tooltip-box {
+        visibility: hidden;
+        opacity: 0;
+        width: 260px;
+        background: #1A2E33;
+        color: #E8F0F2;
+        text-align: left;
+        border-radius: 8px;
+        padding: 10px 14px;
+        position: absolute;
+        z-index: 9999;
+        bottom: 130%;
+        right: 0;
+        font-size: 0.78rem;
+        line-height: 1.6;
+        font-family: 'Montserrat', sans-serif;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        white-space: normal;
+    }
+    .conf-tooltip:hover .conf-tooltip-box { visibility: visible; opacity: 1; }
 
     /* Barra de confiança */
     .conf-bar-bg {
@@ -805,10 +842,11 @@ with col_dir:
         fora_de_escopo = nivel == "FORA_DE_ESCOPO"
 
         # Escapa tudo que vem da API para não quebrar o HTML
-        sugestao_safe = _html.escape(str(r.get("sugestao", ""))).replace("\n", "<br>")
-        acao_safe     = _html.escape(str(r.get("acao", "")))
-        tempo_safe    = _html.escape(str(r.get("tempo", "")))
-        confianca     = int(r.get("confianca", 0))
+        sugestao_safe   = _html.escape(str(r.get("sugestao", ""))).replace("\n", "<br>")
+        acao_safe       = _html.escape(str(r.get("acao", "")))
+        tempo_safe      = _html.escape(str(r.get("tempo", "")))
+        confianca       = int(r.get("confianca", 0))
+        motivo_conf     = _html.escape(str(r.get("motivo_confianca", "")))
 
         if fora_de_escopo:
             st.markdown(f"""
@@ -852,7 +890,11 @@ with col_dir:
                   <div class="conf-bar-bg" style="flex:1;">
                     <div class="{bar_class}" style="width:{confianca}%;"></div>
                   </div>
-                  <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
+                  <span class="conf-tooltip">
+                    <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
+                    <span class="conf-tooltip-icon">ⓘ</span>
+                    <span class="conf-tooltip-box">{motivo_conf}</span>
+                  </span>
                 </div>
               </div>
               {tempo_html}
