@@ -82,6 +82,7 @@ def _dashboard():
             with c1:
                 if st.button(ui.inc_id(tid), key="dash_" + str(tid), use_container_width=True):
                     st.session_state["current_ticket_id"] = tid
+                    st.session_state["ticket_origin"] = "dashboard"
                     st.switch_page("pages/5_Chamado.py")
             with c2:
                 st.markdown(

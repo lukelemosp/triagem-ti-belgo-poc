@@ -88,7 +88,8 @@ else:
 
             with c_ver:
                 if st.button("🔍 Ver", key=f"ver2_{tid}", use_container_width=True):
-                    st.query_params["id"] = str(tid)
+                    st.session_state["current_ticket_id"] = tid
+                    st.session_state["ticket_origin"] = "n2"
                     st.switch_page("pages/5_Chamado.py")
 
         st.divider()
