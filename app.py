@@ -22,16 +22,16 @@ stats = db.stats_tickets()
 
 c1, c2, c3, c4, c5 = st.columns(5)
 with c1:
-    st.markdown(ui.stat_card_html(stats.get("total", 0), "Total de chamados"), unsafe_allow_html=True)
+    st.markdown(ui.stat_card_html(stats.get("total") or 0, "Total de chamados"), unsafe_allow_html=True)
 with c2:
-    st.markdown(ui.stat_card_html(stats.get("fila_n1", 0), "Na fila N1"), unsafe_allow_html=True)
+    st.markdown(ui.stat_card_html(stats.get("fila_n1") or 0, "Na fila N1"), unsafe_allow_html=True)
 with c3:
-    st.markdown(ui.stat_card_html(stats.get("fila_n2", 0), "Na fila N2", "#ED1C24"), unsafe_allow_html=True)
+    st.markdown(ui.stat_card_html(stats.get("fila_n2") or 0, "Na fila N2", "#ED1C24"), unsafe_allow_html=True)
 with c4:
-    st.markdown(ui.stat_card_html(stats.get("resolvidos", 0), "Resolvidos", "#2E7D32"), unsafe_allow_html=True)
+    st.markdown(ui.stat_card_html(stats.get("resolvidos") or 0, "Resolvidos", "#2E7D32"), unsafe_allow_html=True)
 with c5:
     pct = 0
-    total = stats.get("total", 0)
+    total = stats.get("total") or 0
     if total:
         pct = round(stats.get("auto_resolvidos", 0) / total * 100)
     st.markdown(ui.stat_card_html(f"{pct}%", "Auto-resolvidos pela IA", "#7B1FA2"), unsafe_allow_html=True)
