@@ -499,7 +499,7 @@ def _modal_arquitetura():
               <tr>
                 <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">Orquestração</td>
                 <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">Python + SDK Anthropic</td>
-                <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Controle total do prompt; versionamento em Git</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Controle total do prompt; versionamento no Azure DevOps</td>
               </tr>
               <tr style="background:#F7FAFB;">
                 <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">Hospedagem</td>
@@ -512,9 +512,14 @@ def _modal_arquitetura():
                 <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Sistema já adotado; leitura e escrita de tickets via webhook</td>
               </tr>
               <tr style="background:#F7FAFB;">
-                <td style="padding:8px 12px;font-weight:600;color:#003B4A;">Prompts</td>
-                <td style="padding:8px 12px;">Git (repositório dedicado)</td>
-                <td style="padding:8px 12px;color:#5A7E88;">Rastreabilidade; rollback; revisão por Pull Request</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">Prompts</td>
+                <td style="padding:8px 12px;">Azure DevOps (Git)</td>
+                <td style="padding:8px 12px;color:#5A7E88;">Rastreabilidade; rollback; revisão por Pull Request no ADO</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 12px;font-weight:600;color:#003B4A;">Catálogo</td>
+                <td style="padding:8px 12px;">MCP Server (Belgo)</td>
+                <td style="padding:8px 12px;color:#5A7E88;">Skill exposta via MCP — primeira entrada do Catálogo MCP Belgo no ADO</td>
               </tr>
             </tbody>
           </table>
@@ -599,8 +604,10 @@ Garante confiança antes de qualquer automação completa.
 **Sem fine-tuning** — Prompt engineering com exemplos históricos da Belgo (few-shot).
 Mais rápido de ajustar; zero custo de treinamento.
 
-**Prompts como código** — Toda mudança no comportamento do agente passa por Pull Request no Git.
+**Prompts como código** — Toda mudança no comportamento do agente passa por Pull Request no Azure DevOps.
 Rastreabilidade total e rollback em segundos.
+
+**Exposição via MCP** — Esta skill será publicada no Catálogo MCP da Belgo no Azure DevOps, com dono, SLA e custo/mês documentados — primeira entrada do catálogo.
 """)
 
 # ── Dados dos tickets de exemplo ──────────────────────────────────────────────
