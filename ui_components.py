@@ -5,12 +5,15 @@ import pathlib as _pathlib
 
 
 def _load_logo() -> str:
-    src = _pathlib.Path(__file__).parent / "agente_triagem.py"
-    m = _re.search(r'base64,([A-Za-z0-9+/=]+)"', src.read_text(encoding="utf-8"))
-    if not m:
+    try:
+        src = _pathlib.Path(__file__).parent / "agente_triagem.py"
+        m = _re.search(r'base64,([A-Za-z0-9+/=]+)"', src.read_text(encoding="utf-8"))
+        if not m:
+            return ""
+        svg = _base64.b64decode(m.group(1)).decode("utf-8").strip()
+        return _re.sub(r'^<svg ', '<svg style="height:38px;width:auto;" ', svg, count=1)
+    except Exception:
         return ""
-    svg = _base64.b64decode(m.group(1)).decode("utf-8").strip()
-    return _re.sub(r'^<svg ', '<svg style="height:38px;width:auto;" ', svg, count=1)
 
 
 _LOGO_SVG = _load_logo()
