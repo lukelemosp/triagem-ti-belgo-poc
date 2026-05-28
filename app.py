@@ -94,7 +94,7 @@ def _dashboard():
                 "Título": t["titulo"],
                 "Status": STATUS_LABEL.get(t["status"], t["status"]),
                 "Auto-resolvido": "Sim" if t.get("auto_resolvido") else "Não",
-                "Criado em": (t.get("criado_em") or "")[:16].replace("T", " "),
+                "Criado em": ui.fmt_dt(t.get("criado_em") or ""),
             })
         st.dataframe(rows, use_container_width=True, hide_index=True)
     else:

@@ -7,6 +7,7 @@ import ui_components as ui
 
 db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
+st.markdown(ui.enter_to_submit_js(), unsafe_allow_html=True)
 st.markdown(ui.header_html(
     title="Novo Chamado",
     subtitle="Abre chamado, classifica com IA e enfileira automaticamente",
@@ -21,6 +22,9 @@ for k, v in [
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
+
+if st.session_state.nc_processando and not st.session_state.nc_pending:
+    st.session_state.nc_processando = False
 
 # ── Formulário ────────────────────────────────────────────────────────────────
 col_form, col_result = st.columns([1, 1.2], gap="large")

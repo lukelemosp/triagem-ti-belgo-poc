@@ -333,6 +333,14 @@ BELGO_CSS = """
     #MainMenu { visibility: hidden; }
     footer     { visibility: hidden; }
     header     { visibility: hidden; }
+
+    [data-testid="stMainBlockContainer"] {
+        animation: belgo-fade-in 0.22s ease-out;
+    }
+    @keyframes belgo-fade-in {
+        from { opacity: 0; transform: translateY(5px); }
+        to   { opacity: 1; transform: none; }
+    }
 </style>
 """
 
@@ -443,6 +451,33 @@ def render_empty_state() -> str:
         Descreva um chamado de TI ao lado<br>e clique em <strong style="color:#003B4A;">Analisar</strong>
     </div>
 </div>"""
+
+
+def enter_to_submit_js() -> str:
+    """JS que faz Enter submeter o formulário; Shift+Enter insere quebra de linha."""
+    return """
+<script>
+(function() {
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey || e.target.tagName !== 'TEXTAREA') return;
+    var btn = document.querySelector('[data-testid="baseButton-primary"]:not([disabled])');
+    if (btn) { e.preventDefault(); btn.click(); }
+  }, true);
+})();
+</script>
+"""
+
+
+def fmt_dt(iso: str) -> str:
+    if not iso:
+        return "—"
+    iso = iso[:16].replace("T", " ")
+    try:
+        d, t = iso.split(" ")
+        y, m, day = d.split("-")
+        return f"{day}/{m}/{y} {t}"
+    except Exception:
+        return iso
 
 
 def stat_card_html(value: str, label: str, color: str = "#003B4A") -> str:

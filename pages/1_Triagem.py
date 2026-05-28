@@ -106,6 +106,7 @@ if "placeholder_idx" not in st.session_state:
 
 # ── CSS + header ──────────────────────────────────────────────────────────────
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
+st.markdown(ui.enter_to_submit_js(), unsafe_allow_html=True)
 st.markdown(ui.header_html(), unsafe_allow_html=True)
 
 # ── Modal de arquitetura ──────────────────────────────────────────────────────

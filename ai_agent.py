@@ -60,6 +60,8 @@ Valores válidos para "categoria": RESET_SENHA, VPN_RECONEXAO, IMPRESSORA_OFFLIN
 EMAIL_SYNC_CELULAR, TEAMS_AUDIO, OUTLOOK_CAIXA_CHEIA, WIFI_RECONEXAO, SAP_LOGIN_LENTO,
 EXCEL_TRAVA, WINDOWS_UPDATE_AVISO, OUTRO.
 Use OUTRO para chamados que não se encaixem exatamente em nenhuma categoria acima.
+SAP_LOGIN_LENTO aplica-se EXCLUSIVAMENTE a lentidão no login/autenticação do SAP GUI.
+Erros em transações SAP (faturamento, OV, bloqueios, MM, FI, NF-e, etc.) → use OUTRO.
 Para chamados FORA_DE_ESCOPO, use "categoria": "OUTRO".
 
 Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99, "motivo_confianca": "explicação".

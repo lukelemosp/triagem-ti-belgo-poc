@@ -87,10 +87,8 @@ else:
                         st.rerun()
 
             with c_ver:
-                st.page_link(
-                    "pages/5_Chamado.py",
-                    label="Ver",
-                    icon="🔍",
-                )
+                if st.button("🔍 Ver", key=f"ver2_{tid}", use_container_width=True):
+                    st.query_params["id"] = str(tid)
+                    st.switch_page("pages/5_Chamado.py")
 
         st.divider()

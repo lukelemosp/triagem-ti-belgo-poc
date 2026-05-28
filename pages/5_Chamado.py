@@ -72,8 +72,10 @@ with col_meta:
         f'<div style="font-size:0.78rem;color:#5A7E88;margin-top:8px;">'
         f'Categoria: <strong>{ticket.get("categoria") or "—"}</strong>'
         + (" · ✅ <strong>Auto-resolvido pela IA</strong>" if ticket.get("auto_resolvido") else "")
-        + f'<br>Aberto em: {(ticket.get("criado_em") or "")[:16].replace("T"," ")}'
-        + (f'<br>Resolvido em: {ticket["resolvido_em"][:16].replace("T"," ")}' if ticket.get("resolvido_em") else "")
+        + (f'<br>Solicitante: <strong>{_html.escape(ticket["solicitante_nome"])}</strong>'
+           f' — {_html.escape(ticket.get("solicitante_email",""))}' if ticket.get("solicitante_nome") else "")
+        + f'<br>Aberto em: {ui.fmt_dt(ticket.get("criado_em",""))}'
+        + (f'<br>Resolvido em: {ui.fmt_dt(ticket.get("resolvido_em",""))}' if ticket.get("resolvido_em") else "")
         + '</div>',
         unsafe_allow_html=True,
     )

@@ -146,7 +146,15 @@ def criar_ticket(
 
 
 def buscar_ticket(ticket_id: int) -> dict | None:
-    return _row(get_db().execute("SELECT * FROM tickets WHERE id=?", (ticket_id,)).fetchone())
+    row = get_db().execute("""
+        SELECT t.*,
+               u.nome  AS solicitante_nome,
+               u.email AS solicitante_email
+        FROM tickets t
+        LEFT JOIN usuarios u ON t.criado_por = u.id
+        WHERE t.id = ?
+    """, (ticket_id,)).fetchone()
+    return _row(row)
 
 
 def listar_fila(nivel: str, statuses: list[str] = None) -> list[dict]:
