@@ -6,13 +6,51 @@ st.set_page_config(
     page_title="Belgo TI — Sistema de Chamados",
     page_icon="⚙️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 
+# ── Navbar CSS ────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+  [data-testid="stSidebar"],
+  [data-testid="collapsedControl"] { display: none !important; }
 
+  /* Bloco horizontal que contém os page_links → barra teal */
+  [data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) {
+      background: #003B4A;
+      border-radius: 10px;
+      padding: 4px 6px;
+      gap: 0 !important;
+      margin-bottom: 12px;
+  }
+  /* Link base */
+  [data-testid="stPageLink"] a {
+      color: rgba(255,255,255,0.78) !important;
+      font-family: 'Montserrat', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 0.80rem !important;
+      text-decoration: none !important;
+      border-radius: 7px !important;
+      transition: background 0.15s, color 0.15s !important;
+  }
+  [data-testid="stPageLink"] a:hover {
+      background: rgba(255,255,255,0.10) !important;
+      color: #ffffff !important;
+  }
+  /* Página activa */
+  [data-testid="stPageLink"][aria-current="page"] a,
+  [data-testid="stPageLink"][aria-current="true"] a {
+      background: rgba(255,255,255,0.15) !important;
+      color: #ffffff !important;
+  }
+  [data-testid="stPageLink"] { border: none !important; background: transparent !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Definição das páginas ─────────────────────────────────────────────────────
 def _dashboard():
     st.markdown(ui.header_html(
         title="Sistema de Chamados TI",
@@ -65,7 +103,7 @@ def _dashboard():
             })
         st.dataframe(rows, use_container_width=True, hide_index=True)
     else:
-        st.info("Nenhum chamado registrado ainda. Use **Novo Chamado** no menu ao lado para criar o primeiro.")
+        st.info("Nenhum chamado registrado ainda. Use **Novo Chamado** no menu acima para criar o primeiro.")
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;">', unsafe_allow_html=True)
@@ -79,17 +117,28 @@ def _dashboard():
 """, unsafe_allow_html=True)
 
 
-pg = st.navigation({
-    "Sistema": [
-        st.Page(_dashboard, title="Dashboard", icon="📊", default=True),
-        st.Page("pages/2_Novo_Chamado.py", title="Novo Chamado", icon="📋"),
-        st.Page("pages/3_Fila_N1.py", title="Fila N1", icon="🔵"),
-        st.Page("pages/4_Fila_N2.py", title="Fila N2", icon="🔴"),
-        st.Page("pages/5_Chamado.py", title="Detalhe do Chamado", icon="🔍"),
-        st.Page("pages/6_Usuarios.py", title="Usuários", icon="👥"),
-    ],
-    "Demo": [
-        st.Page("pages/1_Triagem.py", title="Triagem IA (Demo)", icon="🤖"),
-    ],
-})
+_p_dash    = st.Page(_dashboard,                  title="Dashboard",        icon="📊", default=True)
+_p_novo    = st.Page("pages/2_Novo_Chamado.py",   title="Novo Chamado",     icon="📋")
+_p_n1      = st.Page("pages/3_Fila_N1.py",        title="Fila N1",          icon="🔵")
+_p_n2      = st.Page("pages/4_Fila_N2.py",        title="Fila N2",          icon="🔴")
+_p_chamado = st.Page("pages/5_Chamado.py",        title="Detalhe Chamado",  icon="🔍")
+_p_users   = st.Page("pages/6_Usuarios.py",       title="Usuários",         icon="👥")
+_p_triagem = st.Page("pages/1_Triagem.py",        title="Triagem IA",       icon="🤖")
+
+# ── Navbar ────────────────────────────────────────────────────────────────────
+c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+with c1: st.page_link(_p_dash,    label="📊 Dashboard",       use_container_width=True)
+with c2: st.page_link(_p_novo,    label="📋 Novo Chamado",     use_container_width=True)
+with c3: st.page_link(_p_n1,      label="🔵 Fila N1",          use_container_width=True)
+with c4: st.page_link(_p_n2,      label="🔴 Fila N2",          use_container_width=True)
+with c5: st.page_link(_p_chamado, label="🔍 Chamado",          use_container_width=True)
+with c6: st.page_link(_p_users,   label="👥 Usuários",         use_container_width=True)
+with c7: st.page_link(_p_triagem, label="🤖 Triagem IA",       use_container_width=True)
+
+# ── Navegação (sem sidebar) ───────────────────────────────────────────────────
+pg = st.navigation(
+    {"Sistema": [_p_dash, _p_novo, _p_n1, _p_n2, _p_chamado, _p_users],
+     "Demo":    [_p_triagem]},
+    position="hidden",
+)
 pg.run()
