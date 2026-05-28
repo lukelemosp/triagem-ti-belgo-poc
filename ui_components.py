@@ -342,6 +342,29 @@ BELGO_CSS = """
         to   { opacity: 1; transform: none; }
     }
 
+    /* ── Botões de ID do dashboard (estilizados como links) ─────────────── */
+    div[data-key^="dash_"] > button {
+        background: transparent !important;
+        border: none !important;
+        color: #003B4A !important;
+        font-weight: 800 !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: 0.85rem !important;
+        padding: 0 4px !important;
+        box-shadow: none !important;
+        text-align: left !important;
+        min-height: unset !important;
+        text-decoration: underline !important;
+        text-decoration-color: #A8C8D0 !important;
+    }
+    div[data-key^="dash_"] > button:hover {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #ED1C24 !important;
+        text-decoration-color: #ED1C24 !important;
+    }
+
     /* ── Navbar via st.page_link ──────────────────────────────────────────── */
     div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) {
         background: #003B4A;

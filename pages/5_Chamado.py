@@ -11,15 +11,10 @@ st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 
 # ── Lê o ticket_id da query string ou da session_state ────────────────────────
 params = st.query_params
-ticket_id_str = params.get("id", "")
+ticket_id_str = params.get("id", "") or str(st.session_state.pop("current_ticket_id", ""))
 
 if not ticket_id_str:
-    # Fallback: campo de busca manual
-    st.markdown(ui.header_html(title="Detalhe do Chamado", subtitle="Consulte qualquer chamado pelo ID"), unsafe_allow_html=True)
-    tid_input = st.number_input("ID do chamado:", min_value=1, step=1)
-    if st.button("Buscar", type="primary"):
-        st.query_params["id"] = str(int(tid_input))
-        st.rerun()
+    st.error("Nenhum chamado selecionado.")
     st.stop()
 
 try:
