@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as _components
 import database as db
 import ui_components as ui
 
@@ -20,33 +19,6 @@ st.markdown("""
   [data-testid="collapsedControl"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
-
-# ── Navbar em iframe isolado (não é afetado pelo re-render do Streamlit) ──────
-_A = (
-    "flex:1;min-width:80px;text-align:center;padding:8px 6px;"
-    "border-radius:8px;color:rgba(255,255,255,0.88);"
-    "font-family:'Montserrat',sans-serif;font-weight:600;"
-    "font-size:0.78rem;text-decoration:none;white-space:nowrap;"
-    "transition:background 0.15s;cursor:pointer;"
-)
-_components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-  *{{margin:0;padding:0;box-sizing:border-box;}}
-  body{{background:transparent;overflow:hidden;}}
-  nav{{background:#003B4A;border-radius:10px;padding:6px 10px;
-       display:flex;align-items:center;gap:4px;flex-wrap:wrap;}}
-  a:hover{{background:rgba(255,255,255,0.13)!important;border-radius:8px;}}
-</style></head><body>
-<script>function nav(u){{try{{parent.location.href=u;}}catch(e){{window.open(u,'_top');}}}}</script>
-<nav>
-  <a style="{_A}" onclick="nav('/')">📊 Dashboard</a>
-  <a style="{_A}" onclick="nav('/novo')">📋 Novo Chamado</a>
-  <a style="{_A}" onclick="nav('/n1')">🔵 Fila N1</a>
-  <a style="{_A}" onclick="nav('/n2')">🔴 Fila N2</a>
-  <a style="{_A}" onclick="nav('/chamado')">🔍 Chamado</a>
-  <a style="{_A}" onclick="nav('/usuarios')">👥 Usuários</a>
-  <a style="{_A}" onclick="nav('/triagem')">🤖 Triagem IA</a>
-</nav>
-</body></html>""", height=52, scrolling=False)
 
 # ── Definição das páginas ─────────────────────────────────────────────────────
 def _dashboard():
@@ -96,21 +68,31 @@ def _dashboard():
 """, unsafe_allow_html=True)
 
 
-# ── Navegação (url_path = URLs dos links acima) ───────────────────────────────
+# ── Páginas registradas ───────────────────────────────────────────────────────
+p_home     = st.Page(_dashboard,                title="Dashboard",    default=True)
+p_novo     = st.Page("pages/2_Novo_Chamado.py", title="Novo Chamado", url_path="novo")
+p_n1       = st.Page("pages/3_Fila_N1.py",      title="Fila N1",      url_path="n1")
+p_n2       = st.Page("pages/4_Fila_N2.py",      title="Fila N2",      url_path="n2")
+p_chamado  = st.Page("pages/5_Chamado.py",       title="Chamado",      url_path="chamado")
+p_usuarios = st.Page("pages/6_Usuarios.py",      title="Usu\xe1rios",  url_path="usuarios")
+p_triagem  = st.Page("pages/1_Triagem.py",       title="Triagem IA",   url_path="triagem")
+
 pg = st.navigation(
     {
-        "Sistema": [
-            st.Page(_dashboard,                title="Dashboard",    default=True),
-            st.Page("pages/2_Novo_Chamado.py", title="Novo Chamado", url_path="novo"),
-            st.Page("pages/3_Fila_N1.py",      title="Fila N1",      url_path="n1"),
-            st.Page("pages/4_Fila_N2.py",      title="Fila N2",      url_path="n2"),
-            st.Page("pages/5_Chamado.py",      title="Chamado",      url_path="chamado"),
-            st.Page("pages/6_Usuarios.py",     title="Usuários",     url_path="usuarios"),
-        ],
-        "Demo": [
-            st.Page("pages/1_Triagem.py",      title="Triagem IA",   url_path="triagem"),
-        ],
+        "Sistema": [p_home, p_novo, p_n1, p_n2, p_chamado, p_usuarios],
+        "Demo":    [p_triagem],
     },
     position="hidden",
 )
+
+# ── Navbar nativa (st.page_link — sem iframe, sem JS) ────────────────────────
+_c1, _c2, _c3, _c4, _c5, _c6, _c7 = st.columns(7)
+with _c1: st.page_link(p_home,     label="\U0001f4ca Dashboard",    use_container_width=True)
+with _c2: st.page_link(p_novo,     label="\U0001f4cb Novo Chamado", use_container_width=True)
+with _c3: st.page_link(p_n1,       label="\U0001f535 Fila N1",      use_container_width=True)
+with _c4: st.page_link(p_n2,       label="\U0001f534 Fila N2",      use_container_width=True)
+with _c5: st.page_link(p_chamado,  label="\U0001f50d Chamado",      use_container_width=True)
+with _c6: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
+with _c7: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
+
 pg.run()
