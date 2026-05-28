@@ -15,16 +15,24 @@ except ImportError:
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
+# Dois níveis de controle para evitar flood na API durante a apresentação:
+# 1. Cooldown por sessão: impede que um único usuário dispare múltiplas
+#    requisições antes da anterior terminar (mínimo 12s entre chamadas).
+# 2. Teto global/hora: limita o total de chamadas em todas as sessões abertas
+#    simultaneamente no mesmo servidor (ex.: avaliadores abrindo em paralelo).
 _COOLDOWN_S       = 12   # segundos mínimos entre requisições na mesma sessão
 _MAX_GLOBAL_HOUR  = 40   # requisições máximas por hora em todas as sessões
 
 @st.cache_resource
 def _global_rate_store() -> dict:
-    """Shared across all sessions on the same server instance."""
+    # cache_resource garante que o mesmo dict (e o mesmo Lock) é compartilhado
+    # entre todas as sessões Streamlit rodando no mesmo processo.
     return {"times": [], "lock": threading.Lock()}
 
 def _check_rate_limit() -> tuple[bool, str | None]:
-    """Returns (allowed, error_message). Does NOT record the request."""
+    # Verifica ambos os limites SEM registrar a requisição — o registro só
+    # acontece em _record_request(), após a validação passar. Isso evita
+    # contabilizar chamadas bloqueadas.
     now = time.time()
     sess = [t for t in st.session_state.get("request_times", []) if now - t < 3600]
     st.session_state.request_times = sess
@@ -44,6 +52,8 @@ def _check_rate_limit() -> tuple[bool, str | None]:
     return True, None
 
 def _record_request():
+    # Registra o timestamp da requisição nas duas camadas (sessão e global).
+    # Chamado somente após _check_rate_limit() retornar True.
     now = time.time()
     st.session_state.request_times.append(now)
     store = _global_rate_store()
@@ -80,7 +90,11 @@ def _cot_step(p: dict, animated: bool = False) -> str:
     )
 
 def _extract_steps(text: str) -> list:
-    """Retorna passos de pensamento completos já gerados no stream parcial."""
+    # O modelo gera JSON via streaming, então o texto chega incompleto e cresce
+    # token a token. Esta função extrai apenas os objetos de "pensamento" que já
+    # estão completos (fechados com "}") dentro do array parcial.
+    # Estratégia: rastrear profundidade de chaves para detectar objetos completos
+    # sem depender de um parser JSON que quebraria em JSON incompleto.
     m = re.search(r'"pensamento"\s*:\s*\[', text)
     if not m:
         return []
@@ -94,6 +108,8 @@ def _extract_steps(text: str) -> list:
         elif ch == "}":
             depth -= 1
             if depth == 0 and start is not None:
+                # Confirma que o objeto é seguido por "," ou "]" — ou seja,
+                # está realmente completo e não truncado no meio do stream.
                 rest = arr[i + 1:].lstrip()
                 if rest and rest[0] in (",", "]"):
                     try:
@@ -104,8 +120,17 @@ def _extract_steps(text: str) -> list:
     return steps
 
 def _analisar_com_api(descricao: str, cot_slot=None) -> dict:
+    # Núcleo do agente: chama a API Anthropic com streaming e exibe o
+    # raciocínio passo a passo (Chain of Thought) em tempo real enquanto
+    # o modelo ainda está gerando a resposta.
     import anthropic
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+
+    # Prompt de sistema versionado — este é o "prompt como código" que ficará
+    # no Azure DevOps. Qualquer alteração no comportamento do agente (ex.: incluir
+    # um novo sistema crítico da Belgo) deve passar por Pull Request aqui.
+    # "pensamento" vem PRIMEIRO no JSON para que os passos apareçam durante
+    # o streaming, antes de nivel/confianca/sugestao estarem completos.
     system = """\
 Você é um agente de triagem de chamados de TI da Belgo Arames, empresa siderúrgica brasileira.
 
@@ -131,13 +156,16 @@ os passos apareçam em tempo real. Formato:
 
 Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99."""
 
+    # Exibe o indicador de "pensando..." antes do primeiro token chegar.
     if cot_slot:
         cot_slot.markdown(_COT_HDR + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
 
     full_text = ""
-    shown: list = []
-    steps_html = ""
+    shown: list = []   # passos do CoT já renderizados na tela
+    steps_html = ""    # HTML acumulado dos passos renderizados
 
+    # Streaming: cada delta é um fragmento de texto. Acumulamos em full_text
+    # e tentamos extrair passos de pensamento completos a cada token recebido.
     with client.messages.stream(
         model="claude-sonnet-4-6",
         max_tokens=1024,
@@ -149,8 +177,11 @@ Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "c
             if not cot_slot:
                 continue
             current = _extract_steps(full_text)
+            # Renderiza somente os passos novos (não os que já estão na tela).
             while len(current) > len(shown):
                 p = current[len(shown)]
+                # Antes do passo final, exibe o spinner "pensando..." para
+                # indicar que ainda há processamento em curso.
                 if p.get("final") and steps_html:
                     cot_slot.markdown(_COT_HDR + steps_html + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
                     time.sleep(0.3)
@@ -158,6 +189,8 @@ Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "c
                 steps_html += _cot_step(p)
                 shown.append(p)
 
+    # Remove possível wrapper ```json ``` que o modelo às vezes adiciona
+    # mesmo sendo instruído a não usar markdown.
     raw = full_text.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
@@ -612,6 +645,13 @@ Rastreabilidade total e rollback em segundos.
 
 
 # ── Estado da sessão ────────────────────────────────────────────────────────
+# O Streamlit re-executa o script inteiro a cada interação do usuário.
+# session_state é o único lugar que persiste valores entre re-runs.
+# A lógica de análise é dividida em 3 fases separadas por st.rerun() para
+# garantir que o spinner/CoT apareça antes do resultado final:
+#   Fase 1 (captura): usuário clica → enfileira o texto em pending_input e reroda
+#   Fase 2 (executa): pending_input presente → chama a API com streaming e reroda
+#   Fase 3 (exibe):   resultado presente → renderiza o card de resultado estático
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
 if "processando" not in st.session_state:
@@ -619,6 +659,9 @@ if "processando" not in st.session_state:
 if "pending_input" not in st.session_state:
     st.session_state.pending_input = None
 if "clear_input" not in st.session_state:
+    # Sinaliza que o text_area deve ser limpo antes de ser renderizado.
+    # É necessário remover a key do session_state ANTES de instanciar o widget,
+    # pois o Streamlit não permite alterar o valor de um widget já renderizado.
     st.session_state.clear_input = False
 if "request_times" not in st.session_state:
     st.session_state.request_times = []
