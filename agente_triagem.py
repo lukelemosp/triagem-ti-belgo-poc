@@ -159,7 +159,7 @@ os passos apareçam em tempo real. Formato:
   "nivel": "N1",
   "confianca": 94,
   "tempo": "15 – 30 min",
-  "sugestao": "texto da sugestão de resolução",
+  "sugestao": "Cada etapa em linha separada, terminada por ponto e vírgula; o step anterior ao último deve ser encerrado com '; e'; o último step termina com ponto final. Exemplo:\nVerificar se o cabo está conectado;\nReiniciar a impressora;\ne confirmar na fila de impressão do Windows.",
   "acao": "texto curto da ação recomendada"
 }
 
