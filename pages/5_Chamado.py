@@ -11,7 +11,8 @@ st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 
 # ── Lê o ticket_id da query string ou da session_state ────────────────────────
 params = st.query_params
-ticket_id_str = params.get("id", "") or str(st.session_state.pop("current_ticket_id", ""))
+_ss_tid = st.session_state.get("current_ticket_id", "")
+ticket_id_str = params.get("id", "") or (str(_ss_tid) if _ss_tid else "")
 
 if not ticket_id_str:
     st.error("Nenhum chamado selecionado.")
@@ -139,6 +140,7 @@ _origin = st.session_state.get("ticket_origin", "")
 _label = "← Voltar à Fila N2" if _origin == "n2" else "← Voltar à Fila N1" if _origin == "n1" else "← Voltar ao Dashboard"
 if st.button(_label):
     st.session_state.pop("ticket_origin", None)
+    st.session_state.pop("current_ticket_id", None)
     if _origin == "n2":
         st.switch_page("pages/4_Fila_N2.py")
     elif _origin == "n1":
