@@ -86,13 +86,12 @@ pg = st.navigation(
 )
 
 # ── Navbar nativa (st.page_link — sem iframe, sem JS) ────────────────────────
-_c1, _c2, _c3, _c4, _c5, _c6, _c7 = st.columns(7)
+_c1, _c2, _c3, _c4, _c5, _c6 = st.columns(6)
 with _c1: st.page_link(p_home,     label="\U0001f4ca Dashboard",    use_container_width=True)
 with _c2: st.page_link(p_novo,     label="\U0001f4cb Novo Chamado", use_container_width=True)
 with _c3: st.page_link(p_n1,       label="\U0001f535 Fila N1",      use_container_width=True)
 with _c4: st.page_link(p_n2,       label="\U0001f534 Fila N2",      use_container_width=True)
-with _c5: st.page_link(p_chamado,  label="\U0001f50d Chamado",      use_container_width=True)
-with _c6: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
-with _c7: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
+with _c5: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
+with _c6: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
 
 pg.run()

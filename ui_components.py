@@ -527,7 +527,7 @@ def recent_tickets_html(recentes: list) -> str:
         dt_str = fmt_dt(t.get("criado_em") or "")
         rows += (
             "<tr>"
-            "<td><a href=\"/chamado?id=" + str(tid) + "\" style=\"color:#003B4A;font-weight:700;"
+            "<td><a href=\"/chamado?id=" + str(tid) + "\" target=\"_self\" style=\"color:#003B4A;font-weight:700;"
             "text-decoration:none;font-family:Montserrat,sans-serif;\">" + iid + "</a></td>"
             "<td>" + emoji + " " + nivel + "</td>"
             "<td style=\"max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">"
