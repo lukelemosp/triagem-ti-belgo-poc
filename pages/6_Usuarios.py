@@ -4,12 +4,6 @@ import streamlit as st
 import database as db
 import ui_components as ui
 
-st.set_page_config(
-    page_title="Usuários — Belgo TI",
-    page_icon="👥",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)

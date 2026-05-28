@@ -11,12 +11,6 @@ import streamlit as st
 import ai_agent as agent
 import ui_components as ui
 
-st.set_page_config(
-    page_title="Agente de Triagem TI — Belgo",
-    page_icon="⚙️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 _PLACEHOLDERS = [
     "Não consigo acessar o SAP com meu usuário desde esta manhã...",
