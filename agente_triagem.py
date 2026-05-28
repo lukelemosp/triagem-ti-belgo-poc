@@ -950,4 +950,11 @@ with ft_r:
         if st.button("📐", key="btn_arq", help="Ver arquitetura da solução"):
             _modal_arquitetura()
 
-
+# Auto-refresh a cada 1s durante o cooldown para o contador descer em tempo real.
+# Feito após o processamento de ambas as colunas para não descartar cliques de botão.
+if not st.session_state.processando:
+    _cd_now = time.time()
+    _cd_sess = [t for t in st.session_state.request_times if _cd_now - t < 3600]
+    if _cd_sess and (_cd_now - _cd_sess[-1]) < _COOLDOWN_S:
+        time.sleep(1)
+        st.rerun()
