@@ -5,6 +5,7 @@ import json
 import re
 import html as _html
 import threading
+import random
 
 try:
     from dotenv import load_dotenv
@@ -13,6 +14,110 @@ except ImportError:
     pass
 
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# ── Placeholders rotativos para o campo de descrição ──────────────────────────
+_PLACEHOLDERS = [
+    "Não consigo acessar o SAP com meu usuário desde esta manhã...",
+    "A transação MB51 do SAP está travando ao gerar relatório de movimentações...",
+    "Erro 'RFC connection failed' ao tentar abrir o SAP GUI na minha estação...",
+    "Não estou conseguindo lançar nota fiscal no SAP — autorização negada...",
+    "SAP está lento demais no setor de compras, travando a cada 2 minutos...",
+    "Preciso de acesso ao módulo PP do SAP para acompanhar ordens de produção...",
+    "A impressão de etiquetas via SAP parou de funcionar na linha 3...",
+    "Erro ao executar a transação ME23N — 'Object not found' no SAP...",
+    "Não consigo fazer login no SAP Logon — tela fica carregando indefinidamente...",
+    "Relatório de estoque MB52 no SAP está gerando valores incorretos...",
+    "Não consigo acessar o Salesforce — tela de login retorna erro 401...",
+    "Dados de oportunidades do Salesforce não estão sincronizando com o SAP...",
+    "Preciso de acesso de edição nos registros de conta do Salesforce para meu perfil...",
+    "Fluxo de aprovação de pedido no Salesforce está rejeitando automaticamente...",
+    "Relatórios de pipeline do Salesforce estão gerando dados duplicados...",
+    "Campo 'Valor do contrato' no Salesforce está bloqueado para meu usuário...",
+    "Integração do Salesforce com e-mail parou — registros não são criados nos casos...",
+    "Não recebo notificações do Salesforce mesmo com as configurações ativas...",
+    "Perfil do novo colaborador precisa ser configurado no Salesforce com urgência...",
+    "Dashboard do Salesforce não carrega — erro 'Insufficient privileges'...",
+    "Sem conexão de rede no ramal B2, todos os computadores do setor offline...",
+    "VPN não conecta fora do escritório — erro 'Network timeout' após atualização...",
+    "Wi-Fi do escritório cai constantemente, especialmente na sala de reunião 204...",
+    "Velocidade de download na rede está em 1 Mbps em vez dos 100 habituais...",
+    "Switch do andar 3 parece ter reiniciado sozinho, setor inteiro sem rede...",
+    "Não consigo acessar pastas compartilhadas no servidor interno...",
+    "Proxy bloqueando acesso a site interno do grupo usado para relatórios...",
+    "Máquina recém-formatada não aparece no domínio da empresa...",
+    "Roteador do almoxarifado com luz vermelha e sem sinal desde esta manhã...",
+    "Link de internet da fábrica caiu — produção parada aguardando reconexão...",
+    "Monitor do computador ficou com tela preta e não responde...",
+    "Teclado e mouse USB pararam de funcionar após reiniciar o Windows...",
+    "Computador do financeiro não liga — sem resposta ao pressionar o botão...",
+    "HD do notebook faz barulho estranho e o Windows demorou 15 minutos para iniciar...",
+    "Bateria do notebook não carrega mais — fica em 4% mesmo plugado na tomada...",
+    "Webcam integrada do notebook não é detectada no Windows...",
+    "Headset não funciona no Teams — áudio saindo pelo alto-falante do computador...",
+    "Dock station não transmite sinal para os monitores externos...",
+    "Scanner do setor de RH parou de digitalizar — luz pisca em vermelho...",
+    "Computador reinicia sozinho no meio do trabalho, sem aviso e sem atualização...",
+    "Preciso de acesso à pasta de projetos no SharePoint para o novo colaborador...",
+    "Meu acesso ao sistema de ponto eletrônico foi bloqueado sem motivo aparente...",
+    "Usuário novo sem acesso ao sistema de ordem de compra — início foi ontem...",
+    "Não consigo acessar relatórios gerenciais após mudança de área...",
+    "Acesso ao módulo de RH foi revogado por engano — preciso com urgência...",
+    "Solicito criação de usuário e permissões básicas para nova estagiária...",
+    "Fui promovido e preciso de acesso de nível gerencial nos sistemas de aprovação...",
+    "Sem acesso à pasta de contratos no servidor após troca de equipe...",
+    "Conta do sistema travada após 5 tentativas incorretas — preciso desbloquear...",
+    "Novo fornecedor precisa de acesso ao portal de notas fiscais — como criar...",
+    "E-mail corporativo não sincroniza no celular após troca de senha...",
+    "Teams trava ao iniciar videoconferência com mais de 5 participantes...",
+    "Caixa de entrada do Outlook cheia — não consigo receber novos e-mails...",
+    "Reunião do Teams ficou sem áudio para todos os participantes...",
+    "Não consigo enviar e-mails para domínio externo — 'Recipient blocked' no Outlook...",
+    "Excel 365 travando ao abrir planilhas com mais de 50 mil linhas no notebook...",
+    "Word não abre arquivo .docx compartilhado — mensagem de 'arquivo corrompido'...",
+    "SharePoint não permite upload de arquivos PDF maiores que 10 MB...",
+    "Calendário do Teams não sincroniza com o Outlook — reuniões duplicadas...",
+    "Assinatura de e-mail corporativa sumiu do Outlook após atualização...",
+    "Senha expirou e o sistema não permite criar nova — link de redefinição falha...",
+    "Conta do AD bloqueada por excesso de tentativas — preciso de reset urgente...",
+    "Esqueci a senha do VPN e o e-mail de recuperação está inacessível...",
+    "Erro 'Your password has expired' ao logar no Windows após férias...",
+    "Política de senha rejeitando combinações válidas — diz ser fraca sem motivo...",
+    "Impressora do setor de expedição offline — fila há 3 horas sem imprimir...",
+    "Impressora HP 4525 não conecta na rede após ser movida de sala...",
+    "Impressão de boletos bancários saindo cortada na impressora do financeiro...",
+    "Não consigo adicionar impressora de rede no computador novo com Windows 11...",
+    "Impressora fiscal emite erro 'EE 04' e não aceita novos documentos...",
+    "Fila de impressão travada — jobs não saem mesmo após reiniciar o spooler...",
+    "Impressora Zebra de etiquetas da expedição parou após atualização de driver...",
+    "Toner da impressora da diretoria acabou — preciso de substituição urgente...",
+    "Crachá perdido — preciso de acesso temporário para entrar no prédio hoje...",
+    "Torniquete do portão principal não lê meu crachá desde a atualização de ontem...",
+    "Sala de servidores não está abrindo com meu crachá de TI...",
+    "Câmera de segurança do corredor B está offline desde a queda de energia...",
+    "Novo colaborador sem crachá de acesso — começa amanhã e precisa entrar na fábrica...",
+    "Sala de reunião não conecta ao Teams Room — controle remoto não responde...",
+    "Câmera da sala 301 não aparece nas opções do Teams durante apresentação...",
+    "Zoom bloqueado no computador corporativo — é bloqueado por política de segurança?",
+    "Echo no áudio durante reuniões do Teams na sala executiva — impossível usar...",
+    "Link de reunião do Teams não funciona para participantes externos...",
+    "Sistema de supervisão SCADA perdeu comunicação com CLP da linha 4...",
+    "Computador de controle da prensa 7 não inicializa o software de automação...",
+    "Rede OT da fábrica sem comunicação com servidor de historiador de dados...",
+    "Painel de operação do forno de recozimento exibe tela azul ao iniciar turno...",
+    "Sistema MES não registra produção das últimas 2 horas — dados perdidos...",
+    "Antivírus bloqueando instalação de software homologado pela TI — como liberar...",
+    "Computador com Windows 7 precisa ser atualizado — aviso de suporte encerrado...",
+    "Software Project Online não abre — erro de licença ao tentar acessar...",
+    "Backup noturno falhou — log indica espaço insuficiente no servidor...",
+    "VoIP do ramal 4521 sem tom de discagem desde esta tarde...",
+    "Token digital USB não é reconhecido — certificado digital não funciona...",
+    "Sistema de gestão de frotas offline desde manutenção de ontem à noite...",
+    "Power BI não atualiza dados automaticamente — relatório de vendas desatualizado...",
+    "Aplicativo mobile da empresa não abre após atualização do iOS...",
+    "Sistema WMS mostrando quantidades negativas após inventário...",
+    "Firewall bloqueando acesso a ferramenta SaaS aprovada pela diretoria...",
+    "Computador da sala de treinamento precisa de reinstalação — extremamente lento...",
+]
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 # Dois níveis de controle para evitar flood na API durante a apresentação:
@@ -85,10 +190,14 @@ _COT_THINKING = (
     '</div></div>'
 )
 
+def _clean_label(label: str) -> str:
+    # Normaliza variantes geradas pelo modelo (FORA_DE_ESCOPO, Fora_De_Escopo…)
+    return re.sub(r'(?i)\bfora[_\s]+de[_\s]+escopo\b', 'Fora de escopo', label)
+
 def _cot_step(p: dict, animated: bool = False) -> str:
     dot_cls = "cot-dot cot-dot-final" if p.get("final") else "cot-dot"
     style = ' style="animation:cot-appear 0.4s cubic-bezier(0.22,1,0.36,1);"' if animated else ""
-    label = _html.escape(str(p.get("label", "")))
+    label = _html.escape(_clean_label(str(p.get("label", ""))))
     texto = _html.escape(str(p.get("texto", "")))
     return (
         f'<div class="cot-step"{style}>'
@@ -164,7 +273,8 @@ os passos apareçam em tempo real. Formato:
   "acao": "texto curto da ação recomendada"
 }
 
-Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99, "motivo_confianca": "explicação"."""
+Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99, "motivo_confianca": "explicação".
+No campo "label" dos passos de pensamento, use sempre "Fora de escopo" (nunca FORA_DE_ESCOPO nem Fora_de_escopo)."""
 
     # Exibe o indicador de "pensando..." antes do primeiro token chegar.
     _hdr = _cot_header(descricao)
@@ -392,10 +502,21 @@ st.markdown("""
         cursor: help;
     }
     .conf-tooltip-icon {
-        color: #7A9EA6;
-        font-size: 0.8rem;
-        margin-left: 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 15px;
+        height: 15px;
+        background: #7A9EA6;
+        border-radius: 50%;
+        color: white;
+        font-size: 0.62rem;
+        font-weight: 800;
+        font-style: italic;
+        margin-left: 6px;
         line-height: 1;
+        flex-shrink: 0;
+        vertical-align: middle;
     }
     .conf-tooltip-box {
         visibility: hidden;
@@ -737,6 +858,8 @@ if "input_key" not in st.session_state:
     st.session_state.input_key = 0
 if "last_input" not in st.session_state:
     st.session_state.last_input = ""
+if "placeholder_idx" not in st.session_state:
+    st.session_state.placeholder_idx = random.randrange(len(_PLACEHOLDERS))
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -768,7 +891,7 @@ with col_esq:
         label="Descrição",
         key=f"ticket_input_{st.session_state.input_key}",
         height=160,
-        placeholder="Ex.: Impressora da sala de reunião não imprime após troca de cartucho...",
+        placeholder=_PLACEHOLDERS[st.session_state.placeholder_idx],
         label_visibility="collapsed",
         disabled=st.session_state.processando,
     )
@@ -885,16 +1008,18 @@ with col_dir:
               <span style="font-size:1.1rem;font-weight:600;color:#334155;">{label_nivel}</span>
 
               <div style="margin-top:18px;">
-                <div class="result-label">Confiança da classificação</div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                  <div class="conf-bar-bg" style="flex:1;">
-                    <div class="{bar_class}" style="width:{confianca}%;"></div>
-                  </div>
+                <div style="display:flex;align-items:center;margin-bottom:4px;">
+                  <div class="result-label" style="margin-bottom:0;">Confiança da classificação</div>
                   <span class="conf-tooltip">
-                    <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
-                    <span class="conf-tooltip-icon">ⓘ</span>
+                    <span class="conf-tooltip-icon">i</span>
                     <span class="conf-tooltip-box">{motivo_conf}</span>
                   </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="conf-bar-bg" style="flex:1;margin-top:0;">
+                    <div class="{bar_class}" style="width:{confianca}%;"></div>
+                  </div>
+                  <span style="font-weight:700;color:#1E293B;">{confianca}%</span>
                 </div>
               </div>
               {tempo_html}
