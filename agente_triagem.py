@@ -676,7 +676,7 @@ st.markdown("""
     <div style="width:1px;height:36px;background:rgba(255,255,255,0.2);margin:0 4px;flex-shrink:0;"></div>
     <div class="header-text">
       <h1>Agente de Triagem TI</h1>
-      <p>Classifica chamados N1 / N2 e sugere resolução automaticamente</p>
+      <p>Agente de triagem exposto via MCP — classifica chamados N1/N2 em tempo real</p>
     </div>
   </div>
 </div>
