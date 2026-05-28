@@ -277,22 +277,22 @@ st.markdown("""
     }
 
     /* Botão de arquitetura no rodapé */
-    div[data-testid="stButton"][data-key="btn_arq"] > button,
-    button[data-testid="baseButton-secondary"][aria-label*="Arquitetura"] {
-        background: transparent !important;
-        border: none !important;
+    div[data-testid="stButton"][data-key="btn_arq"] > button {
+        background: #E6F4F1 !important;
+        border: 1.5px solid #A8C8D0 !important;
         color: #003B4A !important;
-        font-size: 0.78rem !important;
-        font-weight: 600 !important;
-        font-family: 'Montserrat', sans-serif !important;
-        padding: 2px 0 !important;
-        text-decoration: none;
+        font-size: 1rem !important;
+        padding: 3px 10px !important;
+        border-radius: 8px !important;
         box-shadow: none !important;
         width: auto !important;
+        line-height: 1.3 !important;
+        transition: background 0.18s, color 0.18s !important;
     }
     div[data-testid="stButton"][data-key="btn_arq"] > button:hover {
-        color: #ED1C24 !important;
-        background: transparent !important;
+        background: #003B4A !important;
+        color: #FFFFFF !important;
+        border-color: #003B4A !important;
     }
 
     /* Botão primário "Analisar" */
@@ -928,26 +928,26 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;margin:0 0 10px;">', unsafe_allow_html=True)
 ft_l, ft_r = st.columns([2, 1])
 with ft_l:
-    c_badge, c_btn = st.columns([1.4, 1], gap="small")
-    with c_badge:
+    st.markdown("""
+    <span style="background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;
+        padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;
+        letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">
+        ⚠ Uso Interno — Não Divulgar
+    </span>
+    """, unsafe_allow_html=True)
+with ft_r:
+    c_txt, c_btn = st.columns([5, 1], gap="small")
+    with c_txt:
         st.markdown("""
-        <span style="background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;
-            padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;
-            letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;">
-            ⚠ Uso Interno — Não Divulgar
-        </span>
+        <div style="text-align:right;padding-top:6px;">
+            <span style="font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;">
+                Desenvolvido por <strong style="color:#003B4A;">Lucas Lemos</strong> &nbsp;·&nbsp;
+                Belgo Arames, 2026
+            </span>
+        </div>
         """, unsafe_allow_html=True)
     with c_btn:
-        if st.button("📐 Arquitetura", key="btn_arq"):
+        if st.button("📐", key="btn_arq", help="Ver arquitetura da solução"):
             _modal_arquitetura()
-with ft_r:
-    st.markdown("""
-    <div style="text-align:right;padding-top:4px;">
-        <span style="font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;">
-            Desenvolvido por <strong style="color:#003B4A;">Lucas Lemos</strong> &nbsp;·&nbsp;
-            Belgo Arames, 2026
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
 
 
