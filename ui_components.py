@@ -355,13 +355,13 @@ BELGO_CSS = """
         color: rgba(255,255,255,0.88) !important;
         font-family: 'Montserrat',sans-serif !important;
         font-weight: 600 !important;
-        font-size: 0.78rem !important;
+        font-size: 0.95rem !important;
         text-decoration: none !important;
         border-radius: 8px !important;
         transition: background 0.15s !important;
         justify-content: center !important;
         display: flex !important;
-        padding: 6px 4px !important;
+        padding: 8px 6px !important;
         text-align: center !important;
     }
     [data-testid="stPageLink"] a *,
@@ -371,7 +371,7 @@ BELGO_CSS = """
         color: rgba(255,255,255,0.88) !important;
         font-family: 'Montserrat',sans-serif !important;
         font-weight: 600 !important;
-        font-size: 0.78rem !important;
+        font-size: 0.95rem !important;
         margin: 0 !important;
         line-height: 1.3 !important;
     }
