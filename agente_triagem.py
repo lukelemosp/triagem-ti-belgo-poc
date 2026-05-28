@@ -335,6 +335,7 @@ st.markdown("""
         border-top: 3px solid #003B4A;
         border-radius: 12px;
         padding: 24px 28px;
+        animation: fadeIn 0.35s ease;
     }
     .result-label {
         font-size: 0.72rem;
@@ -390,6 +391,7 @@ st.markdown("""
         border: 1px solid #D6E2E5;
         border-radius: 12px;
         padding: 20px 24px;
+        animation: fadeIn 0.35s ease;
     }
     .cot-title {
         font-size: 0.78rem;
@@ -424,6 +426,12 @@ st.markdown("""
         box-shadow: 0 0 0 2px #C5D8DC;
     }
     .cot-dot-final { background: #ED1C24; box-shadow: 0 0 0 2px #F5C0C2; }
+
+    /* Fade-in ao exibir novos resultados */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 
     /* Animações do chain of thought */
     @keyframes cot-appear {
