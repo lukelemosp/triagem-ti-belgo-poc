@@ -453,6 +453,52 @@ def render_empty_state() -> str:
 </div>"""
 
 
+def inc_id(ticket_id) -> str:
+    return f"INC{int(ticket_id):06d}"
+
+
+def recent_tickets_html(recentes: list) -> str:
+    NIVEL_EMOJI = {"N1": "🔵", "N2": "🔴", "FORA_DE_ESCOPO": "🟠"}
+    STATUS_LABEL = {
+        "ABERTO": "Aberto",
+        "EM_ATENDIMENTO": "Em atendimento",
+        "RESOLVIDO": "Resolvido",
+        "FECHADO": "Fechado",
+    }
+    rows = ""
+    for t in recentes:
+        nivel = t.get("nivel") or "—"
+        emoji = NIVEL_EMOJI.get(nivel, "⚪")
+        iid = inc_id(t["id"])
+        rows += (
+            f'<tr>'
+            f'<td><a href="/chamado?id={t["id"]}" style="color:#003B4A;font-weight:700;'
+            f'text-decoration:none;font-family:Montserrat,sans-serif;">{iid}</a></td>'
+            f'<td>{emoji} {nivel}</td>'
+            f'<td style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+            f'{_html.escape(t["titulo"])}</td>'
+            f'<td>{STATUS_LABEL.get(t["status"], t["status"])}</td>'
+            f'<td>{"Sim" if t.get("auto_resolvido") else "Não"}</td>'
+            f'<td>{fmt_dt(t.get("criado_em",""))}</td>'
+            f'</tr>'
+        )
+    return (
+        '<style>'
+        '.inc-tbl{width:100%;border-collapse:collapse;font-family:Montserrat,sans-serif;font-size:0.84rem;}'
+        '.inc-tbl th{background:#003B4A;color:#fff;padding:7px 12px;text-align:left;font-size:0.73rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}'
+        '.inc-tbl td{padding:7px 12px;border-bottom:1px solid #E2EEF0;color:#1A2E33;vertical-align:middle;}'
+        '.inc-tbl tr:hover td{background:#F0F7F9;}'
+        '</style>'
+        '<table class="inc-tbl">'
+        '<thead><tr>'
+        '<th>Chamado</th><th>Nível</th><th>Título</th>'
+        '<th>Status</th><th>Auto-res.</th><th>Criado em</th>'
+        '</tr></thead>'
+        f'<tbody>{rows}</tbody>'
+        '</table>'
+    )
+
+
 def enter_to_submit_js() -> str:
     """JS que faz Enter submeter o formulário; Shift+Enter insere quebra de linha."""
     return """

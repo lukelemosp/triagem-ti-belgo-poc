@@ -37,7 +37,7 @@ if not ticket:
 nivel = ticket.get("nivel") or "—"
 nivel_label = {"N1": "N1 — Helpdesk", "N2": "N2 — Especialistas", "FORA_DE_ESCOPO": "Fora do Escopo"}.get(nivel, nivel)
 st.markdown(ui.header_html(
-    title=f"#{ticket_id} — {ticket['titulo']}",
+    title=f"INC{ticket_id:06d} — {ticket['titulo']}",
     subtitle=nivel_label,
     tag=ticket.get("status", ""),
 ), unsafe_allow_html=True)
@@ -135,7 +135,7 @@ with col_acao:
                 if resolucao_texto.strip():
                     updates["resolucao"] = resolucao_texto.strip()
                 db.atualizar_ticket(ticket_id, **updates)
-                st.success(f"Chamado #{ticket_id} atualizado para {novo_status}.")
+                st.success(f"INC{ticket_id:06d} atualizado para {novo_status}.")
                 st.query_params["id"] = str(ticket_id)
                 st.rerun()
 

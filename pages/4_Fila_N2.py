@@ -44,8 +44,8 @@ else:
 
             with c_id:
                 st.markdown(
-                    f'<div style="font-size:1.1rem;font-weight:800;color:#ED1C24;'
-                    f'font-family:Montserrat,sans-serif;padding-top:6px;">#{tid}</div>',
+                    f'<div style="font-size:0.85rem;font-weight:800;color:#ED1C24;'
+                    f'font-family:Montserrat,sans-serif;padding-top:6px;">INC{tid:06d}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -78,12 +78,12 @@ else:
                 if t["status"] == "ABERTO":
                     if st.button("Assumir", key=f"assumir2_{tid}", use_container_width=True):
                         db.atualizar_ticket(tid, status="EM_ATENDIMENTO")
-                        st.session_state.msg_fila2 = f"Chamado #{tid} assumido."
+                        st.session_state.msg_fila2 = f"Chamado INC{tid:06d} assumido."
                         st.rerun()
                 elif t["status"] == "EM_ATENDIMENTO":
                     if st.button("Liberar", key=f"liberar2_{tid}", use_container_width=True):
                         db.atualizar_ticket(tid, status="ABERTO", atribuido_para=None)
-                        st.session_state.msg_fila2 = f"Chamado #{tid} devolvido à fila."
+                        st.session_state.msg_fila2 = f"Chamado INC{tid:06d} devolvido à fila."
                         st.rerun()
 
             with c_ver:

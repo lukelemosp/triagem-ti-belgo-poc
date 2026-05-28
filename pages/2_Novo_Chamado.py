@@ -184,7 +184,7 @@ with col_result:
       Chamado auto-resolvido pela IA
     </div>
     <div style="font-size:0.83rem;color:#2E7D32;font-family:'Montserrat',sans-serif;">
-      Ticket #{t['id']} · Confiança {t.get('confianca')}% · Categoria: {t.get('categoria')}
+      INC{t['id']:06d} · Confiança {t.get('confianca')}% · Categoria: {t.get('categoria')}
     </div>
   </div>
 </div>
@@ -198,7 +198,7 @@ with col_result:
   <span style="font-size:1.6rem;">📬</span>
   <div>
     <div style="font-weight:700;color:#0D47A1;font-family:'Montserrat',sans-serif;">
-      Chamado #{t['id']} adicionado à fila
+      INC{t['id']:06d} adicionado à fila
     </div>
     <div style="font-size:0.83rem;color:#1565C0;font-family:'Montserrat',sans-serif;">
       {nivel_label} · Confiança {t.get('confianca')}%

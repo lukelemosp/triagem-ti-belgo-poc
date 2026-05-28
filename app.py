@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as _components
 import database as db
 import ui_components as ui
 
@@ -17,33 +18,35 @@ st.markdown("""
 <style>
   [data-testid="stSidebar"],
   [data-testid="collapsedControl"] { display: none !important; }
-  .belgo-nav a:hover { background: rgba(255,255,255,0.13) !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Navbar HTML puro (sem depender de seletores do Streamlit) ─────────────────
-_LINK = (
+# ── Navbar em iframe isolado (não é afetado pelo re-render do Streamlit) ──────
+_A = (
     "flex:1;min-width:80px;text-align:center;padding:8px 6px;"
     "border-radius:8px;color:rgba(255,255,255,0.88);"
     "font-family:'Montserrat',sans-serif;font-weight:600;"
     "font-size:0.78rem;text-decoration:none;white-space:nowrap;"
-    "transition:background 0.15s;"
+    "transition:background 0.15s;cursor:pointer;"
 )
-
-st.markdown(f"""
-<nav class="belgo-nav" style="
-    background:#003B4A;border-radius:10px;
-    padding:6px 10px;margin-bottom:20px;
-    display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-  <a href="/"         target="_self" style="{_LINK}">📊 Dashboard</a>
-  <a href="/novo"     target="_self" style="{_LINK}">📋 Novo Chamado</a>
-  <a href="/n1"       target="_self" style="{_LINK}">🔵 Fila N1</a>
-  <a href="/n2"       target="_self" style="{_LINK}">🔴 Fila N2</a>
-  <a href="/chamado"  target="_self" style="{_LINK}">🔍 Chamado</a>
-  <a href="/usuarios" target="_self" style="{_LINK}">👥 Usuários</a>
-  <a href="/triagem"  target="_self" style="{_LINK}">🤖 Triagem IA</a>
+_components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+  *{{margin:0;padding:0;box-sizing:border-box;}}
+  body{{background:transparent;overflow:hidden;}}
+  nav{{background:#003B4A;border-radius:10px;padding:6px 10px;
+       display:flex;align-items:center;gap:4px;flex-wrap:wrap;}}
+  a:hover{{background:rgba(255,255,255,0.13)!important;border-radius:8px;}}
+</style></head><body>
+<script>function nav(u){{try{{parent.location.href=u;}}catch(e){{window.open(u,'_top');}}}}</script>
+<nav>
+  <a style="{_A}" onclick="nav('/')">📊 Dashboard</a>
+  <a style="{_A}" onclick="nav('/novo')">📋 Novo Chamado</a>
+  <a style="{_A}" onclick="nav('/n1')">🔵 Fila N1</a>
+  <a style="{_A}" onclick="nav('/n2')">🔴 Fila N2</a>
+  <a style="{_A}" onclick="nav('/chamado')">🔍 Chamado</a>
+  <a style="{_A}" onclick="nav('/usuarios')">👥 Usuários</a>
+  <a style="{_A}" onclick="nav('/triagem')">🤖 Triagem IA</a>
 </nav>
-""", unsafe_allow_html=True)
+</body></html>""", height=52, scrolling=False)
 
 # ── Definição das páginas ─────────────────────────────────────────────────────
 def _dashboard():
@@ -77,26 +80,7 @@ def _dashboard():
     )
     recentes = db.listar_tickets_recentes(10)
     if recentes:
-        NIVEL_EMOJI = {"N1": "🔵", "N2": "🔴", "FORA_DE_ESCOPO": "🟠"}
-        STATUS_LABEL = {
-            "ABERTO": "Aberto",
-            "EM_ATENDIMENTO": "Em atendimento",
-            "RESOLVIDO": "Resolvido",
-            "FECHADO": "Fechado",
-        }
-        rows = []
-        for t in recentes:
-            nivel = t.get("nivel") or "—"
-            emoji = NIVEL_EMOJI.get(nivel, "⚪")
-            rows.append({
-                "ID": t["id"],
-                "Nível": f"{emoji} {nivel}",
-                "Título": t["titulo"],
-                "Status": STATUS_LABEL.get(t["status"], t["status"]),
-                "Auto-resolvido": "Sim" if t.get("auto_resolvido") else "Não",
-                "Criado em": ui.fmt_dt(t.get("criado_em") or ""),
-            })
-        st.dataframe(rows, use_container_width=True, hide_index=True)
+        st.markdown(ui.recent_tickets_html(recentes), unsafe_allow_html=True)
     else:
         st.info("Nenhum chamado registrado ainda. Use **Novo Chamado** acima para criar o primeiro.")
 
