@@ -60,12 +60,21 @@ def _record_request():
     with store["lock"]:
         store["times"].append(now)
 
-# ── Constantes de CoT ────────────────────────────────────────────────────────
-_COT_HDR = (
-    '<div class="cot-container">'
-    '<div class="cot-title">Raciocínio do Agente</div>'
-    '<div class="cot-steps">'
-)
+# ── Constantes / helpers de CoT ──────────────────────────────────────────────
+def _cot_header(input_text: str = "") -> str:
+    # Gera o cabeçalho do painel de raciocínio incluindo o input do usuário
+    # como subtítulo, truncado para não ultrapassar a largura do painel.
+    subtitle = ""
+    if input_text:
+        label = input_text if len(input_text) <= 80 else input_text[:77] + "…"
+        subtitle = f'<div class="cot-subtitle">"{_html.escape(label)}"</div>'
+    return (
+        '<div class="cot-container">'
+        '<div class="cot-title">Raciocínio do Agente</div>'
+        f'{subtitle}'
+        '<div class="cot-steps">'
+    )
+
 _COT_FTR = '</div></div>'
 _COT_THINKING = (
     '<div class="cot-step">'
@@ -157,8 +166,9 @@ os passos apareçam em tempo real. Formato:
 Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "confianca": 99."""
 
     # Exibe o indicador de "pensando..." antes do primeiro token chegar.
+    _hdr = _cot_header(descricao)
     if cot_slot:
-        cot_slot.markdown(_COT_HDR + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
+        cot_slot.markdown(_hdr + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
 
     full_text = ""
     shown: list = []   # passos do CoT já renderizados na tela
@@ -183,9 +193,9 @@ Para chamados FORA_DE_ESCOPO, use: "nivel": "FORA_DE_ESCOPO", "tempo": "N/A", "c
                 # Antes do passo final, exibe o spinner "pensando..." para
                 # indicar que ainda há processamento em curso.
                 if p.get("final") and steps_html:
-                    cot_slot.markdown(_COT_HDR + steps_html + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
+                    cot_slot.markdown(_hdr + steps_html + _COT_THINKING + _COT_FTR, unsafe_allow_html=True)
                     time.sleep(0.3)
-                cot_slot.markdown(_COT_HDR + steps_html + _cot_step(p, animated=True) + _COT_FTR, unsafe_allow_html=True)
+                cot_slot.markdown(_hdr + steps_html + _cot_step(p, animated=True) + _COT_FTR, unsafe_allow_html=True)
                 steps_html += _cot_step(p)
                 shown.append(p)
 
@@ -399,8 +409,18 @@ st.markdown("""
         color: #003B4A;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        margin-bottom: 16px;
+        margin-bottom: 4px;
         font-family: 'Montserrat', sans-serif;
+    }
+    .cot-subtitle {
+        font-size: 0.78rem;
+        color: #5A7E88;
+        font-style: italic;
+        font-family: 'Montserrat', sans-serif;
+        margin-bottom: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .cot-steps { position: relative; padding-left: 28px; }
     .cot-steps::before {
@@ -678,6 +698,8 @@ if "input_key" not in st.session_state:
     # Contador que força um novo elemento DOM no text_area a cada análise,
     # garantindo que o campo apareça vazio após o submit.
     st.session_state.input_key = 0
+if "last_input" not in st.session_state:
+    st.session_state.last_input = ""
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -745,6 +767,7 @@ with col_dir:
         else:
             _record_request()
             st.session_state.pending_input = ticket_input.strip()
+            st.session_state.last_input = ticket_input.strip()
             st.session_state.processando = True
             st.session_state.resultado = None
             st.session_state.clear_input = True
@@ -776,7 +799,7 @@ with col_dir:
         # CoT acima do card de resultado
         if r.get("pensamento"):
             steps_html = "".join(_cot_step(p) for p in r["pensamento"])
-            st.markdown(_COT_HDR + steps_html + _COT_FTR, unsafe_allow_html=True)
+            st.markdown(_cot_header(st.session_state.get("last_input", "")) + steps_html + _COT_FTR, unsafe_allow_html=True)
 
         nivel = r.get("nivel", "N1")
         fora_de_escopo = nivel == "FORA_DE_ESCOPO"
