@@ -385,6 +385,7 @@ st.markdown("""
     /* Chain of thought */
     .cot-container {
         margin-top: 16px;
+        margin-bottom: 28px;
         background: #F7FAFB;
         border: 1px solid #D6E2E5;
         border-radius: 12px;
