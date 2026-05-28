@@ -35,13 +35,13 @@ st.markdown(f"""
     background:#003B4A;border-radius:10px;
     padding:6px 10px;margin-bottom:20px;
     display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-  <a href="/"         style="{_LINK}">📊 Dashboard</a>
-  <a href="/novo"     style="{_LINK}">📋 Novo Chamado</a>
-  <a href="/n1"       style="{_LINK}">🔵 Fila N1</a>
-  <a href="/n2"       style="{_LINK}">🔴 Fila N2</a>
-  <a href="/chamado"  style="{_LINK}">🔍 Chamado</a>
-  <a href="/usuarios" style="{_LINK}">👥 Usuários</a>
-  <a href="/triagem"  style="{_LINK}">🤖 Triagem IA</a>
+  <a href="/"         target="_self" style="{_LINK}">📊 Dashboard</a>
+  <a href="/novo"     target="_self" style="{_LINK}">📋 Novo Chamado</a>
+  <a href="/n1"       target="_self" style="{_LINK}">🔵 Fila N1</a>
+  <a href="/n2"       target="_self" style="{_LINK}">🔴 Fila N2</a>
+  <a href="/chamado"  target="_self" style="{_LINK}">🔍 Chamado</a>
+  <a href="/usuarios" target="_self" style="{_LINK}">👥 Usuários</a>
+  <a href="/triagem"  target="_self" style="{_LINK}">🤖 Triagem IA</a>
 </nav>
 """, unsafe_allow_html=True)
 
