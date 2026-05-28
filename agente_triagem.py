@@ -674,6 +674,10 @@ if "clear_input" not in st.session_state:
     st.session_state.clear_input = False
 if "request_times" not in st.session_state:
     st.session_state.request_times = []
+if "input_key" not in st.session_state:
+    # Contador que força um novo elemento DOM no text_area a cada análise,
+    # garantindo que o campo apareça vazio após o submit.
+    st.session_state.input_key = 0
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -695,15 +699,15 @@ st.markdown("""
 col_esq, col_dir = st.columns([1, 1.2], gap="large")
 
 with col_esq:
-    # Limpa a caixa antes de instanciar o widget (Streamlit não permite depois)
+    # Incrementa o contador para forçar um novo widget DOM (key diferente = campo vazio)
     if st.session_state.clear_input:
-        st.session_state.pop("ticket_input", None)
+        st.session_state.input_key += 1
         st.session_state.clear_input = False
 
     st.markdown("**Descreva o chamado:**")
     ticket_input = st.text_area(
         label="Descrição",
-        key="ticket_input",
+        key=f"ticket_input_{st.session_state.input_key}",
         height=160,
         placeholder="Ex.: Impressora da sala de reunião não imprime após troca de cartucho...",
         label_visibility="collapsed",
