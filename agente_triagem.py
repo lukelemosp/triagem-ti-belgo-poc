@@ -883,8 +883,9 @@ Rastreabilidade total e rollback em segundos.
 
 **Exposição via MCP** — Esta skill será publicada no Catálogo MCP da Belgo no Azure DevOps, com dono, SLA e custo/mês documentados — primeira entrada do catálogo.
 """)
-        st.markdown("""
-<div style="border-top:1px solid #D6E2E5;margin-top:18px;padding-top:14px;">
+
+    st.markdown("""
+<div style="border-top:1px solid #D6E2E5;margin-top:24px;padding-top:16px;">
   <a href="https://github.com/lukelemosp/triagem-ti-belgo-poc" target="_blank"
      style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;
             color:#003B4A;font-size:0.82rem;font-family:'Montserrat',sans-serif;font-weight:600;">
