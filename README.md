@@ -48,11 +48,13 @@ fastmcp dev mcp_server.py
 | **Dashboard com métricas** | Total, fila N1/N2, resolvidos, % auto-resolvidos; tabela de chamados recentes clicável |
 | **Detalhe do chamado** | Sugestão IA, ação, solicitante, datas, formulário de atualização de status |
 | **Gestão de usuários** | CRUD completo — nome, email, setor, cargo |
+| **Modal de Arquitetura** | Botão 📐 em todas as telas abre modal com problema, solução, stack, fluxo, métricas e catálogo de 6 skills |
+| **Rodapé padronizado** | Badge "Uso Interno", crédito e botão de arquitetura presentes em todas as 7 telas |
 | **Skeleton loading** | Shimmer animado enquanto o agente processa |
 | **Fade-in entre páginas** | Conteúdo entra com animação suave a cada navegação |
 | **Navbar nativa** | `st.page_link()` — sem iframe, sem JavaScript; navegação SPA sem reload |
 | **MCP Server** | Expõe `criar_chamado`, `consultar_chamado` e `listar_fila` para agentes externos |
-| **Identidade visual Belgo** | Montserrat, teal `#003B4A`, vermelho `#ED1C24`, dourado `#FDB913` |
+| **Identidade visual Belgo** | Montserrat, teal `#003B4A`, vermelho `#ED1C24`, dourado `#FDB913`; favicon oficial Belgo |
 
 ## Segurança
 
@@ -88,8 +90,9 @@ app.py                  # Entry point — navbar, dashboard, st.navigation()
 agente_triagem.py       # Demo standalone original (intocado)
 ai_agent.py             # Lógica de triagem IA reutilizável
 database.py             # SQLite WAL — CRUD tickets e usuários
-ui_components.py        # BELGO_CSS, componentes HTML, fmt_dt, inc_id
+ui_components.py        # BELGO_CSS, header_html, render_footer, modal_arquitetura, componentes HTML
 mcp_server.py           # MCP Server (FastMCP stdio)
+favicon.ico             # Favicon oficial Belgo Arames
 pages/
   1_Triagem.py          # Demo de triagem isolada
   2_Novo_Chamado.py     # Abertura de chamado + presets automáticos
