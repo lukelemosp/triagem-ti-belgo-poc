@@ -161,28 +161,19 @@ for k, v in [
 if st.session_state.nc_processando and not st.session_state.nc_pending:
     st.session_state.nc_processando = False
 
-# ── Solicitante (compartilhado entre presets e form manual) ───────────────────
+# ── Dados de solicitantes (necessário antes dos presets) ──────────────────────
 usuarios = db.listar_usuarios()
 opcoes_usuario = ["— N\xe3o informado —"] + [
     u["nome"] + " (" + u["email"] + ")" for u in usuarios
 ]
 
-_col_sol, _col_gap = st.columns([1.5, 1])
-with _col_sol:
-    st.markdown("**Solicitante:**")
-    sel_usuario = st.selectbox(
-        "Solicitante",
-        opcoes_usuario,
-        label_visibility="collapsed",
-        disabled=st.session_state.nc_processando,
-    )
-
 
 def _usuario_id():
-    if sel_usuario == "— N\xe3o informado —":
+    val = st.session_state.get("nc_sol", opcoes_usuario[0])
+    if val == opcoes_usuario[0]:
         return None
     try:
-        idx = opcoes_usuario.index(sel_usuario) - 1
+        idx = opcoes_usuario.index(val) - 1
         return usuarios[idx]["id"] if 0 <= idx < len(usuarios) else None
     except (ValueError, IndexError):
         return None
@@ -314,6 +305,15 @@ with col_form:
         "font-family:Montserrat,sans-serif;margin-top:-10px;margin-bottom:8px;\">"
         + str(_cc) + "/" + str(_MAX_LEN) + "</div>",
         unsafe_allow_html=True,
+    )
+
+    st.markdown("**Solicitante:**")
+    st.selectbox(
+        "Solicitante",
+        opcoes_usuario,
+        key="nc_sol",
+        label_visibility="collapsed",
+        disabled=st.session_state.nc_processando,
     )
 
     btn_abrir = st.button(

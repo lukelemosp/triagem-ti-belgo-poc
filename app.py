@@ -5,7 +5,7 @@ import ui_components as ui
 
 st.set_page_config(
     page_title="Belgo TI — Sistema de Chamados",
-    page_icon="⚙️",
+    page_icon="favicon.ico",
     layout="wide",
     initial_sidebar_state="collapsed",
 )

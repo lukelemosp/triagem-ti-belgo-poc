@@ -636,99 +636,19 @@ _GITHUB_SVG = (
     '</svg>'
 )
 
-_SKILLS_HTML = """
-<div style="margin-top:28px;">
-  <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
-       letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:14px;
-       border-bottom:2px solid #E2EEF0;padding-bottom:8px;">
-    Skills dispon&iacute;veis na aplica&ccedil;&atilde;o
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-
-    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #003B4A;
-         border-radius:8px;padding:12px 14px;">
-      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        Triagem Autom&aacute;tica
-      </div>
-      <div style="font-size:0.67rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;
-           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7;">IA Interna</div>
-      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
-        Classifica chamados como N1, N2 ou Fora do Escopo usando Claude Sonnet com racioc&iacute;nio
-        encadeado (CoT) vis&iacute;vel em tempo real.
-      </div>
-    </div>
-
-    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #2E7D32;
-         border-radius:8px;padding:12px 14px;">
-      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        Auto-resolu&ccedil;&atilde;o IA
-      </div>
-      <div style="font-size:0.67rem;font-weight:700;color:#2E7D32;font-family:'Montserrat',sans-serif;
-           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">IA Interna</div>
-      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
-        Resolve automaticamente chamados N1 com confian&ccedil;a &ge; 90% em 10 categorias
-        (reset senha, VPN, impressora, Teams&hellip;).
-      </div>
-    </div>
-
-    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #F37021;
-         border-radius:8px;padding:12px 14px;">
-      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        Atendimento Autom&aacute;tico
-      </div>
-      <div style="font-size:0.67rem;font-weight:700;color:#F37021;font-family:'Montserrat',sans-serif;
-           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">Interface</div>
-      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
-        10 presets de resolu&ccedil;&atilde;o instant&acirc;nea para categorias recorrentes
-        — cria ticket resolvido sem chamar a IA, com SLA imediato.
-      </div>
-    </div>
-
-    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #7B1FA2;
-         border-radius:8px;padding:12px 14px;">
-      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        <code style="background:#EDE7F6;color:#7B1FA2;border-radius:3px;padding:1px 5px;
-               font-size:0.78rem;">criar_chamado</code>
-      </div>
-      <div style="font-size:0.67rem;font-weight:700;color:#7B1FA2;font-family:'Montserrat',sans-serif;
-           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">MCP Skill</div>
-      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
-        Cria novo chamado no ServiceNow via protocolo MCP — exposta no Cat&aacute;logo do Azure DevOps
-        para outros agentes consumirem.
-      </div>
-    </div>
-
-    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #7B1FA2;
-         border-radius:8px;padding:12px 14px;">
-      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        <code style="background:#EDE7F6;color:#7B1FA2;border-radius:3px;padding:1px 5px;
-               font-size:0.78rem;">consultar_chamado</code>
-      </div>
-      <div style="font-size:0.67rem;font-weight:700;color:#7B1FA2;font-family:'Montserrat',sans-serif;
-           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">MCP Skill</div>
-      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
-        Retorna estado, n&iacute;vel IA, confian&ccedil;a, sugest&atilde;o e resolu&ccedil;&atilde;o
-        de qualquer chamado por ID — permite auditoria e integra&ccedil;&atilde;o.
-      </div>
-    </div>
-
-    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #7B1FA2;
-         border-radius:8px;padding:12px 14px;">
-      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
-        <code style="background:#EDE7F6;color:#7B1FA2;border-radius:3px;padding:1px 5px;
-               font-size:0.78rem;">listar_fila</code>
-      </div>
-      <div style="font-size:0.67rem;font-weight:700;color:#7B1FA2;font-family:'Montserrat',sans-serif;
-           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">MCP Skill</div>
-      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
-        Lista chamados pendentes na fila N1 ou N2 com status, confian&ccedil;a e categoria
-        — permite orquestrar prioridades entre agentes.
-      </div>
-    </div>
-
-  </div>
-</div>
-"""
+def _skill_card(title: str, color: str, badge: str, desc: str) -> str:
+    return (
+        "<div style=\"background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid " + color + ";"
+        "border-radius:8px;padding:12px 14px;\">"
+        "<div style=\"font-size:0.8rem;font-weight:700;color:#003B4A;"
+        "font-family:'Montserrat',sans-serif;margin-bottom:4px;\">" + title + "</div>"
+        "<div style=\"font-size:0.67rem;font-weight:700;color:" + color + ";"
+        "font-family:'Montserrat',sans-serif;margin-bottom:7px;"
+        "text-transform:uppercase;letter-spacing:0.05em;\">" + badge + "</div>"
+        "<div style=\"font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;"
+        "line-height:1.6;\">" + desc + "</div>"
+        "</div>"
+    )
 
 
 @st.dialog("\U0001f4d0 Arquitetura da Solu\xe7\xe3o", width="large")
@@ -822,7 +742,57 @@ def modal_arquitetura() -> None:
         with m4:
             st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">100%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Prompts em Git</div></div>""", unsafe_allow_html=True)
 
-    st.markdown(_SKILLS_HTML, unsafe_allow_html=True)
+    st.markdown(
+        "<div style=\"margin-top:28px;border-top:2px solid #E2EEF0;padding-top:14px;"
+        "margin-bottom:12px;font-size:0.72rem;font-weight:700;color:#003B4A;"
+        "text-transform:uppercase;letter-spacing:0.08em;font-family:'Montserrat',sans-serif;\">"
+        "Skills dispon\xedveis na aplica\xe7\xe3o</div>",
+        unsafe_allow_html=True,
+    )
+    sk1, sk2, sk3 = st.columns(3, gap="small")
+    sk4, sk5, sk6 = st.columns(3, gap="small")
+    with sk1:
+        st.markdown(_skill_card(
+            "Triagem Autom\xe1tica", "#003B4A", "IA Interna",
+            "Classifica chamados como N1, N2 ou Fora do Escopo usando Claude Sonnet com "
+            "racioc\xednio encadeado (CoT) vis\xedvel em tempo real.",
+        ), unsafe_allow_html=True)
+    with sk2:
+        st.markdown(_skill_card(
+            "Auto-resolu\xe7\xe3o IA", "#2E7D32", "IA Interna",
+            "Resolve automaticamente chamados N1 com confian\xe7a ≥ 90% em 10 categorias "
+            "(reset senha, VPN, impressora, Teams…).",
+        ), unsafe_allow_html=True)
+    with sk3:
+        st.markdown(_skill_card(
+            "Atendimento Autom\xe1tico", "#F37021", "Interface",
+            "10 presets de resolu\xe7\xe3o instant\xe2nea para categorias recorrentes — "
+            "cria ticket resolvido sem chamar a IA, com SLA imediato.",
+        ), unsafe_allow_html=True)
+    with sk4:
+        st.markdown(_skill_card(
+            "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
+            "padding:1px 6px;font-size:0.8rem;\">criar_chamado</code>",
+            "#7B1FA2", "MCP Skill",
+            "Cria novo chamado no ServiceNow via protocolo MCP — exposta no "
+            "Cat\xe1logo do Azure DevOps para outros agentes consumirem.",
+        ), unsafe_allow_html=True)
+    with sk5:
+        st.markdown(_skill_card(
+            "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
+            "padding:1px 6px;font-size:0.8rem;\">consultar_chamado</code>",
+            "#7B1FA2", "MCP Skill",
+            "Retorna estado, n\xedvel IA, confian\xe7a, sugest\xe3o e resolu\xe7\xe3o "
+            "de qualquer chamado por ID — permite auditoria e integra\xe7\xe3o.",
+        ), unsafe_allow_html=True)
+    with sk6:
+        st.markdown(_skill_card(
+            "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
+            "padding:1px 6px;font-size:0.8rem;\">listar_fila</code>",
+            "#7B1FA2", "MCP Skill",
+            "Lista chamados pendentes na fila N1 ou N2 com status, confian\xe7a e "
+            "categoria — permite orquestrar prioridades entre agentes.",
+        ), unsafe_allow_html=True)
 
     st.markdown(
         "<div style=\"border-top:1px solid #D6E2E5;margin-top:24px;padding-top:16px;text-align:center;\">"
