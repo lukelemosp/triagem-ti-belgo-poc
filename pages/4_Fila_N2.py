@@ -93,3 +93,5 @@ else:
                     st.switch_page("pages/5_Chamado.py")
 
         st.divider()
+
+ui.render_footer()

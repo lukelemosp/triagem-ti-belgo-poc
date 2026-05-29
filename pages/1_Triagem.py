@@ -109,105 +109,6 @@ st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 st.markdown(ui.enter_to_submit_js(), unsafe_allow_html=True)
 st.markdown(ui.header_html(), unsafe_allow_html=True)
 
-# ── Modal de arquitetura ──────────────────────────────────────────────────────
-@st.dialog("📐 Arquitetura da Solução", width="large")
-def _modal_arquitetura():
-    st.markdown("""
-    <div style="border-bottom:3px solid #ED1C24;padding-bottom:10px;margin-bottom:24px;">
-      <p style="margin:0;color:#5A7E88;font-size:0.9rem;font-family:'Montserrat',sans-serif;">
-        Agente de Triagem N1/N2 · Belgo Arames, 2026
-      </p>
-    </div>
-    """, unsafe_allow_html=True)
-    c1, c2 = st.columns([1, 1], gap="large")
-    with c1:
-        st.markdown("""
-        <div style="margin-bottom:28px;">
-          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
-               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">O Problema</div>
-          <p style="font-size:0.93rem;color:#1A2E33;line-height:1.65;font-family:'Montserrat',sans-serif;">
-            A equipe de TI da Belgo Arames recebe chamados por múltiplos canais. Todos convergem no
-            ServiceNow, mas a <strong>triagem manual</strong> entre N1 e N2 consome tempo do analista,
-            atrasa o SLA e gera escalonamentos desnecessários.
-          </p>
-        </div>
-        <div style="margin-bottom:28px;">
-          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
-               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">A Solução</div>
-          <p style="font-size:0.93rem;color:#1A2E33;line-height:1.65;font-family:'Montserrat',sans-serif;">
-            Um <strong>agente de IA</strong> que lê a descrição do chamado assim que ele é aberto,
-            classifica automaticamente como N1 ou N2 e sugere a resolução — tudo em menos de 3 segundos.
-          </p>
-        </div>
-        <div>
-          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
-               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">Stack Técnica</div>
-          <table style="width:100%;border-collapse:collapse;font-family:'Montserrat',sans-serif;font-size:0.85rem;">
-            <thead><tr style="background:#003B4A;color:white;">
-              <th style="padding:8px 12px;text-align:left;">Componente</th>
-              <th style="padding:8px 12px;text-align:left;">Tecnologia</th>
-              <th style="padding:8px 12px;text-align:left;">Por quê</th>
-            </tr></thead>
-            <tbody>
-              <tr style="background:#F7FAFB;"><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">LLM</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">Claude Sonnet 4.6</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Melhor reasoning em português; custo previsível</td></tr>
-              <tr><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">Banco</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">SQLite + WAL</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Zero infra; acesso concorrente com Streamlit e MCP</td></tr>
-              <tr style="background:#F7FAFB;"><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">MCP</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">FastMCP (stdio)</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Skill exposta no Catálogo MCP Belgo</td></tr>
-              <tr><td style="padding:8px 12px;font-weight:600;color:#003B4A;">Prompts</td><td style="padding:8px 12px;">Azure DevOps (Git)</td><td style="padding:8px 12px;color:#5A7E88;">Rastreabilidade; revisão por Pull Request</td></tr>
-            </tbody>
-          </table>
-        </div>
-        """, unsafe_allow_html=True)
-        with st.expander("Conheça o prompt deste Agente", expanded=False):
-            st.code(agent._SYSTEM_PROMPT, language=None)
-    with c2:
-        st.markdown('<div class="result-label" style="margin-bottom:10px;">Fluxo da Solução</div>', unsafe_allow_html=True)
-        st.code("""\
-  Usuário abre chamado
-         │
-         ▼
-  ┌─────────────────────┐
-  │     ServiceNow      │
-  └──────────┬──────────┘
-             │ webhook
-             ▼
-  ┌─────────────────────┐
-  │   Azure Function    │
-  └──────────┬──────────┘
-             │ MCP Tool
-             ▼
-  ┌─────────────────────┐
-  │   Agente Claude     │
-  │  · classifica N1/N2 │
-  │  · gera sugestão    │
-  │  · auto-resolve     │
-  └──────────┬──────────┘
-             │ resultado
-             ▼
-  ┌─────────────────────┐
-  │     ServiceNow      │
-  │  (atualiza ticket)  │
-  └─────────────────────┘\
-""", language=None)
-        st.markdown('<div class="result-label" style="margin:20px 0 10px;">Métricas de Sucesso (30 dias)</div>', unsafe_allow_html=True)
-        m1, m2 = st.columns(2)
-        m3, m4 = st.columns(2)
-        with m1:
-            st.markdown("""<div style="background:#E6F4F1;border-left:3px solid #003B4A;padding:12px 14px;border-radius:0 8px 8px 0;"><div style="font-size:1.5rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">≥ 80%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Acurácia N1/N2</div></div>""", unsafe_allow_html=True)
-        with m2:
-            st.markdown("""<div style="background:#E6F4F1;border-left:3px solid #003B4A;padding:12px 14px;border-radius:0 8px 8px 0;"><div style="font-size:1.5rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">&lt; R$ 0,50</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Custo/chamado</div></div>""", unsafe_allow_html=True)
-        with m3:
-            st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">&lt; 3s</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Tempo de resposta</div></div>""", unsafe_allow_html=True)
-        with m4:
-            st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">100%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Prompts em Git</div></div>""", unsafe_allow_html=True)
-    st.markdown("""
-<div style="border-top:1px solid #D6E2E5;margin-top:24px;padding-top:16px;text-align:center;">
-  <a href="https://github.com/lukelemosp/triagem-ti-belgo-poc" target="_blank"
-     style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;
-            color:#003B4A;font-size:0.82rem;font-family:'Montserrat',sans-serif;font-weight:600;">
-    Conheça o código-fonte no GitHub
-  </a>
-</div>
-""", unsafe_allow_html=True)
 
 
 # ── Layout principal ──────────────────────────────────────────────────────────
@@ -319,27 +220,7 @@ with col_dir:
         st.markdown(ui.render_empty_state(), unsafe_allow_html=True)
 
 # ── Rodapé ────────────────────────────────────────────────────────────────────
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;margin:0 0 10px;">', unsafe_allow_html=True)
-ft_l, ft_r = st.columns([2, 1])
-with ft_l:
-    st.markdown("""
-    <span style="background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;
-        padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;
-        letter-spacing:0.06em;text-transform:uppercase;">⚠ Uso Interno — Não Divulgar</span>
-    """, unsafe_allow_html=True)
-with ft_r:
-    c_txt, c_btn = st.columns([5, 1], gap="small")
-    with c_txt:
-        st.markdown("""
-        <div style="text-align:right;padding-top:6px;">
-            <span style="font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;">
-                <strong style="color:#003B4A;">Lucas Lemos</strong> · Belgo Arames, 2026
-            </span>
-        </div>""", unsafe_allow_html=True)
-    with c_btn:
-        if st.button("📐", key="btn_arq", help="Ver arquitetura da solução"):
-            _modal_arquitetura()
+ui.render_footer()
 
 # Auto-refresh durante cooldown
 if not st.session_state.processando:

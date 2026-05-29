@@ -137,7 +137,7 @@ with col_acao:
 
 st.markdown("<br>", unsafe_allow_html=True)
 _origin = st.session_state.get("ticket_origin", "")
-_label = "← Voltar à Fila N2" if _origin == "n2" else "← Voltar à Fila N1" if _origin == "n1" else "← Voltar ao Dashboard"
+_label = "← Voltar \xe0 Fila N2" if _origin == "n2" else "← Voltar \xe0 Fila N1" if _origin == "n1" else "← Voltar ao Dashboard"
 if st.button(_label):
     st.session_state.pop("ticket_origin", None)
     st.session_state.pop("current_ticket_id", None)
@@ -147,3 +147,5 @@ if st.button(_label):
         st.switch_page("pages/3_Fila_N1.py")
     else:
         st.switch_page(st.session_state.get("_p_home", "pages/3_Fila_N1.py"))
+
+ui.render_footer()

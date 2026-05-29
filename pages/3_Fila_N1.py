@@ -96,3 +96,4 @@ def _fila_page(nivel: str):
 
 
 _fila_page("N1")
+ui.render_footer()

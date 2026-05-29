@@ -109,16 +109,7 @@ def _dashboard():
                 )
             st.divider()
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;">', unsafe_allow_html=True)
-    st.markdown("""
-<div style="text-align:center;">
-  <span style="font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;">
-    Desenvolvido por <strong style="color:#003B4A;">Lucas Lemos</strong> &nbsp;·&nbsp;
-    Belgo Arames, 2026
-  </span>
-</div>
-""", unsafe_allow_html=True)
+    ui.render_footer()
 
 
 # ── Páginas registradas ───────────────────────────────────────────────────────

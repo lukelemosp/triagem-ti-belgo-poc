@@ -456,3 +456,5 @@ with col_result:
 
     elif not st.session_state.nc_processando:
         st.markdown(ui.render_empty_state(), unsafe_allow_html=True)
+
+ui.render_footer()

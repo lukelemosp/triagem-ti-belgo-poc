@@ -3,6 +3,8 @@ import html as _html
 import re as _re
 import pathlib as _pathlib
 
+import streamlit as st
+
 
 def _load_logo() -> str:
     try:
@@ -619,3 +621,242 @@ def stat_card_html(value: str, label: str, color: str = "#003B4A") -> str:
     {_html.escape(label)}
   </div>
 </div>"""
+
+
+_GITHUB_SVG = (
+    '<svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" '
+    'style="flex-shrink:0;vertical-align:middle;">'
+    '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38'
+    ' 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15'
+    '-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07'
+    '-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21'
+    ' 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16'
+    ' 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0'
+    ' 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>'
+    '</svg>'
+)
+
+_SKILLS_HTML = """
+<div style="margin-top:28px;">
+  <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
+       letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:14px;
+       border-bottom:2px solid #E2EEF0;padding-bottom:8px;">
+    Skills dispon&iacute;veis na aplica&ccedil;&atilde;o
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+
+    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #003B4A;
+         border-radius:8px;padding:12px 14px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
+        Triagem Autom&aacute;tica
+      </div>
+      <div style="font-size:0.67rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;
+           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7;">IA Interna</div>
+      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
+        Classifica chamados como N1, N2 ou Fora do Escopo usando Claude Sonnet com racioc&iacute;nio
+        encadeado (CoT) vis&iacute;vel em tempo real.
+      </div>
+    </div>
+
+    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #2E7D32;
+         border-radius:8px;padding:12px 14px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
+        Auto-resolu&ccedil;&atilde;o IA
+      </div>
+      <div style="font-size:0.67rem;font-weight:700;color:#2E7D32;font-family:'Montserrat',sans-serif;
+           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">IA Interna</div>
+      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
+        Resolve automaticamente chamados N1 com confian&ccedil;a &ge; 90% em 10 categorias
+        (reset senha, VPN, impressora, Teams&hellip;).
+      </div>
+    </div>
+
+    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #F37021;
+         border-radius:8px;padding:12px 14px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
+        Atendimento Autom&aacute;tico
+      </div>
+      <div style="font-size:0.67rem;font-weight:700;color:#F37021;font-family:'Montserrat',sans-serif;
+           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">Interface</div>
+      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
+        10 presets de resolu&ccedil;&atilde;o instant&acirc;nea para categorias recorrentes
+        — cria ticket resolvido sem chamar a IA, com SLA imediato.
+      </div>
+    </div>
+
+    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #7B1FA2;
+         border-radius:8px;padding:12px 14px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
+        <code style="background:#EDE7F6;color:#7B1FA2;border-radius:3px;padding:1px 5px;
+               font-size:0.78rem;">criar_chamado</code>
+      </div>
+      <div style="font-size:0.67rem;font-weight:700;color:#7B1FA2;font-family:'Montserrat',sans-serif;
+           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">MCP Skill</div>
+      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
+        Cria novo chamado no ServiceNow via protocolo MCP — exposta no Cat&aacute;logo do Azure DevOps
+        para outros agentes consumirem.
+      </div>
+    </div>
+
+    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #7B1FA2;
+         border-radius:8px;padding:12px 14px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
+        <code style="background:#EDE7F6;color:#7B1FA2;border-radius:3px;padding:1px 5px;
+               font-size:0.78rem;">consultar_chamado</code>
+      </div>
+      <div style="font-size:0.67rem;font-weight:700;color:#7B1FA2;font-family:'Montserrat',sans-serif;
+           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">MCP Skill</div>
+      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
+        Retorna estado, n&iacute;vel IA, confian&ccedil;a, sugest&atilde;o e resolu&ccedil;&atilde;o
+        de qualquer chamado por ID — permite auditoria e integra&ccedil;&atilde;o.
+      </div>
+    </div>
+
+    <div style="background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid #7B1FA2;
+         border-radius:8px;padding:12px 14px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#003B4A;font-family:'Montserrat',sans-serif;">
+        <code style="background:#EDE7F6;color:#7B1FA2;border-radius:3px;padding:1px 5px;
+               font-size:0.78rem;">listar_fila</code>
+      </div>
+      <div style="font-size:0.67rem;font-weight:700;color:#7B1FA2;font-family:'Montserrat',sans-serif;
+           margin:4px 0 7px;text-transform:uppercase;letter-spacing:0.05em;">MCP Skill</div>
+      <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;line-height:1.5;">
+        Lista chamados pendentes na fila N1 ou N2 com status, confian&ccedil;a e categoria
+        — permite orquestrar prioridades entre agentes.
+      </div>
+    </div>
+
+  </div>
+</div>
+"""
+
+
+@st.dialog("\U0001f4d0 Arquitetura da Solu\xe7\xe3o", width="large")
+def modal_arquitetura() -> None:
+    import ai_agent as _agent
+    st.markdown("""
+    <div style="border-bottom:3px solid #ED1C24;padding-bottom:10px;margin-bottom:24px;">
+      <p style="margin:0;color:#5A7E88;font-size:0.9rem;font-family:'Montserrat',sans-serif;">
+        Agente de Triagem N1/N2 &middot; Belgo Arames, 2026
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+    c1, c2 = st.columns([1, 1], gap="large")
+    with c1:
+        st.markdown("""
+        <div style="margin-bottom:28px;">
+          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
+               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">O Problema</div>
+          <p style="font-size:0.93rem;color:#1A2E33;line-height:1.65;font-family:'Montserrat',sans-serif;">
+            A equipe de TI da Belgo Arames recebe chamados por m&uacute;ltiplos canais. Todos convergem no
+            ServiceNow, mas a <strong>triagem manual</strong> entre N1 e N2 consome tempo do analista,
+            atrasa o SLA e gera escalonamentos desnecess&aacute;rios.
+          </p>
+        </div>
+        <div style="margin-bottom:28px;">
+          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
+               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">A Solu&ccedil;&atilde;o</div>
+          <p style="font-size:0.93rem;color:#1A2E33;line-height:1.65;font-family:'Montserrat',sans-serif;">
+            Um <strong>agente de IA</strong> que l&ecirc; a descri&ccedil;&atilde;o do chamado assim que ele &eacute; aberto,
+            classifica automaticamente como N1 ou N2 e sugere a resolu&ccedil;&atilde;o &mdash; tudo em menos de 3 segundos.
+          </p>
+        </div>
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
+               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">Stack T&eacute;cnica</div>
+          <table style="width:100%;border-collapse:collapse;font-family:'Montserrat',sans-serif;font-size:0.85rem;">
+            <thead><tr style="background:#003B4A;color:white;">
+              <th style="padding:8px 12px;text-align:left;">Componente</th>
+              <th style="padding:8px 12px;text-align:left;">Tecnologia</th>
+              <th style="padding:8px 12px;text-align:left;">Por qu&ecirc;</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#F7FAFB;"><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">LLM</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">Claude Sonnet 4.6</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Melhor reasoning em portugu&ecirc;s; custo previs&iacute;vel</td></tr>
+              <tr><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">Banco</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">SQLite + WAL</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Zero infra; acesso concorrente com Streamlit e MCP</td></tr>
+              <tr style="background:#F7FAFB;"><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">MCP</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">FastMCP (stdio)</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Skill exposta no Cat&aacute;logo MCP Belgo</td></tr>
+              <tr><td style="padding:8px 12px;font-weight:600;color:#003B4A;">Prompts</td><td style="padding:8px 12px;">Azure DevOps (Git)</td><td style="padding:8px 12px;color:#5A7E88;">Rastreabilidade; revis&atilde;o por Pull Request</td></tr>
+            </tbody>
+          </table>
+        </div>
+        """, unsafe_allow_html=True)
+        with st.expander("Conhe\xe7a o prompt deste Agente", expanded=False):
+            st.code(_agent._SYSTEM_PROMPT, language=None)
+    with c2:
+        st.markdown('<div class="result-label" style="margin-bottom:10px;">Fluxo da Solu\xe7\xe3o</div>', unsafe_allow_html=True)
+        st.code("""\
+  Usu\xe1rio abre chamado
+         │
+         ▼
+  ┌─────────────────────┐
+  │     ServiceNow      │
+  └──────────┬──────────┘
+             │ webhook
+             ▼
+  ┌─────────────────────┐
+  │   Azure Function    │
+  └──────────┬──────────┘
+             │ MCP Tool
+             ▼
+  ┌─────────────────────┐
+  │   Agente Claude     │
+  │  \xb7 classifica N1/N2 │
+  │  \xb7 gera sugest\xe3o    │
+  │  \xb7 auto-resolve     │
+  └──────────┬──────────┘
+             │ resultado
+             ▼
+  ┌─────────────────────┐
+  │     ServiceNow      │
+  │  (atualiza ticket)  │
+  └─────────────────────┘\
+""", language=None)
+        st.markdown('<div class="result-label" style="margin:20px 0 10px;">M\xe9tricas de Sucesso (30 dias)</div>', unsafe_allow_html=True)
+        m1, m2 = st.columns(2)
+        m3, m4 = st.columns(2)
+        with m1:
+            st.markdown("""<div style="background:#E6F4F1;border-left:3px solid #003B4A;padding:12px 14px;border-radius:0 8px 8px 0;"><div style="font-size:1.5rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">&ge; 80%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Acur&aacute;cia N1/N2</div></div>""", unsafe_allow_html=True)
+        with m2:
+            st.markdown("""<div style="background:#E6F4F1;border-left:3px solid #003B4A;padding:12px 14px;border-radius:0 8px 8px 0;"><div style="font-size:1.5rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">&lt; R$ 0,50</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Custo/chamado</div></div>""", unsafe_allow_html=True)
+        with m3:
+            st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">&lt; 3s</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Tempo de resposta</div></div>""", unsafe_allow_html=True)
+        with m4:
+            st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">100%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Prompts em Git</div></div>""", unsafe_allow_html=True)
+
+    st.markdown(_SKILLS_HTML, unsafe_allow_html=True)
+
+    st.markdown(
+        "<div style=\"border-top:1px solid #D6E2E5;margin-top:24px;padding-top:16px;text-align:center;\">"
+        "<a href=\"https://github.com/lukelemosp/triagem-ti-belgo-poc\" target=\"_blank\""
+        " style=\"display:inline-flex;align-items:center;gap:8px;text-decoration:none;"
+        "color:#003B4A;font-size:0.82rem;font-family:'Montserrat',sans-serif;font-weight:600;\">"
+        + _GITHUB_SVG +
+        " Conhe\xe7a o c\xf3digo-fonte no GitHub"
+        "</a></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_footer() -> None:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;margin:0 0 10px;">', unsafe_allow_html=True)
+    ft_l, ft_r = st.columns([2, 1])
+    with ft_l:
+        st.markdown(
+            "<span style=\"background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;"
+            "padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;"
+            "letter-spacing:0.06em;text-transform:uppercase;\">⚠ Uso Interno — N\xe3o Divulgar</span>",
+            unsafe_allow_html=True,
+        )
+    with ft_r:
+        c_txt, c_btn = st.columns([5, 1], gap="small")
+        with c_txt:
+            st.markdown(
+                "<div style=\"text-align:right;padding-top:6px;\">"
+                "<span style=\"font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;\">"
+                "<strong style=\"color:#003B4A;\">Lucas Lemos</strong> \xb7 Belgo Arames, 2026"
+                "</span></div>",
+                unsafe_allow_html=True,
+            )
+        with c_btn:
+            if st.button("\U0001f4d0", key="btn_arq", help="Ver arquitetura da solu\xe7\xe3o"):
+                modal_arquitetura()

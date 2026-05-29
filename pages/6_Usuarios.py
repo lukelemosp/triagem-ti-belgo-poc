@@ -107,13 +107,15 @@ with aba_novo:
 
     if criar:
         if not nome.strip() or not email.strip() or not depto.strip():
-            st.session_state.msg_err = "Nome, e-mail e departamento são obrigatórios."
+            st.session_state.msg_err = "Nome, e-mail e departamento s\xe3o obrigat\xf3rios."
             st.rerun()
         else:
             try:
                 novo = db.criar_usuario(nome.strip(), email.strip(), depto.strip(), ramal.strip() or None)
-                st.session_state.msg_ok = f"Usuário {novo['nome']} cadastrado com sucesso (ID #{novo['id']})."
+                st.session_state.msg_ok = "Usu\xe1rio " + novo['nome'] + " cadastrado com sucesso (ID #" + str(novo['id']) + ")."
                 st.rerun()
             except Exception as e:
-                st.session_state.msg_err = f"Erro ao cadastrar (e-mail já existe?): {e}"
+                st.session_state.msg_err = "Erro ao cadastrar (e-mail j\xe1 existe?): " + str(e)
                 st.rerun()
+
+ui.render_footer()
