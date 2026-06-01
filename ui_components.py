@@ -2,6 +2,9 @@ import base64 as _base64
 import html as _html
 import re as _re
 import pathlib as _pathlib
+from datetime import datetime, timezone, timedelta
+
+_BRT = timezone(timedelta(hours=-3))
 
 import streamlit as st
 
@@ -601,13 +604,11 @@ def enter_to_submit_js() -> str:
 def fmt_dt(iso: str) -> str:
     if not iso:
         return "—"
-    iso = iso[:16].replace("T", " ")
     try:
-        d, t = iso.split(" ")
-        y, m, day = d.split("-")
-        return f"{day}/{m}/{y} {t}"
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        return dt.astimezone(_BRT).strftime("%d/%m/%Y %H:%M")
     except Exception:
-        return iso
+        return iso[:16].replace("T", " ")
 
 
 def stat_card_html(value: str, label: str, color: str = "#003B4A") -> str:
