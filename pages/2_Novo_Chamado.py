@@ -374,20 +374,23 @@ with col_result:
             and categoria in agent.AUTO_RESOLVABLE
         )
 
-        ticket = db.criar_ticket(
-            titulo=p["titulo"],
-            descricao=p["descricao"],
-            nivel=nivel,
-            categoria=categoria,
-            confianca=confianca,
-            criado_por=p["usuario_id"],
-            status="RESOLVIDO" if auto else "ABERTO",
-            resolucao=resultado.get("sugestao") if auto else None,
-            auto_resolvido=auto,
-            sugestao_ia=resultado.get("sugestao"),
-            acao_ia=resultado.get("acao"),
-            tempo_estimado=resultado.get("tempo"),
-        )
+        if nivel == "FORA_DE_ESCOPO":
+            ticket = None
+        else:
+            ticket = db.criar_ticket(
+                titulo=p["titulo"],
+                descricao=p["descricao"],
+                nivel=nivel,
+                categoria=categoria,
+                confianca=confianca,
+                criado_por=p["usuario_id"],
+                status="RESOLVIDO" if auto else "ABERTO",
+                resolucao=resultado.get("sugestao") if auto else None,
+                auto_resolvido=auto,
+                sugestao_ia=resultado.get("sugestao"),
+                acao_ia=resultado.get("acao"),
+                tempo_estimado=resultado.get("tempo"),
+            )
 
         st.session_state.nc_resultado = resultado
         st.session_state.nc_ticket = ticket
@@ -396,18 +399,35 @@ with col_result:
         st.rerun()
 
     # Fase 3: exibe resultado
-    elif st.session_state.nc_resultado and st.session_state.nc_ticket:
+    elif st.session_state.nc_resultado:
         r = st.session_state.nc_resultado
-        t = st.session_state.nc_ticket
+        t = st.session_state.nc_ticket  # None quando FORA_DE_ESCOPO
 
         if r.get("pensamento"):
+            _cot_desc = t.get("descricao", "") if t else ""
             steps_html = "".join(agent._cot_step(p) for p in r["pensamento"])
             st.markdown(
-                agent._cot_header(t.get("descricao", "")) + steps_html + agent._COT_FTR,
+                agent._cot_header(_cot_desc) + steps_html + agent._COT_FTR,
                 unsafe_allow_html=True,
             )
 
-        if t.get("auto_resolvido"):
+        if r.get("nivel") == "FORA_DE_ESCOPO":
+            st.markdown(
+                "<div style=\"background:#FFF3E0;border:1px solid #FF9800;border-radius:10px;"
+                "padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;\">"
+                "<span style=\"font-size:1.6rem;\">\U0001f6ab</span>"
+                "<div>"
+                "<div style=\"font-weight:700;color:#E65100;font-family:'Montserrat',sans-serif;\">"
+                "Solicita\xe7\xe3o fora do escopo de TI"
+                "</div>"
+                "<div style=\"font-size:0.83rem;color:#BF360C;font-family:'Montserrat',sans-serif;\">"
+                "Nenhum chamado foi aberto. Redirecionamento sugerido abaixo."
+                "</div>"
+                "</div>"
+                "</div>",
+                unsafe_allow_html=True,
+            )
+        elif t and t.get("auto_resolvido"):
             cat_label = (t.get("categoria") or "").replace("_", " ").title()
             st.markdown(
                 "<div style=\"background:#E8F5E9;border:1px solid #4CAF50;border-radius:10px;"
@@ -425,11 +445,10 @@ with col_result:
                 "</div>",
                 unsafe_allow_html=True,
             )
-        else:
+        elif t:
             nivel_label = {
                 "N1": "Fila N1 — Helpdesk",
                 "N2": "Fila N2 — Especialistas",
-                "FORA_DE_ESCOPO": "Fora do Escopo",
             }.get(t.get("nivel", ""), t.get("nivel", ""))
             st.markdown(
                 "<div style=\"background:#E3F2FD;border:1px solid #1976D2;border-radius:10px;"
