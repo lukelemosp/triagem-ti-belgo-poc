@@ -601,6 +601,27 @@ def enter_to_submit_js() -> str:
 """
 
 
+_CAT_LABELS: dict[str, str] = {
+    "RESET_SENHA":          "Reset de Senha",
+    "VPN_RECONEXAO":        "VPN / Reconexão",
+    "IMPRESSORA_OFFLINE":   "Impressora Offline",
+    "EMAIL_SYNC_CELULAR":   "E-mail no Celular",
+    "TEAMS_AUDIO":          "Teams sem Áudio",
+    "OUTLOOK_CAIXA_CHEIA":  "Outlook Caixa Cheia",
+    "WIFI_RECONEXAO":       "Wi-Fi Instável",
+    "SAP_LOGIN_LENTO":      "SAP GUI Lento",
+    "EXCEL_TRAVA":          "Excel Travando",
+    "WINDOWS_UPDATE_AVISO": "Windows Update",
+    "OUTRO":                "Outro",
+}
+
+
+def fmt_categoria(cat: str | None) -> str:
+    if not cat:
+        return "—"
+    return _CAT_LABELS.get(cat, cat.replace("_", " ").title())
+
+
 def fmt_dt(iso: str) -> str:
     if not iso:
         return "—"

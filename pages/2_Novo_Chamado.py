@@ -428,7 +428,7 @@ with col_result:
                 unsafe_allow_html=True,
             )
         elif t and t.get("auto_resolvido"):
-            cat_label = (t.get("categoria") or "").replace("_", " ").title()
+            cat_label = ui.fmt_categoria(t.get("categoria"))
             st.markdown(
                 "<div style=\"background:#E8F5E9;border:1px solid #4CAF50;border-radius:10px;"
                 "padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;\">"

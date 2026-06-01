@@ -51,7 +51,7 @@ def _fila_page(nivel: str):
                 )
 
             with c_info:
-                cat = t.get("categoria") or "OUTRO"
+                cat = ui.fmt_categoria(t.get("categoria"))
                 auto = " · ✅ Auto-resolvido" if t.get("auto_resolvido") else ""
                 st.markdown(
                     f"**{t['titulo']}**  \n"

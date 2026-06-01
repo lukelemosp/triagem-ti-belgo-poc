@@ -66,7 +66,7 @@ with col_meta:
 
     st.markdown(
         f'<div style="font-size:0.78rem;color:#5A7E88;margin-top:8px;">'
-        f'Categoria: <strong>{ticket.get("categoria") or "—"}</strong>'
+        f'Categoria: <strong>{ui.fmt_categoria(ticket.get("categoria"))}</strong>'
         + (" · ✅ <strong>Auto-resolvido pela IA</strong>" if ticket.get("auto_resolvido") else "")
         + (f'<br>Solicitante: <strong>{_html.escape(ticket["solicitante_nome"])}</strong>'
            f' — {_html.escape(ticket.get("solicitante_email",""))}' if ticket.get("solicitante_nome") else "")

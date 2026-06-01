@@ -117,7 +117,7 @@ def _dashboard():
                     .size()
                     .reset_index(name="total")
                 )
-                _cat["categoria"] = _cat["categoria"].fillna("Sem categoria")
+                _cat["categoria"] = _cat["categoria"].apply(lambda x: ui.fmt_categoria(x) if x else "Sem categoria")
                 _fig1 = px.pie(
                     _cat, names="categoria", values="total",
                     hole=0.52,
@@ -169,7 +169,7 @@ def _dashboard():
                     .rename(columns={"confianca": "conf_media"})
                     .sort_values("conf_media", ascending=True)
                 )
-                _conf["categoria"] = _conf["categoria"].fillna("Sem categoria")
+                _conf["categoria"] = _conf["categoria"].apply(lambda x: ui.fmt_categoria(x) if x else "Sem categoria")
                 if _conf.empty:
                     st.caption("Sem dados de confiança para o filtro atual.")
                 else:

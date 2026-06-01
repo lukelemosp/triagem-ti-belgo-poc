@@ -50,7 +50,7 @@ else:
                 )
 
             with c_info:
-                cat = t.get("categoria") or "OUTRO"
+                cat = ui.fmt_categoria(t.get("categoria"))
                 alerta = " · ⚠️ Confiança baixa" if incerto else ""
                 st.markdown(
                     f"**{t['titulo']}**  \n"
