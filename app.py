@@ -1,4 +1,6 @@
 import html as _html
+import pandas as pd
+import plotly.express as px
 import streamlit as st
 import database as db
 import ui_components as ui
@@ -46,6 +48,180 @@ def _dashboard():
             pct = round(stats.get("auto_resolvidos", 0) / total * 100)
         st.markdown(ui.stat_card_html(f"{pct}%", "Auto-resolvidos pela IA", "#7B1FA2"), unsafe_allow_html=True)
 
+    st.markdown("<div style='margin-top:22px'></div>", unsafe_allow_html=True)
+
+    # ── Seção de Gráficos (colapsável) ───────────────────────────────────────
+    with st.expander("Análise de Chamados", expanded=False):
+        _DIAS_MAP = {
+            "Últimos 7 dias": 7,
+            "Últimos 30 dias": 30,
+            "Últimos 90 dias": 90,
+            "Todo o histórico": None,
+        }
+        _NIVEL_LABELS = {"N1": "N1", "N2": "N2", "FORA_DE_ESCOPO": "Fora de Escopo"}
+        _STATUS_LABELS = {
+            "ABERTO": "Aberto",
+            "EM_ATENDIMENTO": "Em Atendimento",
+            "RESOLVIDO": "Resolvido",
+            "FECHADO": "Fechado",
+        }
+
+        _fk1, _fk2, _fk3 = st.columns(3)
+        with _fk1:
+            _periodo = st.selectbox(
+                "Período", list(_DIAS_MAP.keys()), index=1, key="dash_periodo"
+            )
+        with _fk2:
+            _niveis_sel = st.multiselect(
+                "Nível", list(_NIVEL_LABELS.keys()),
+                default=list(_NIVEL_LABELS.keys()),
+                format_func=lambda x: _NIVEL_LABELS[x],
+                key="dash_nivel",
+            )
+        with _fk3:
+            _status_sel = st.multiselect(
+                "Status", list(_STATUS_LABELS.keys()),
+                default=list(_STATUS_LABELS.keys()),
+                format_func=lambda x: _STATUS_LABELS[x],
+                key="dash_status",
+            )
+
+        _raw = db.listar_tickets_graficos(_DIAS_MAP[_periodo])
+        _df = pd.DataFrame(_raw) if _raw else pd.DataFrame()
+        if not _df.empty and _niveis_sel:
+            _df = _df[_df["nivel"].isin(_niveis_sel)]
+        if not _df.empty and _status_sel:
+            _df = _df[_df["status"].isin(_status_sel)]
+
+        if _df.empty:
+            st.info("Nenhum dado para o período e filtros selecionados.")
+        else:
+            _BELGO_COLORS = [
+                "#003B4A", "#ED1C24", "#2E7D32", "#7B1FA2",
+                "#F9A825", "#1976D2", "#00695C", "#E64A19",
+                "#5D4037", "#455A64",
+            ]
+            _CHART_LAYOUT = dict(
+                font_family="Montserrat, sans-serif",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=36, b=0, l=0, r=0),
+            )
+
+            _gc1, _gc2 = st.columns(2)
+
+            # Donut — Chamados por Categoria
+            with _gc1:
+                _cat = (
+                    _df.groupby("categoria", dropna=False)
+                    .size()
+                    .reset_index(name="total")
+                )
+                _cat["categoria"] = _cat["categoria"].fillna("Sem categoria")
+                _fig1 = px.pie(
+                    _cat, names="categoria", values="total",
+                    hole=0.52,
+                    color_discrete_sequence=_BELGO_COLORS,
+                    title="Tipos de Chamado",
+                )
+                _fig1.update_traces(
+                    textposition="inside", textinfo="percent+label",
+                    hovertemplate="<b>%{label}</b><br>%{value} chamados (%{percent})<extra></extra>",
+                )
+                _fig1.update_layout(**_CHART_LAYOUT, showlegend=False)
+                st.plotly_chart(_fig1, use_container_width=True)
+
+            # Barras verticais — Chamados por Status
+            with _gc2:
+                _st_order = ["ABERTO", "EM_ATENDIMENTO", "RESOLVIDO", "FECHADO"]
+                _st_colors = {"ABERTO": "#F9A825", "EM_ATENDIMENTO": "#1976D2",
+                              "RESOLVIDO": "#2E7D32", "FECHADO": "#455A64"}
+                _sts = (
+                    _df.groupby("status")
+                    .size()
+                    .reindex(_st_order, fill_value=0)
+                    .reset_index(name="total")
+                )
+                _sts["label"] = _sts["status"].map(_STATUS_LABELS)
+                _fig2 = px.bar(
+                    _sts, x="label", y="total",
+                    color="status",
+                    color_discrete_map={s: _st_colors[s] for s in _st_order},
+                    title="Chamados por Status",
+                    labels={"label": "", "total": "Qtd."},
+                )
+                _fig2.update_traces(
+                    hovertemplate="<b>%{x}</b><br>%{y} chamados<extra></extra>",
+                )
+                _fig2.update_layout(**_CHART_LAYOUT, showlegend=False)
+                st.plotly_chart(_fig2, use_container_width=True)
+
+            _gc3, _gc4 = st.columns(2)
+
+            # Barras horizontais — Confiança média da IA por categoria
+            with _gc3:
+                _conf = (
+                    _df[_df["confianca"].notna()]
+                    .groupby("categoria")["confianca"]
+                    .mean()
+                    .round(1)
+                    .reset_index()
+                    .rename(columns={"confianca": "conf_media"})
+                    .sort_values("conf_media", ascending=True)
+                )
+                _conf["categoria"] = _conf["categoria"].fillna("Sem categoria")
+                if _conf.empty:
+                    st.caption("Sem dados de confiança para o filtro atual.")
+                else:
+                    _fig3 = px.bar(
+                        _conf, x="conf_media", y="categoria",
+                        orientation="h",
+                        range_x=[0, 100],
+                        title="Confiança Média da IA por Categoria (%)",
+                        labels={"conf_media": "Confiança (%)", "categoria": ""},
+                        color="conf_media",
+                        color_continuous_scale=["#ED1C24", "#F9A825", "#2E7D32"],
+                        range_color=[0, 100],
+                    )
+                    _fig3.update_traces(
+                        hovertemplate="<b>%{y}</b><br>Confiança: %{x:.1f}%<extra></extra>",
+                    )
+                    _fig3.update_layout(**_CHART_LAYOUT, coloraxis_showscale=False)
+                    st.plotly_chart(_fig3, use_container_width=True)
+
+            # Barras horizontais empilhadas — Resolução por Nível
+            with _gc4:
+                _nv = (
+                    _df.groupby(["nivel", "auto_resolvido"])
+                    .size()
+                    .reset_index(name="total")
+                )
+                _nv["tipo"] = _nv["auto_resolvido"].map(
+                    {1: "Auto-resolvido (IA)", 0: "Manual"}
+                )
+                _nv["nivel_label"] = _nv["nivel"].map(
+                    lambda x: _NIVEL_LABELS.get(x, x)
+                )
+                _fig4 = px.bar(
+                    _nv, x="total", y="nivel_label",
+                    color="tipo", orientation="h",
+                    title="Resolução por Nível",
+                    labels={"total": "Qtd.", "nivel_label": "", "tipo": ""},
+                    color_discrete_map={
+                        "Auto-resolvido (IA)": "#7B1FA2",
+                        "Manual": "#003B4A",
+                    },
+                    barmode="stack",
+                )
+                _fig4.update_traces(
+                    hovertemplate="<b>%{y}</b> — %{fullData.name}<br>%{x} chamados<extra></extra>",
+                )
+                _fig4.update_layout(**_CHART_LAYOUT)
+                st.plotly_chart(_fig4, use_container_width=True)
+
+    # ── Divisor antes da tabela ───────────────────────────────────────────────
+    st.divider()
+
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
         '<div class="result-label" style="margin-bottom:10px;">Chamados recentes</div>',
@@ -62,15 +238,81 @@ def _dashboard():
             "FECHADO": "⬛ Fechado",
         }
         _NIVEL_EMOJI = {"N1": "\U0001f535", "N2": "\U0001f534", "FORA_DE_ESCOPO": "\U0001f7e0"}
-        _HDR = ('<span style="font-size:0.72rem;font-weight:700;color:#7A9EA6;'
-                'font-family:Montserrat,sans-serif;text-transform:uppercase;letter-spacing:0.05em;">')
+
+        # Sort state
+        if "dash_sort_col" not in st.session_state:
+            st.session_state["dash_sort_col"] = "criado_em"
+        if "dash_sort_dir" not in st.session_state:
+            st.session_state["dash_sort_dir"] = "desc"
+
+        def _toggle_sort(col):
+            if st.session_state["dash_sort_col"] == col:
+                st.session_state["dash_sort_dir"] = (
+                    "asc" if st.session_state["dash_sort_dir"] == "desc" else "desc"
+                )
+            else:
+                st.session_state["dash_sort_col"] = col
+                st.session_state["dash_sort_dir"] = "asc"
+
+        _sc = st.session_state["dash_sort_col"]
+        _sd = st.session_state["dash_sort_dir"]
+
+        def _lbl(text, col):
+            if _sc == col:
+                return text + (" ▼" if _sd == "desc" else " ▲")
+            return text
+
+        _SORT_KEYS = {
+            "id":       lambda t: t.get("id") or 0,
+            "nivel":    lambda t: t.get("nivel") or "",
+            "titulo":   lambda t: (t.get("titulo") or "").lower(),
+            "status":   lambda t: t.get("status") or "",
+            "criado_em": lambda t: t.get("criado_em") or "",
+        }
+        recentes = sorted(recentes, key=_SORT_KEYS[_sc], reverse=(_sd == "desc"))
+
+        st.markdown("""
+<style>
+  button[data-testid="stBaseButton-tertiary"] {
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    min-height: unset !important;
+    height: auto !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  button[data-testid="stBaseButton-tertiary"] p {
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    color: #7A9EA6 !important;
+    font-family: Montserrat, sans-serif !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    text-align: left !important;
+  }
+  button[data-testid="stBaseButton-tertiary"]:hover p {
+    color: #003B4A !important;
+  }
+</style>
+""", unsafe_allow_html=True)
 
         h1, h2, h3, h4, h5 = st.columns([1.2, 0.7, 4.5, 1.8, 2])
-        h1.markdown(_HDR + "ID</span>", unsafe_allow_html=True)
-        h2.markdown(_HDR + "N\xedvel</span>", unsafe_allow_html=True)
-        h3.markdown(_HDR + "T\xedtulo</span>", unsafe_allow_html=True)
-        h4.markdown(_HDR + "Status</span>", unsafe_allow_html=True)
-        h5.markdown(_HDR + "Aberto em</span>", unsafe_allow_html=True)
+        with h1:
+            st.button(_lbl("ID", "id"), key="s_id", type="tertiary",
+                      on_click=_toggle_sort, args=("id",), use_container_width=True)
+        with h2:
+            st.button(_lbl("Nível", "nivel"), key="s_nivel", type="tertiary",
+                      on_click=_toggle_sort, args=("nivel",), use_container_width=True)
+        with h3:
+            st.button(_lbl("Título", "titulo"), key="s_titulo", type="tertiary",
+                      on_click=_toggle_sort, args=("titulo",), use_container_width=True)
+        with h4:
+            st.button(_lbl("Status", "status"), key="s_status", type="tertiary",
+                      on_click=_toggle_sort, args=("status",), use_container_width=True)
+        with h5:
+            st.button(_lbl("Aberto em", "criado_em"), key="s_criado_em", type="tertiary",
+                      on_click=_toggle_sort, args=("criado_em",), use_container_width=True)
         st.divider()
 
         for t in recentes:

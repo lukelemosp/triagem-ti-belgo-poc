@@ -190,6 +190,19 @@ def atualizar_ticket(ticket_id: int, **kwargs) -> dict | None:
     return buscar_ticket(ticket_id)
 
 
+def listar_tickets_graficos(dias: int | None = None) -> list[dict]:
+    sql = (
+        "SELECT id, status, nivel, categoria, auto_resolvido, confianca, "
+        "criado_em, resolvido_em FROM tickets"
+    )
+    params: list = []
+    if dias:
+        sql += " WHERE criado_em >= datetime('now', ?)"
+        params.append(f"-{dias} days")
+    sql += " ORDER BY criado_em ASC"
+    return _rows(get_db().execute(sql, params).fetchall())
+
+
 def stats_tickets() -> dict:
     row = get_db().execute("""
         SELECT

@@ -45,7 +45,9 @@ fastmcp dev mcp_server.py
 | **Atendimento Automático via IA** | 10 categorias recorrentes viram presets — 1 clique cria e resolve sem chamar a IA |
 | **IDs no formato ServiceNow** | Chamados identificados como INC000001, INC000002… |
 | **Filas N1 e N2** | Assumir, liberar e resolver com texto de resolução obrigatório |
-| **Dashboard com métricas** | Total, fila N1/N2, resolvidos, % auto-resolvidos; tabela de chamados recentes clicável |
+| **Dashboard com métricas** | Total, fila N1/N2, resolvidos, % auto-resolvidos; seção de gráficos colapsável com filtros dinâmicos; tabela de chamados recentes com ordenação por coluna |
+| **Seção de gráficos (Análise de Chamados)** | Colapsável por padrão; filtros em tempo real por período, nível e status; 4 gráficos Plotly: donut de tipos de chamado, barras por status, confiança média da IA por categoria e resolução por nível (manual vs. IA) |
+| **Tabela ordenável** | Clique em qualquer cabeçalho (ID, Nível, Título, Status, Aberto em) para ordenar; segundo clique inverte a direção; seta ▲▼ indica coluna ativa |
 | **Detalhe do chamado** | Sugestão IA, ação, solicitante, datas, formulário de atualização de status |
 | **Gestão de usuários** | CRUD completo — nome, email, setor, cargo |
 | **Modal de Arquitetura** | Botão 📐 em todas as telas abre modal com problema, solução, stack, fluxo, métricas e catálogo de 6 skills |
