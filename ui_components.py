@@ -419,6 +419,319 @@ BELGO_CSS = """
     [data-testid="stPageLink"] a[aria-current="page"] {
         background: rgba(255,255,255,0.18) !important;
     }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN SYSTEM V2 — I AM SMART ADAPTATION (cores Belgo)
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+        --belgo-primary: #003B4A;
+        --belgo-accent:  #ED1C24;
+        --belgo-warning: #F37021;
+        --belgo-success: #2E7D32;
+        --belgo-mid:     #1A6B7F;
+        --belgo-bg:      #F5F7F9;
+        --belgo-surface: #FFFFFF;
+        --belgo-border:  #D6E2E5;
+        --belgo-text:    #1A2E33;
+        --belgo-muted:   #5A7E88;
+        --sidebar-w:     220px;
+    }
+
+    /* ── Banner de boas-vindas (dashboard) ────────────────────────── */
+    .belgo-banner {
+        background: linear-gradient(135deg, #003B4A 0%, #1A6B7F 60%, #005F73 100%);
+        border-radius: 14px;
+        padding: 34px 40px;
+        margin-bottom: 26px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0,59,74,0.22);
+    }
+    .belgo-banner::after {
+        content: '';
+        position: absolute;
+        top: -70px; right: -50px;
+        width: 230px; height: 230px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .belgo-banner::before {
+        content: '';
+        position: absolute;
+        bottom: -90px; right: 120px;
+        width: 170px; height: 170px;
+        background: rgba(237,28,36,0.10);
+        border-radius: 50%;
+    }
+    .belgo-banner-greeting {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #FFFFFF;
+        font-family: 'Montserrat', sans-serif;
+        line-height: 1.2;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+    }
+    .belgo-banner-sub {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.78);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+    }
+    .belgo-banner-search-wrap {
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 40px;
+        padding: 11px 22px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 520px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ── Grid de categorias (cards estilo I Am Smart) ─────────────── */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 24px 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #E2EEF0;
+    }
+    .section-num {
+        width: 28px; height: 28px;
+        background: var(--belgo-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.78rem;
+        font-weight: 800;
+        font-family: 'Montserrat', sans-serif;
+        flex-shrink: 0;
+    }
+    .section-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--belgo-primary);
+        font-family: 'Montserrat', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    /* ── Painel lateral de steps (formulário) ─────────────────────── */
+    .steps-panel {
+        background: #F7FAFB;
+        border: 1px solid #D6E2E5;
+        border-radius: 12px;
+        padding: 20px 18px;
+    }
+    .steps-panel-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #003B4A;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-family: 'Montserrat', sans-serif;
+        margin-bottom: 16px;
+    }
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .step-item:last-child { margin-bottom: 0; }
+    .step-num-small {
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: #C5D8DC;
+        color: #FFFFFF;
+        font-size: 0.68rem;
+        font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .step-num-small.done { background: #2E7D32; }
+    .step-num-small.active { background: #003B4A; }
+    .step-label {
+        font-size: 0.78rem;
+        color: #5A7E88;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+    }
+    .step-label.done { color: #2E7D32; }
+    .step-label.active { color: #003B4A; }
+
+    /* ── Sidebar dark (filas N1/N2) ───────────────────────────────── */
+    .belgo-sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        width: var(--sidebar-w);
+        height: 100vh;
+        background: #002833;
+        z-index: 9990;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        box-shadow: 4px 0 16px rgba(0,0,0,0.25);
+    }
+    .belgo-sidebar-logo {
+        padding: 22px 18px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: white;
+        font-family: 'Montserrat', sans-serif;
+        letter-spacing: 0.02em;
+    }
+    .belgo-sidebar-nav {
+        flex: 1;
+        padding: 12px 0;
+        overflow-y: auto;
+    }
+    .belgo-sidebar-section {
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 14px 18px 4px;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .belgo-sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px 18px;
+        color: rgba(255,255,255,0.65);
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.84rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.12s, color 0.12s;
+        border-left: 3px solid transparent;
+    }
+    .belgo-sidebar-item:hover {
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.92);
+    }
+    .belgo-sidebar-item.active {
+        background: rgba(237,28,36,0.15);
+        color: #FF6B70;
+        border-left-color: #ED1C24;
+    }
+    .belgo-sidebar-item .item-icon { font-size: 1.05rem; flex-shrink: 0; }
+
+    /* ── Data grid (tabela das filas) ─────────────────────────────── */
+    .bq-table-header {
+        background: #003B4A;
+        display: grid;
+        padding: 0 16px;
+        align-items: center;
+        border-radius: 10px 10px 0 0;
+    }
+    .bq-table-header-cell {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.82);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-family: 'Montserrat', sans-serif;
+        padding: 11px 4px;
+    }
+    .bq-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 11px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .bq-badge-aberto    { background: #FFF8E1; color: #F57F17; border: 1px solid #FFD54F; }
+    .bq-badge-em_atend  { background: #E3F2FD; color: #1565C0; border: 1px solid #90CAF9; }
+    .bq-badge-resolvido { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+    .bq-badge-fechado   { background: #ECEFF1; color: #546E7A; border: 1px solid #CFD8DC; }
+
+    /* ── Detalhe do chamado ───────────────────────────────────────── */
+    .ticket-meta-row {
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+        margin: 18px 0;
+    }
+    .ticket-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .ticket-meta-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #7A9EA6;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .ticket-meta-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1A2E33;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    /* ── Botão CTA flutuante ──────────────────────────────────────── */
+    .belgo-fab {
+        position: fixed;
+        bottom: 28px; right: 28px;
+        background: #ED1C24;
+        color: white !important;
+        border: none;
+        border-radius: 28px;
+        padding: 14px 22px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(237,28,36,0.4);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 9980;
+        text-decoration: none !important;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .belgo-fab:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(237,28,36,0.5);
+    }
+    .belgo-fab .fab-plus { font-size: 1.2rem; line-height: 1; }
+
+    /* ── Breadcrumb ───────────────────────────────────────────────── */
+    .belgo-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.76rem;
+        font-family: 'Montserrat', sans-serif;
+        color: #7A9EA6;
+        margin-bottom: 18px;
+    }
+    .belgo-breadcrumb a {
+        color: #003B4A;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .belgo-breadcrumb a:hover { text-decoration: underline; }
+    .belgo-breadcrumb-sep { color: #C5D8DC; }
 </style>
 """
 
@@ -441,6 +754,254 @@ def header_html(title: str = "Agente de Triagem TI", subtitle: str = None, tag: 
   </div>
 </div>
 """
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DESIGN SYSTEM V2 — componentes inspirados no I Am Smart (cores Belgo)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def welcome_banner_html(user_name: str = "Analista") -> str:
+    """Banner de boas-vindas para o dashboard (estilo portal I Am Smart)."""
+    safe_name = _html.escape(user_name)
+    return (
+        '<div class="belgo-banner">'
+        '<div class="belgo-banner-greeting">Oi, ' + safe_name + '!</div>'
+        '<div class="belgo-banner-sub">Este \xe9 o Sistema de Chamados TI \xb7 Belgo Arames</div>'
+        '<div class="belgo-banner-search-wrap">'
+        '<span style="color:rgba(255,255,255,0.7);font-size:1.05rem;">&#128269;</span>'
+        '<span style="color:rgba(255,255,255,0.6);font-size:0.9rem;'
+        'font-family:Montserrat,sans-serif;">Buscar chamados, categorias ou solicitantes...</span>'
+        '</div>'
+        '</div>'
+    )
+
+
+# Paleta de cores por categoria (ciclo pela paleta Belgo + complementares)
+_CAT_COLORS = [
+    "#003B4A", "#ED1C24", "#F37021", "#2E7D32", "#7B1FA2",
+    "#1976D2", "#00695C", "#E64A19", "#5D4037", "#455A64",
+]
+
+
+def category_card_css(n: int = 10) -> str:
+    """CSS que transforma os botões preset_N em cards visuais estilo I Am Smart."""
+    rules = []
+    for i in range(n):
+        color = _CAT_COLORS[i % len(_CAT_COLORS)]
+        sel = 'div[data-testid="stButton"][data-key="preset_' + str(i) + '"] > button'
+        rules.append(
+            sel + " {"
+            "background: #FFFFFF !important;"
+            "border: 2px solid " + color + " !important;"
+            "color: #1A2E33 !important;"
+            "font-family: 'Montserrat', sans-serif !important;"
+            "font-size: 0.74rem !important;"
+            "font-weight: 700 !important;"
+            "padding: 16px 8px !important;"
+            "height: 96px !important;"
+            "line-height: 1.35 !important;"
+            "white-space: normal !important;"
+            "border-radius: 12px !important;"
+            "box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;"
+            "transition: transform 0.15s, box-shadow 0.15s, background 0.15s !important;"
+            "}"
+            + sel + ":hover {"
+            "background: " + color + " !important;"
+            "color: #FFFFFF !important;"
+            "border-color: " + color + " !important;"
+            "transform: translateY(-3px) !important;"
+            "box-shadow: 0 8px 20px rgba(0,0,0,0.18) !important;"
+            "}"
+        )
+    return "<style>" + "".join(rules) + "</style>"
+
+
+def section_header_html(num: int, title: str) -> str:
+    """Cabeçalho numerado de seção (estilo formulário I Am Smart)."""
+    return (
+        '<div class="section-header">'
+        '<div class="section-num">' + str(num) + '</div>'
+        '<div class="section-title">' + _html.escape(title) + '</div>'
+        '</div>'
+    )
+
+
+def steps_panel_html(steps: list) -> str:
+    """Painel lateral de progresso. Recebe lista de (label, concluido: bool).
+
+    O primeiro passo não concluído é marcado como 'ativo'.
+    """
+    items = ""
+    active_marked = False
+    for idx, (label, done) in enumerate(steps):
+        safe_label = _html.escape(label)
+        if done:
+            num_cls = "step-num-small done"
+            lbl_cls = "step-label done"
+            icon = "&#10003;"
+        elif not active_marked:
+            num_cls = "step-num-small active"
+            lbl_cls = "step-label active"
+            icon = str(idx + 1)
+            active_marked = True
+        else:
+            num_cls = "step-num-small"
+            lbl_cls = "step-label"
+            icon = str(idx + 1)
+        items += (
+            '<div class="step-item">'
+            '<div class="' + num_cls + '">' + icon + '</div>'
+            '<div class="' + lbl_cls + '">' + safe_label + '</div>'
+            '</div>'
+        )
+    return (
+        '<div class="steps-panel">'
+        '<div class="steps-panel-title">Progresso</div>'
+        + items +
+        '</div>'
+    )
+
+
+def sidebar_html(active_page: str = "") -> str:
+    """Sidebar dark fixa para páginas de fila/admin. Usa hrefs diretos às rotas."""
+    def _item(icon, label, page_key, href):
+        cls = "belgo-sidebar-item active" if active_page == page_key else "belgo-sidebar-item"
+        return (
+            '<a class="' + cls + '" href="' + href + '" target="_self">'
+            '<span class="item-icon">' + icon + '</span>'
+            + _html.escape(label) +
+            '</a>'
+        )
+    return (
+        '<div class="belgo-sidebar">'
+        '<div class="belgo-sidebar-logo">Belgo TI</div>'
+        '<nav class="belgo-sidebar-nav">'
+        '<div class="belgo-sidebar-section">Principal</div>'
+        + _item("\U0001f4ca", "Dashboard", "dashboard", "/")
+        + _item("\U0001f4cb", "Novo Chamado", "novo", "/novo")
+        + '<div class="belgo-sidebar-section">Filas</div>'
+        + _item("\U0001f535", "Fila N1", "n1", "/n1")
+        + _item("\U0001f534", "Fila N2", "n2", "/n2")
+        + '<div class="belgo-sidebar-section">Admin</div>'
+        + _item("\U0001f465", "Usu\xe1rios", "usuarios", "/usuarios")
+        + _item("\U0001f916", "Triagem IA", "triagem", "/triagem")
+        + '</nav>'
+        '</div>'
+    )
+
+
+def breadcrumb_html(items: list) -> str:
+    """Breadcrumb horizontal. Recebe lista de (label, href|None)."""
+    parts = []
+    n = len(items)
+    for i, (label, href) in enumerate(items):
+        safe_label = _html.escape(label)
+        if href and i < n - 1:
+            parts.append('<a href="' + href + '" target="_self">' + safe_label + '</a>')
+        else:
+            parts.append('<span style="color:#1A2E33;font-weight:600;">' + safe_label + '</span>')
+        if i < n - 1:
+            parts.append('<span class="belgo-breadcrumb-sep">/</span>')
+    return '<div class="belgo-breadcrumb">' + "".join(parts) + '</div>'
+
+
+def fab_html(label: str, href: str) -> str:
+    """Botão de ação flutuante (canto inferior direito)."""
+    return (
+        '<a class="belgo-fab" href="' + href + '" target="_self">'
+        '<span class="fab-plus">+</span>'
+        + _html.escape(label) +
+        '</a>'
+    )
+
+
+def ticket_status_badge(status: str) -> str:
+    """Badge inline colorido por status (estilo data grid I Am Smart)."""
+    _MAP = {
+        "ABERTO":         ("bq-badge bq-badge-aberto",    "\U0001f7e1 Aberto"),
+        "EM_ATENDIMENTO": ("bq-badge bq-badge-em_atend",  "\U0001f535 Em atendimento"),
+        "RESOLVIDO":      ("bq-badge bq-badge-resolvido", "✅ Resolvido"),
+        "FECHADO":        ("bq-badge bq-badge-fechado",   "⬛ Fechado"),
+    }
+    cls, lbl = _MAP.get(status, ("bq-badge bq-badge-fechado", _html.escape(status)))
+    return '<span class="' + cls + '">' + lbl + '</span>'
+
+
+def ticket_detail_html(ticket: dict, nivel: str) -> str:
+    """Painel completo de metadados do chamado (col_meta de 5_Chamado.py)."""
+    cls = "result-card"
+    border_top = "#ED1C24" if nivel == "N2" else "#003B4A"
+    auto_badge = ""
+    if ticket.get("auto_resolvido"):
+        auto_badge = (
+            ' &nbsp;<span style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;'
+            'border-radius:12px;padding:2px 10px;font-size:0.66rem;font-weight:700;'
+            'font-family:Montserrat,sans-serif;">Auto-resolvido IA</span>'
+        )
+    descricao_html = _html.escape(ticket.get("descricao", "")).replace("\n", "<br>")
+
+    sugestao_html = ""
+    if ticket.get("sugestao_ia"):
+        sugestao_html = (
+            '<div class="result-label" style="margin-top:18px;">Sugest\xe3o da IA</div>'
+            '<div class="result-value">'
+            + _html.escape(ticket["sugestao_ia"]).replace("\n", "<br>") +
+            '</div>'
+        )
+
+    acao_html = ""
+    if ticket.get("acao_ia"):
+        acao_cls = "acao-n1" if nivel == "N1" else "acao-n2"
+        acao_html = (
+            '<div class="' + acao_cls + '" style="margin-top:10px;">'
+            '⚡ ' + _html.escape(ticket["acao_ia"]) +
+            '</div>'
+        )
+
+    solicitante_html = ""
+    if ticket.get("solicitante_nome"):
+        email = ticket.get("solicitante_email", "")
+        solicitante_html = (
+            '<br>Solicitante: <strong>' + _html.escape(ticket["solicitante_nome"]) + '</strong>'
+            + (' &mdash; ' + _html.escape(email) if email else "")
+        )
+
+    resolvido_html = ""
+    if ticket.get("resolvido_em"):
+        resolvido_html = '<br>Resolvido em: ' + fmt_dt(ticket.get("resolvido_em", ""))
+
+    conf = str(ticket.get("confianca") or 0)
+    return (
+        '<div class="' + cls + '" style="border-top-color:' + border_top + ';">'
+        '<div class="result-label">Descri\xe7\xe3o do chamado</div>'
+        '<div class="result-value" style="white-space:pre-wrap;margin-bottom:0;">' + descricao_html + '</div>'
+        '<div class="ticket-meta-row">'
+        '<div class="ticket-meta-item">'
+        '<div class="ticket-meta-label">Status</div>'
+        '<div class="ticket-meta-value">' + ticket_status_badge(ticket.get("status", "")) + '</div>'
+        '</div>'
+        '<div class="ticket-meta-item">'
+        '<div class="ticket-meta-label">N\xedvel IA</div>'
+        '<div class="ticket-meta-value">' + _html.escape(nivel) + auto_badge + '</div>'
+        '</div>'
+        '<div class="ticket-meta-item">'
+        '<div class="ticket-meta-label">Confian\xe7a</div>'
+        '<div class="ticket-meta-value">' + conf + '%</div>'
+        '</div>'
+        '<div class="ticket-meta-item">'
+        '<div class="ticket-meta-label">Categoria</div>'
+        '<div class="ticket-meta-value">' + fmt_categoria(ticket.get("categoria")) + '</div>'
+        '</div>'
+        '</div>'
+        '<div style="font-size:0.78rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
+        'Aberto em: ' + fmt_dt(ticket.get("criado_em", ""))
+        + resolvido_html
+        + solicitante_html
+        + '</div>'
+        + sugestao_html
+        + acao_html
+        + '</div>'
+    )
 
 
 def render_result_card(r: dict) -> str:
@@ -617,7 +1178,8 @@ _CAT_LABELS: dict[str, str] = {
 
 
 def fmt_categoria(cat: str | None) -> str:
-    if not cat:
+    # Robusto a NaN/float vindos do pandas (NaN é truthy, escaparia de "if not cat")
+    if not cat or not isinstance(cat, str):
         return "—"
     return _CAT_LABELS.get(cat, cat.replace("_", " ").title())
 

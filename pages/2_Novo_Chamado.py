@@ -12,6 +12,10 @@ st.markdown(ui.header_html(
     title="Novo Chamado",
     subtitle="Abre chamado, classifica com IA e enfileira automaticamente",
 ), unsafe_allow_html=True)
+st.markdown(ui.breadcrumb_html([
+    ("Dashboard", "/"),
+    ("Novo Chamado", None),
+]), unsafe_allow_html=True)
 
 _MAX_LEN = 2000
 
@@ -212,38 +216,14 @@ if st.session_state.nc_preset_idx is not None and not st.session_state.nc_result
     st.rerun()
 
 # ── Seção de atendimento automático ───────────────────────────────────────────
+st.markdown(ui.section_header_html(1, "✨ Tem um problema? Selecione a categoria"), unsafe_allow_html=True)
 st.markdown(
-    "<div style=\"margin:16px 0 8px;display:flex;align-items:center;gap:8px;\">"
-    "<span style=\"font-size:0.72rem;font-weight:700;color:#003B4A;"
-    "font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.08em;\">"
-    "✨ Atendimento Autom\xe1tico via IA</span>"
-    "<span style=\"font-size:0.72rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;\">"
-    "— clique para resolver instantaneamente</span>"
-    "</div>",
+    "<div style=\"font-size:0.78rem;color:#7A9EA6;font-family:'Montserrat',sans-serif;"
+    "margin:-6px 0 14px;\">Clique em uma categoria para atendimento autom\xe1tico instant\xe2neo via IA.</div>",
     unsafe_allow_html=True,
 )
 
-st.markdown("""
-<style>
-div[data-testid="stButton"][data-key^="preset_"] > button {
-    background: #F0F9F7 !important;
-    border: 1.5px solid #A8C8D0 !important;
-    color: #003B4A !important;
-    font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.76rem !important;
-    font-weight: 600 !important;
-    padding: 10px 6px !important;
-    height: auto !important;
-    line-height: 1.4 !important;
-    white-space: normal !important;
-}
-div[data-testid="stButton"][data-key^="preset_"] > button:hover {
-    background: #003B4A !important;
-    color: white !important;
-    border-color: #003B4A !important;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(ui.category_card_css(len(_PRESETS)), unsafe_allow_html=True)
 
 _r1 = st.columns(5)
 for _i, _p in enumerate(_PRESETS[:5]):
@@ -271,13 +251,17 @@ for _i, _p in enumerate(_PRESETS[5:], start=5):
 
 st.markdown('<hr style="border:none;border-top:1px solid #D6E2E5;margin:16px 0;">', unsafe_allow_html=True)
 
-# ── Form manual + resultado ────────────────────────────────────────────────────
-col_form, col_result = st.columns([1, 1.2], gap="large")
+# ── Form manual + resultado + progresso ────────────────────────────────────────
+titulo = ""
+descricao = ""
+col_form, col_result, col_steps = st.columns([1.8, 1.5, 0.9], gap="large")
 
 with col_form:
     if st.session_state.nc_clear:
         st.session_state.nc_input_key += 1
         st.session_state.nc_clear = False
+
+    st.markdown(ui.section_header_html(2, "Descreva o problema"), unsafe_allow_html=True)
 
     st.markdown("**T\xedtulo do chamado:**")
     titulo = st.text_input(
@@ -307,6 +291,7 @@ with col_form:
         unsafe_allow_html=True,
     )
 
+    st.markdown(ui.section_header_html(3, "Identifica\xe7\xe3o"), unsafe_allow_html=True)
     st.markdown("**Solicitante:**")
     st.selectbox(
         "Solicitante",
@@ -322,6 +307,16 @@ with col_form:
         use_container_width=True,
         disabled=st.session_state.nc_processando,
     )
+
+with col_steps:
+    _desc_ok = bool(titulo.strip()) and bool(descricao.strip())
+    _sol_ok = st.session_state.get("nc_sol", opcoes_usuario[0]) != opcoes_usuario[0]
+    _class_ok = st.session_state.nc_resultado is not None
+    st.markdown(ui.steps_panel_html([
+        ("Descrever o problema", _desc_ok),
+        ("Informar solicitante", _sol_ok),
+        ("Classificar com IA", _class_ok),
+    ]), unsafe_allow_html=True)
 
 with col_result:
     # Fase 1: captura clique

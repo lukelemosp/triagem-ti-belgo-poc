@@ -29,6 +29,16 @@ if not ticket:
     st.error(f"Chamado #{ticket_id} não encontrado.")
     st.stop()
 
+# ── Breadcrumb (origem dinâmica) ──────────────────────────────────────────────
+_origem = st.session_state.get("ticket_origin", "")
+_origin_label = "Fila N2" if _origem == "n2" else "Fila N1" if _origem == "n1" else "Dashboard"
+_origin_href = "/n2" if _origem == "n2" else "/n1" if _origem == "n1" else "/"
+_inc_str = ui.inc_id(ticket_id)
+st.markdown(ui.breadcrumb_html([
+    (_origin_label, _origin_href),
+    (_inc_str, None),
+]), unsafe_allow_html=True)
+
 # ── Header ────────────────────────────────────────────────────────────────────
 nivel = ticket.get("nivel") or "—"
 nivel_label = {"N1": "N1 — Helpdesk", "N2": "N2 — Especialistas", "FORA_DE_ESCOPO": "Fora do Escopo"}.get(nivel, nivel)
@@ -38,61 +48,10 @@ st.markdown(ui.header_html(
     tag=ticket.get("status", ""),
 ), unsafe_allow_html=True)
 
-STATUS_LABEL = {
-    "ABERTO": "🟡 Aberto",
-    "EM_ATENDIMENTO": "🔵 Em atendimento",
-    "RESOLVIDO": "✅ Resolvido",
-    "FECHADO": "⬛ Fechado",
-}
-
 col_meta, col_acao = st.columns([1.2, 1], gap="large")
 
 with col_meta:
-    # Metadados
-    st.markdown(
-        f'<div class="result-label">Descrição do chamado</div>'
-        f'<div class="result-value" style="white-space:pre-wrap;">'
-        f'{_html.escape(ticket["descricao"])}</div>',
-        unsafe_allow_html=True,
-    )
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.metric("Status", STATUS_LABEL.get(ticket["status"], ticket["status"]))
-    with c2:
-        st.metric("Nível IA", nivel)
-    with c3:
-        st.metric("Confiança", f"{ticket.get('confianca') or 0}%")
-
-    st.markdown(
-        f'<div style="font-size:0.78rem;color:#5A7E88;margin-top:8px;">'
-        f'Categoria: <strong>{ui.fmt_categoria(ticket.get("categoria"))}</strong>'
-        + (" · ✅ <strong>Auto-resolvido pela IA</strong>" if ticket.get("auto_resolvido") else "")
-        + (f'<br>Solicitante: <strong>{_html.escape(ticket["solicitante_nome"])}</strong>'
-           f' — {_html.escape(ticket.get("solicitante_email",""))}' if ticket.get("solicitante_nome") else "")
-        + f'<br>Aberto em: {ui.fmt_dt(ticket.get("criado_em",""))}'
-        + (f'<br>Resolvido em: {ui.fmt_dt(ticket.get("resolvido_em",""))}' if ticket.get("resolvido_em") else "")
-        + '</div>',
-        unsafe_allow_html=True,
-    )
-
-    # Sugestão da IA
-    if ticket.get("sugestao_ia"):
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="result-label">Sugestão da IA</div>'
-            f'<div class="result-value">'
-            f'{_html.escape(ticket["sugestao_ia"]).replace(chr(10),"<br>")}'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-    if ticket.get("acao_ia"):
-        nivel_key = ticket.get("nivel", "N1")
-        cls = "acao-n1" if nivel_key == "N1" else "acao-n2"
-        st.markdown(
-            f'<div class="{cls}">⚡ {_html.escape(ticket["acao_ia"])}</div>',
-            unsafe_allow_html=True,
-        )
+    st.markdown(ui.ticket_detail_html(ticket, nivel), unsafe_allow_html=True)
 
 with col_acao:
     # Resolução existente

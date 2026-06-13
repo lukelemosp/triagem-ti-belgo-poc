@@ -6,18 +6,55 @@ import ui_components as ui
 
 db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
-st.markdown(ui.header_html(
-    title="Fila N2 — Especialistas",
-    subtitle="Chamados que requerem intervenção de especialista",
-    tag="N2",
-), unsafe_allow_html=True)
 
-STATUS_LABEL = {
-    "ABERTO": "🟡 Aberto",
-    "EM_ATENDIMENTO": "🔴 Em atendimento",
-    "RESOLVIDO": "✅ Resolvido",
-    "FECHADO": "⬛ Fechado",
-}
+# ── Sidebar dark + ajustes de layout da página ────────────────────────────────
+st.markdown(ui.sidebar_html("n2"), unsafe_allow_html=True)
+st.markdown("""
+<style>
+  [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }
+  div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
+  [class*="st-key-qrow_"] {
+    border-bottom: 1px solid #EEF3F5;
+    padding: 2px 8px;
+    transition: background 0.1s;
+  }
+  [class*="st-key-qrow_"]:hover { background: #FFF5F5; }
+  div[data-key^="assumir2_"] > button {
+    background: #ED1C24 !important; color: white !important; border: none !important;
+    font-size: 0.78rem !important; font-weight: 700 !important; border-radius: 6px !important;
+  }
+  div[data-key^="liberar2_"] > button {
+    background: transparent !important; color: #ED1C24 !important;
+    border: 1.5px solid #ED1C24 !important; font-size: 0.78rem !important;
+    font-weight: 700 !important; border-radius: 6px !important;
+  }
+  div[data-key^="ver2_"] > button {
+    background: transparent !important; color: #003B4A !important;
+    border: 1.5px solid #A8C8D0 !important; font-size: 0.78rem !important;
+    font-weight: 700 !important; border-radius: 6px !important;
+  }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Header compacto ───────────────────────────────────────────────────────────
+st.markdown(
+    '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">'
+    '<span style="display:inline-flex;align-items:center;justify-content:center;'
+    'background:#FEE8E8;color:#ED1C24;border:2px solid #ED1C24;border-radius:10px;'
+    'width:52px;height:52px;font-size:1.4rem;font-weight:800;'
+    'font-family:Montserrat,sans-serif;">N2</span>'
+    '<div>'
+    '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
+    'font-family:Montserrat,sans-serif;line-height:1.2;">Fila N2 &mdash; Especialistas</div>'
+    '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
+    'Chamados que requerem interven\xe7\xe3o de especialista</div>'
+    '</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
+
+_COLS = [0.7, 4, 1.2, 1.6, 1.2, 1]
+_GRID_TPL = " ".join(str(c) + "fr" for c in _COLS)
 
 if "msg_fila2" not in st.session_state:
     st.session_state.msg_fila2 = None
@@ -32,20 +69,31 @@ if not tickets:
 else:
     st.caption(f"{len(tickets)} chamado(s) pendente(s)")
 
+    st.markdown(
+        '<div class="bq-table-header" style="grid-template-columns:' + _GRID_TPL + ';">'
+        '<div class="bq-table-header-cell">ID</div>'
+        '<div class="bq-table-header-cell">Chamado</div>'
+        '<div class="bq-table-header-cell" style="text-align:center;">Confian\xe7a</div>'
+        '<div class="bq-table-header-cell">Status</div>'
+        '<div class="bq-table-header-cell">A\xe7\xe3o</div>'
+        '<div class="bq-table-header-cell">Ver</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
     for t in tickets:
         tid = t["id"]
         confianca = t.get("confianca") or 0
         # N2 com baixa confiança merece destaque — pode ser escalação incerta
         incerto = confianca < 70
-        borda = "#ED1C24" if not incerto else "#F37021"
 
-        with st.container():
-            c_id, c_info, c_conf, c_status, c_assumir, c_ver = st.columns([0.6, 4, 1.2, 1.5, 1.2, 1])
+        with st.container(key="qrow_" + str(tid)):
+            c_id, c_info, c_conf, c_status, c_assumir, c_ver = st.columns(_COLS, gap="small")
 
             with c_id:
                 st.markdown(
                     f'<div style="font-size:0.85rem;font-weight:800;color:#ED1C24;'
-                    f'font-family:Montserrat,sans-serif;padding-top:6px;">INC{tid:06d}</div>',
+                    f'font-family:Montserrat,sans-serif;padding-top:8px;">INC{tid:06d}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -61,16 +109,15 @@ else:
             with c_conf:
                 cor = "#ED1C24" if incerto else "#003B4A"
                 st.markdown(
-                    f'<div style="text-align:center;padding-top:6px;">'
+                    f'<div style="text-align:center;padding-top:8px;">'
                     f'<span style="font-weight:700;color:{cor};font-size:0.9rem;">{confianca}%</span>'
-                    f'<br><span style="font-size:0.68rem;color:#7A9EA6;">confiança</span></div>',
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
 
             with c_status:
                 st.markdown(
-                    f'<div style="padding-top:8px;font-size:0.82rem;">'
-                    f'{STATUS_LABEL.get(t["status"], t["status"])}</div>',
+                    '<div style="padding-top:6px;">' + ui.ticket_status_badge(t["status"]) + '</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -91,7 +138,5 @@ else:
                     st.session_state["current_ticket_id"] = tid
                     st.session_state["ticket_origin"] = "n2"
                     st.switch_page("pages/5_Chamado.py")
-
-        st.divider()
 
 ui.render_footer()

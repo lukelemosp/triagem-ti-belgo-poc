@@ -6,21 +6,61 @@ import ui_components as ui
 
 db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
-st.markdown(ui.header_html(
-    title="Fila N1 — Helpdesk",
-    subtitle="Chamados aguardando atendimento do nível 1",
-    tag="N1",
-), unsafe_allow_html=True)
+
+# ── Sidebar dark + ajustes de layout da página ────────────────────────────────
+st.markdown(ui.sidebar_html("n1"), unsafe_allow_html=True)
+st.markdown("""
+<style>
+  [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }
+  /* Esconde a navbar horizontal nativa — navegação vai pela sidebar dark */
+  div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
+  /* Linhas do data grid (apenas containers com key qrow_) */
+  [class*="st-key-qrow_"] {
+    border-bottom: 1px solid #EEF3F5;
+    padding: 2px 8px;
+    transition: background 0.1s;
+  }
+  [class*="st-key-qrow_"]:hover { background: #EFF7F9; }
+  div[data-key^="assumir_"] > button {
+    background: #003B4A !important; color: white !important; border: none !important;
+    font-size: 0.78rem !important; font-weight: 700 !important; border-radius: 6px !important;
+  }
+  div[data-key^="liberar_"] > button {
+    background: transparent !important; color: #ED1C24 !important;
+    border: 1.5px solid #ED1C24 !important; font-size: 0.78rem !important;
+    font-weight: 700 !important; border-radius: 6px !important;
+  }
+  div[data-key^="ver_"] > button {
+    background: transparent !important; color: #003B4A !important;
+    border: 1.5px solid #A8C8D0 !important; font-size: 0.78rem !important;
+    font-weight: 700 !important; border-radius: 6px !important;
+  }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Header compacto ───────────────────────────────────────────────────────────
+st.markdown(
+    '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">'
+    '<span style="display:inline-flex;align-items:center;justify-content:center;'
+    'background:#E6F4F1;color:#003B4A;border:2px solid #003B4A;border-radius:10px;'
+    'width:52px;height:52px;font-size:1.4rem;font-weight:800;'
+    'font-family:Montserrat,sans-serif;">N1</span>'
+    '<div>'
+    '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
+    'font-family:Montserrat,sans-serif;line-height:1.2;">Fila N1 &mdash; Helpdesk</div>'
+    '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
+    'Chamados aguardando atendimento do n\xedvel 1</div>'
+    '</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
+
+# Proporções compartilhadas entre o cabeçalho HTML e as colunas das linhas
+_COLS = [0.7, 4, 1.2, 1.6, 1.2, 1]
+_GRID_TPL = " ".join(str(c) + "fr" for c in _COLS)
 
 
 def _fila_page(nivel: str):
-    STATUS_LABEL = {
-        "ABERTO": "🟡 Aberto",
-        "EM_ATENDIMENTO": "🔵 Em atendimento",
-        "RESOLVIDO": "✅ Resolvido",
-        "FECHADO": "⬛ Fechado",
-    }
-
     if "msg_fila" not in st.session_state:
         st.session_state.msg_fila = None
     if st.session_state.msg_fila:
@@ -35,18 +75,31 @@ def _fila_page(nivel: str):
 
     st.caption(f"{len(tickets)} chamado(s) pendente(s)")
 
+    # Cabeçalho do data grid
+    st.markdown(
+        '<div class="bq-table-header" style="grid-template-columns:' + _GRID_TPL + ';">'
+        '<div class="bq-table-header-cell">ID</div>'
+        '<div class="bq-table-header-cell">Chamado</div>'
+        '<div class="bq-table-header-cell" style="text-align:center;">Confian\xe7a</div>'
+        '<div class="bq-table-header-cell">Status</div>'
+        '<div class="bq-table-header-cell">A\xe7\xe3o</div>'
+        '<div class="bq-table-header-cell">Ver</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
     for t in tickets:
         tid = t["id"]
         confianca = t.get("confianca") or 0
         cor_conf = "#003B4A" if confianca >= 80 else "#F37021" if confianca >= 60 else "#ED1C24"
 
-        with st.container():
-            c_id, c_info, c_conf, c_status, c_assumir, c_ver = st.columns([0.6, 4, 1.2, 1.5, 1.2, 1])
+        with st.container(key="qrow_" + str(tid)):
+            c_id, c_info, c_conf, c_status, c_assumir, c_ver = st.columns(_COLS, gap="small")
 
             with c_id:
                 st.markdown(
                     f'<div style="font-size:0.85rem;font-weight:800;color:#003B4A;'
-                    f'font-family:Montserrat,sans-serif;padding-top:6px;">INC{tid:06d}</div>',
+                    f'font-family:Montserrat,sans-serif;padding-top:8px;">INC{tid:06d}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -61,16 +114,15 @@ def _fila_page(nivel: str):
 
             with c_conf:
                 st.markdown(
-                    f'<div style="text-align:center;padding-top:6px;">'
+                    f'<div style="text-align:center;padding-top:8px;">'
                     f'<span style="font-weight:700;color:{cor_conf};font-size:0.9rem;">{confianca}%</span>'
-                    f'<br><span style="font-size:0.68rem;color:#7A9EA6;">confiança</span></div>',
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
 
             with c_status:
                 st.markdown(
-                    f'<div style="padding-top:8px;font-size:0.82rem;">'
-                    f'{STATUS_LABEL.get(t["status"], t["status"])}</div>',
+                    '<div style="padding-top:6px;">' + ui.ticket_status_badge(t["status"]) + '</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -91,8 +143,6 @@ def _fila_page(nivel: str):
                     st.session_state["current_ticket_id"] = tid
                     st.session_state["ticket_origin"] = "n1"
                     st.switch_page("pages/5_Chamado.py")
-
-        st.divider()
 
 
 _fila_page("N1")

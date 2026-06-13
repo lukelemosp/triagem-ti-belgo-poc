@@ -25,11 +25,8 @@ st.markdown("""
 
 # ── Definição das páginas ─────────────────────────────────────────────────────
 def _dashboard():
-    st.markdown(ui.header_html(
-        title="Sistema de Chamados TI",
-        subtitle="Triagem automática com IA · Filas N1/N2 · Gestão de usuários",
-        tag="Belgo Arames",
-    ), unsafe_allow_html=True)
+    st.markdown(ui.welcome_banner_html("Analista"), unsafe_allow_html=True)
+    st.markdown(ui.fab_html("Novo Chamado", "/novo"), unsafe_allow_html=True)
 
     stats = db.stats_tickets()
     c1, c2, c3, c4, c5 = st.columns(5)
