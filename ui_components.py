@@ -523,7 +523,7 @@ BELGO_CSS = """
     }
     /* Selo "IA" indicando busca inteligente por linguagem natural */
     .st-key-dash_busca::after {
-        content: "\2728 IA";
+        content: "✨ IA";
         position: absolute;
         top: 50%;
         right: 14px;
