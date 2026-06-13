@@ -53,7 +53,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-_COLS = [0.7, 4, 1.2, 1.6, 1.2, 1]
+_COLS = [1.05, 3.9, 1.2, 1.6, 1.25, 1.0]
 _GRID_TPL = " ".join(str(c) + "fr" for c in _COLS)
 
 if "msg_fila2" not in st.session_state:
@@ -93,7 +93,7 @@ else:
             with c_id:
                 st.markdown(
                     f'<div style="font-size:0.85rem;font-weight:800;color:#ED1C24;'
-                    f'font-family:Montserrat,sans-serif;padding-top:8px;">INC{tid:06d}</div>',
+                    f'font-family:Montserrat,sans-serif;padding-top:8px;white-space:nowrap;">INC{tid:06d}</div>',
                     unsafe_allow_html=True,
                 )
 

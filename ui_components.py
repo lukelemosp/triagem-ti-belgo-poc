@@ -441,8 +441,8 @@ BELGO_CSS = """
     .belgo-banner {
         background: linear-gradient(135deg, #003B4A 0%, #1A6B7F 60%, #005F73 100%);
         border-radius: 14px;
-        padding: 34px 40px;
-        margin-bottom: 26px;
+        padding: 28px 40px 66px;
+        margin-bottom: 0;
         position: relative;
         overflow: hidden;
         box-shadow: 0 4px 24px rgba(0,59,74,0.22);
@@ -478,17 +478,28 @@ BELGO_CSS = """
         color: rgba(255,255,255,0.78);
         font-family: 'Montserrat', sans-serif;
         font-weight: 400;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
         position: relative;
         z-index: 1;
     }
-    /* Barra de busca real (st.text_input key=dash_busca), sobreposta ao banner */
+    .belgo-banner-ask {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.92);
+        font-family: 'Montserrat', sans-serif;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 1;
+    }
+    /* Barra de busca real (st.text_input key=dash_busca), posicionada DENTRO do banner */
     .st-key-dash_busca {
-        margin-top: -34px;
-        margin-bottom: 24px;
+        margin-top: -56px;
+        margin-left: 40px;
+        margin-right: 40px;
+        margin-bottom: 28px;
         position: relative;
         z-index: 5;
-        max-width: 560px;
+        max-width: 520px;
     }
     .st-key-dash_busca div[data-baseweb="input"] {
         border-radius: 30px !important;
@@ -791,6 +802,7 @@ def welcome_banner_html(user_name: str = "Analista") -> str:
         '<div class="belgo-banner">'
         '<div class="belgo-banner-greeting">Oi, ' + safe_name + '!</div>'
         '<div class="belgo-banner-sub">Este \xe9 o Sistema de Chamados TI \xb7 Belgo Arames</div>'
+        '<div class="belgo-banner-ask">Como podemos te ajudar hoje?</div>'
         '</div>'
     )
 
