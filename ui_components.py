@@ -338,8 +338,11 @@ BELGO_CSS = """
     #MainMenu { visibility: hidden; }
     footer     { visibility: hidden; }
     header     { visibility: hidden; }
+    /* Remove o header nativo (estava só oculto, mantendo espaço morto no topo) */
+    [data-testid="stHeader"] { display: none !important; }
 
     [data-testid="stMainBlockContainer"] {
+        padding-top: 2.2rem !important;
         animation: belgo-fade-in 0.32s cubic-bezier(0.22,1,0.36,1);
     }
     @keyframes belgo-fade-in {
@@ -1270,11 +1273,11 @@ def fmt_dt(iso: str) -> str:
 def stat_card_html(value: str, label: str, color: str = "#003B4A") -> str:
     return f"""
 <div style="background:#FAFBFC;border:1px solid #D6E2E5;border-top:3px solid {color};
-     border-radius:10px;padding:16px 20px;">
-  <div style="font-size:1.8rem;font-weight:800;color:{color};font-family:'Montserrat',sans-serif;">
+     border-radius:10px;padding:18px 20px;">
+  <div style="font-size:1.8rem;font-weight:800;color:{color};font-family:'Montserrat',sans-serif;line-height:1.1;">
     {_html.escape(str(value))}
   </div>
-  <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;margin-top:2px;">
+  <div style="font-size:0.78rem;color:#5A7E88;font-family:'Montserrat',sans-serif;margin-top:7px;">
     {_html.escape(label)}
   </div>
 </div>"""

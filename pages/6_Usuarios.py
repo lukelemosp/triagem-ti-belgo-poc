@@ -14,6 +14,13 @@ st.markdown("""
 <style>
   [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }
   div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
+  /* Linhas de usuário compactas com separador sutil (em vez de st.divider espaçado) */
+  [class*="st-key-urow_"] {
+    border-bottom: 1px solid #EEF3F5;
+    padding: 10px 6px;
+    transition: background 0.1s;
+  }
+  [class*="st-key-urow_"]:hover { background: #F5FAFB; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -57,8 +64,8 @@ with aba_lista:
     else:
         for u in usuarios:
             uid = u["id"]
-            with st.container():
-                c_info, c_edit, c_del = st.columns([6, 1, 1])
+            with st.container(key="urow_" + str(uid)):
+                c_info, c_edit, c_del = st.columns([6, 1, 1], vertical_alignment="center")
                 with c_info:
                     st.markdown(
                         f"**{_html.escape(u['nome'])}** &nbsp;·&nbsp; "
@@ -82,7 +89,6 @@ with aba_lista:
                         if st.button("🗑️", key=f"del_{uid}", help="Remover"):
                             st.session_state.confirmar_del = uid
                             st.rerun()
-            st.divider()
 
     # ── Painel de edição inline ──────────────────────────────────────────────
     if st.session_state.editar_uid:

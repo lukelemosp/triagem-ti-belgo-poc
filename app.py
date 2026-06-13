@@ -296,11 +296,8 @@ def _dashboard():
                 st.plotly_chart(_fig4, use_container_width=True)
 
     # ── Divisor antes da tabela ───────────────────────────────────────────────
-    st.divider()
-
-    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
-        '<div class="result-label" style="margin-bottom:10px;">Chamados recentes</div>',
+        '<div class="result-label" style="margin:18px 0 10px;border-top:1px solid #E2EEF0;padding-top:20px;">Chamados recentes</div>',
         unsafe_allow_html=True,
     )
     recentes = db.listar_tickets_recentes(10)
