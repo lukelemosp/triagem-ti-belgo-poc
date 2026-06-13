@@ -8,7 +8,7 @@ db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 
 # ── Sidebar dark + ajustes de layout da página ────────────────────────────────
-st.markdown(ui.sidebar_html("n2"), unsafe_allow_html=True)
+ui.render_sidebar("n2")
 st.markdown("""
 <style>
   [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }

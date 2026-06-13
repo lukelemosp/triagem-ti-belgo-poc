@@ -482,17 +482,29 @@ BELGO_CSS = """
         position: relative;
         z-index: 1;
     }
-    .belgo-banner-search-wrap {
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.25);
-        border-radius: 40px;
-        padding: 11px 22px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        max-width: 520px;
+    /* Barra de busca real (st.text_input key=dash_busca), sobreposta ao banner */
+    .st-key-dash_busca {
+        margin-top: -34px;
+        margin-bottom: 24px;
         position: relative;
-        z-index: 1;
+        z-index: 5;
+        max-width: 560px;
+    }
+    .st-key-dash_busca div[data-baseweb="input"] {
+        border-radius: 30px !important;
+        border: none !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.16) !important;
+        background: #FFFFFF !important;
+    }
+    .st-key-dash_busca input {
+        border-radius: 30px !important;
+        padding: 13px 20px !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: 0.92rem !important;
+        color: #1A2E33 !important;
+    }
+    .st-key-dash_busca input::placeholder {
+        color: #7A9EA6 !important;
     }
 
     /* ── Grid de categorias (cards estilo I Am Smart) ─────────────── */
@@ -569,66 +581,74 @@ BELGO_CSS = """
     .step-label.done { color: #2E7D32; }
     .step-label.active { color: #003B4A; }
 
-    /* ── Sidebar dark (filas N1/N2) ───────────────────────────────── */
-    .belgo-sidebar {
+    /* ── Sidebar dark (filas/admin) — container fixo com page_links ── */
+    /* Navegação SPA suave: usa st.page_link nativo (sem reload de página) */
+    .st-key-belgo_nav {
         position: fixed;
         top: 0; left: 0;
         width: var(--sidebar-w);
         height: 100vh;
         background: #002833;
         z-index: 9990;
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-        box-shadow: 4px 0 16px rgba(0,0,0,0.25);
+        padding: 0 0 24px 0 !important;
+        box-shadow: 4px 0 16px rgba(0,0,0,0.28);
+        overflow-y: auto;
+        gap: 1px !important;
     }
-    .belgo-sidebar-logo {
+    .st-key-belgo_nav .belgo-sidebar-logo {
         padding: 22px 18px 16px;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        border-bottom: 1px solid rgba(255,255,255,0.10);
         font-size: 1.05rem;
         font-weight: 800;
-        color: white;
+        color: #FFFFFF;
         font-family: 'Montserrat', sans-serif;
         letter-spacing: 0.02em;
+        margin-bottom: 6px;
     }
-    .belgo-sidebar-nav {
-        flex: 1;
-        padding: 12px 0;
-        overflow-y: auto;
-    }
-    .belgo-sidebar-section {
+    .st-key-belgo_nav .belgo-sidebar-section {
         font-size: 0.62rem;
         font-weight: 700;
-        color: rgba(255,255,255,0.3);
+        color: rgba(255,255,255,0.38);
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        padding: 14px 18px 4px;
+        padding: 12px 18px 4px;
         font-family: 'Montserrat', sans-serif;
     }
-    .belgo-sidebar-item {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        padding: 11px 18px;
-        color: rgba(255,255,255,0.65);
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.84rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background 0.12s, color 0.12s;
-        border-left: 3px solid transparent;
+    /* page_link dentro da sidebar dark */
+    .st-key-belgo_nav [data-testid="stPageLink"] { margin: 0 !important; }
+    .st-key-belgo_nav [data-testid="stPageLink"] a {
+        border-radius: 0 !important;
+        padding: 11px 18px !important;
+        margin: 0 !important;
+        border-left: 3px solid transparent !important;
+        text-decoration: none !important;
+        justify-content: flex-start !important;
+        transition: background 0.12s, border-color 0.12s !important;
     }
-    .belgo-sidebar-item:hover {
-        background: rgba(255,255,255,0.08);
-        color: rgba(255,255,255,0.92);
+    .st-key-belgo_nav [data-testid="stPageLink"] a:hover {
+        background: rgba(255,255,255,0.09) !important;
     }
-    .belgo-sidebar-item.active {
-        background: rgba(237,28,36,0.15);
-        color: #FF6B70;
-        border-left-color: #ED1C24;
+    .st-key-belgo_nav [data-testid="stPageLink"] a p,
+    .st-key-belgo_nav [data-testid="stPageLink"] a span,
+    .st-key-belgo_nav [data-testid="stPageLink"] a div {
+        color: rgba(255,255,255,0.85) !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: 0.86rem !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
     }
-    .belgo-sidebar-item .item-icon { font-size: 1.05rem; flex-shrink: 0; }
+    .st-key-belgo_nav [data-testid="stPageLink"] a:hover p,
+    .st-key-belgo_nav [data-testid="stPageLink"] a:hover span {
+        color: #FFFFFF !important;
+    }
+    .st-key-belgo_nav [data-testid="stPageLink"] a[aria-current="page"] {
+        background: rgba(237,28,36,0.16) !important;
+        border-left-color: #ED1C24 !important;
+    }
+    .st-key-belgo_nav [data-testid="stPageLink"] a[aria-current="page"] p,
+    .st-key-belgo_nav [data-testid="stPageLink"] a[aria-current="page"] span {
+        color: #FF8A8E !important;
+    }
 
     /* ── Data grid (tabela das filas) ─────────────────────────────── */
     .bq-table-header {
@@ -761,17 +781,16 @@ def header_html(title: str = "Agente de Triagem TI", subtitle: str = None, tag: 
 # ═══════════════════════════════════════════════════════════════════════════
 
 def welcome_banner_html(user_name: str = "Analista") -> str:
-    """Banner de boas-vindas para o dashboard (estilo portal I Am Smart)."""
+    """Banner de boas-vindas para o dashboard (estilo portal I Am Smart).
+
+    A barra de busca real é um st.text_input renderizado logo abaixo
+    (ver app.py / dash_busca), estilizado para parecer integrado ao banner.
+    """
     safe_name = _html.escape(user_name)
     return (
         '<div class="belgo-banner">'
         '<div class="belgo-banner-greeting">Oi, ' + safe_name + '!</div>'
         '<div class="belgo-banner-sub">Este \xe9 o Sistema de Chamados TI \xb7 Belgo Arames</div>'
-        '<div class="belgo-banner-search-wrap">'
-        '<span style="color:rgba(255,255,255,0.7);font-size:1.05rem;">&#128269;</span>'
-        '<span style="color:rgba(255,255,255,0.6);font-size:0.9rem;'
-        'font-family:Montserrat,sans-serif;">Buscar chamados, categorias ou solicitantes...</span>'
-        '</div>'
         '</div>'
     )
 
@@ -862,32 +881,26 @@ def steps_panel_html(steps: list) -> str:
     )
 
 
-def sidebar_html(active_page: str = "") -> str:
-    """Sidebar dark fixa para páginas de fila/admin. Usa hrefs diretos às rotas."""
-    def _item(icon, label, page_key, href):
-        cls = "belgo-sidebar-item active" if active_page == page_key else "belgo-sidebar-item"
-        return (
-            '<a class="' + cls + '" href="' + href + '" target="_self">'
-            '<span class="item-icon">' + icon + '</span>'
-            + _html.escape(label) +
-            '</a>'
-        )
-    return (
-        '<div class="belgo-sidebar">'
-        '<div class="belgo-sidebar-logo">Belgo TI</div>'
-        '<nav class="belgo-sidebar-nav">'
-        '<div class="belgo-sidebar-section">Principal</div>'
-        + _item("\U0001f4ca", "Dashboard", "dashboard", "/")
-        + _item("\U0001f4cb", "Novo Chamado", "novo", "/novo")
-        + '<div class="belgo-sidebar-section">Filas</div>'
-        + _item("\U0001f535", "Fila N1", "n1", "/n1")
-        + _item("\U0001f534", "Fila N2", "n2", "/n2")
-        + '<div class="belgo-sidebar-section">Admin</div>'
-        + _item("\U0001f465", "Usu\xe1rios", "usuarios", "/usuarios")
-        + _item("\U0001f916", "Triagem IA", "triagem", "/triagem")
-        + '</nav>'
-        '</div>'
-    )
+def render_sidebar(active_page: str = "") -> None:
+    """Sidebar dark fixa para páginas de fila/admin.
+
+    Usa st.page_link nativo (navegação SPA suave, sem reload de página).
+    O destaque da página atual é automático via aria-current do Streamlit;
+    o parâmetro active_page é mantido por compatibilidade e não é necessário.
+    """
+    with st.container(key="belgo_nav"):
+        st.markdown('<div class="belgo-sidebar-logo">Belgo TI</div>', unsafe_allow_html=True)
+        st.markdown('<div class="belgo-sidebar-section">Principal</div>', unsafe_allow_html=True)
+        _home = st.session_state.get("_p_home")
+        if _home is not None:
+            st.page_link(_home, label="\U0001f4ca  Dashboard")
+        st.page_link("pages/2_Novo_Chamado.py", label="\U0001f4cb  Novo Chamado")
+        st.markdown('<div class="belgo-sidebar-section">Filas</div>', unsafe_allow_html=True)
+        st.page_link("pages/3_Fila_N1.py", label="\U0001f535  Fila N1")
+        st.page_link("pages/4_Fila_N2.py", label="\U0001f534  Fila N2")
+        st.markdown('<div class="belgo-sidebar-section">Admin</div>', unsafe_allow_html=True)
+        st.page_link("pages/6_Usuarios.py", label="\U0001f465  Usu\xe1rios")
+        st.page_link("pages/1_Triagem.py", label="\U0001f916  Triagem IA")
 
 
 def breadcrumb_html(items: list) -> str:

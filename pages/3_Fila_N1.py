@@ -8,11 +8,11 @@ db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 
 # ── Sidebar dark + ajustes de layout da página ────────────────────────────────
-st.markdown(ui.sidebar_html("n1"), unsafe_allow_html=True)
+ui.render_sidebar("n1")
 st.markdown("""
 <style>
   [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }
-  /* Esconde a navbar horizontal nativa — navegação vai pela sidebar dark */
+  /* Esconde a navbar horizontal nativa do topo — navegação vai pela sidebar dark */
   div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
   /* Linhas do data grid (apenas containers com key qrow_) */
   [class*="st-key-qrow_"] {

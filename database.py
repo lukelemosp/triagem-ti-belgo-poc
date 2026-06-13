@@ -177,6 +177,36 @@ def listar_tickets_recentes(limit: int = 20) -> list[dict]:
     )
 
 
+def buscar_tickets(termo: str, limit: int = 50) -> list[dict]:
+    """Busca tickets por ID (INC000123 ou 123), título, descrição, categoria,
+    ou nome/e-mail do solicitante. Case-insensitive (ASCII)."""
+    termo = (termo or "").strip()
+    if not termo:
+        return []
+    like = f"%{termo}%"
+    params = [like, like, like, like, like]
+    sql = """
+        SELECT t.*,
+               u.nome  AS solicitante_nome,
+               u.email AS solicitante_email
+        FROM tickets t
+        LEFT JOIN usuarios u ON t.criado_por = u.id
+        WHERE t.titulo    LIKE ?
+           OR t.descricao LIKE ?
+           OR t.categoria LIKE ?
+           OR u.nome      LIKE ?
+           OR u.email     LIKE ?
+    """
+    # Casa também por ID quando o termo contém dígitos (ex.: "INC000007" -> 7)
+    digitos = "".join(ch for ch in termo if ch.isdigit())
+    if digitos:
+        sql += " OR t.id = ?"
+        params.append(int(digitos))
+    sql += " ORDER BY t.criado_em DESC LIMIT ?"
+    params.append(limit)
+    return _rows(get_db().execute(sql, params).fetchall())
+
+
 def atualizar_ticket(ticket_id: int, **kwargs) -> dict | None:
     if not kwargs:
         return buscar_ticket(ticket_id)

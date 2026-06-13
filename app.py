@@ -24,9 +24,55 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Definição das páginas ─────────────────────────────────────────────────────
+def _render_ticket_row(t, key_prefix):
+    """Renderiza uma linha de chamado (id clicável, nível, título, status, data)."""
+    _STATUS = {
+        "ABERTO": "\U0001f7e1 Aberto",
+        "EM_ATENDIMENTO": "\U0001f535 Em atendimento",
+        "RESOLVIDO": "✅ Resolvido",
+        "FECHADO": "⬛ Fechado",
+    }
+    _NIVEL_EMOJI = {"N1": "\U0001f535", "N2": "\U0001f534", "FORA_DE_ESCOPO": "\U0001f7e0"}
+    tid = int(t["id"])
+    nivel = t.get("nivel") or "—"
+    emoji = _NIVEL_EMOJI.get(nivel, "⚪")
+    auto_badge = " ✅" if t.get("auto_resolvido") else ""
+    c1, c2, c3, c4, c5 = st.columns([1.2, 0.7, 4.5, 1.8, 2])
+    with c1:
+        if st.button(ui.inc_id(tid), key=key_prefix + str(tid), use_container_width=True):
+            st.session_state["current_ticket_id"] = tid
+            st.session_state["ticket_origin"] = "dashboard"
+            st.switch_page("pages/5_Chamado.py")
+    with c2:
+        st.markdown('<span style="font-size:0.85rem;">' + emoji + " " + nivel + "</span>", unsafe_allow_html=True)
+    with c3:
+        st.markdown(
+            '<span style="font-size:0.85rem;color:#1A2E33;">'
+            + _html.escape(t["titulo"]) + auto_badge + "</span>",
+            unsafe_allow_html=True,
+        )
+    with c4:
+        st.markdown(
+            '<span style="font-size:0.82rem;">' + _STATUS.get(t["status"], t["status"]) + "</span>",
+            unsafe_allow_html=True,
+        )
+    with c5:
+        st.markdown(
+            '<span style="font-size:0.82rem;color:#5A7E88;">' + ui.fmt_dt(t.get("criado_em") or "") + "</span>",
+            unsafe_allow_html=True,
+        )
+
+
 def _dashboard():
     st.markdown(ui.welcome_banner_html("Analista"), unsafe_allow_html=True)
     st.markdown(ui.fab_html("Novo Chamado", "/novo"), unsafe_allow_html=True)
+
+    termo = st.text_input(
+        "Busca",
+        key="dash_busca",
+        placeholder="\U0001f50d  Buscar por ID (INC000007), t\xedtulo, categoria ou solicitante...",
+        label_visibility="collapsed",
+    )
 
     stats = db.stats_tickets()
     c1, c2, c3, c4, c5 = st.columns(5)
@@ -46,6 +92,25 @@ def _dashboard():
         st.markdown(ui.stat_card_html(f"{pct}%", "Auto-resolvidos pela IA", "#7B1FA2"), unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:22px'></div>", unsafe_allow_html=True)
+
+    # ── Modo busca: substitui gráficos + recentes pelos resultados ────────────
+    termo_limpo = (termo or "").strip()
+    if termo_limpo:
+        resultados = db.buscar_tickets(termo_limpo)
+        _termo_safe = _html.escape(termo_limpo)
+        st.markdown(
+            '<div class="result-label" style="margin-bottom:10px;">'
+            'Resultados da busca por "' + _termo_safe + '" \xb7 ' + str(len(resultados)) + ' encontrado(s)</div>',
+            unsafe_allow_html=True,
+        )
+        if not resultados:
+            st.info("Nenhum chamado encontrado. Tente outro termo (ID, t\xedtulo, categoria ou solicitante).")
+        else:
+            for t in resultados:
+                _render_ticket_row(t, "srch_")
+                st.divider()
+        ui.render_footer()
+        return
 
     # ── Seção de Gráficos (colapsável) ───────────────────────────────────────
     with st.expander("Análise de Chamados", expanded=False):
