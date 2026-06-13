@@ -645,7 +645,8 @@ BELGO_CSS = """
         color: rgba(255,255,255,0.38);
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        padding: 12px 18px 4px;
+        padding: 18px 18px 9px;
+        margin-top: 4px;
         font-family: 'Montserrat', sans-serif;
     }
     /* page_link dentro da sidebar dark */
