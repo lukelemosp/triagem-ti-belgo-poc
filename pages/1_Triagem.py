@@ -108,6 +108,10 @@ if "placeholder_idx" not in st.session_state:
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 st.markdown(ui.enter_to_submit_js(), unsafe_allow_html=True)
 st.markdown(ui.header_html(), unsafe_allow_html=True)
+st.markdown(ui.breadcrumb_html([
+    ("Dashboard", "/"),
+    ("Triagem IA", None),
+]), unsafe_allow_html=True)
 
 
 

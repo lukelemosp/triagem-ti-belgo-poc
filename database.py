@@ -1,6 +1,6 @@
 import sqlite3
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "belgo_ti.db"
@@ -177,6 +177,51 @@ def listar_tickets_recentes(limit: int = 20) -> list[dict]:
     )
 
 
+def buscar_tickets_avancado(texto: str = None, categoria: str = None, nivel=None,
+                            status=None, auto_resolvido: bool = None,
+                            periodo_dias: int = None, limit: int = 50) -> list[dict]:
+    """Busca por filtros estruturados (usada pela busca em linguagem natural).
+
+    Todos os filtros são opcionais; apenas os não-nulos entram no WHERE.
+    `nivel` e `status` aceitam str ou lista. `texto` faz LIKE em
+    título/descrição/categoria/nome/e-mail do solicitante.
+    """
+    where, params = [], []
+    if texto:
+        like = f"%{texto}%"
+        where.append(
+            "(t.titulo LIKE ? OR t.descricao LIKE ? OR t.categoria LIKE ? "
+            "OR u.nome LIKE ? OR u.email LIKE ?)"
+        )
+        params += [like, like, like, like, like]
+    if categoria:
+        where.append("t.categoria = ?")
+        params.append(categoria)
+    if nivel:
+        nivel = [nivel] if isinstance(nivel, str) else list(nivel)
+        where.append("t.nivel IN (" + ",".join("?" * len(nivel)) + ")")
+        params += nivel
+    if status:
+        status = [status] if isinstance(status, str) else list(status)
+        where.append("t.status IN (" + ",".join("?" * len(status)) + ")")
+        params += status
+    if auto_resolvido is not None:
+        where.append("t.auto_resolvido = ?")
+        params.append(1 if auto_resolvido else 0)
+    if periodo_dias:
+        where.append("t.criado_em >= datetime('now', ?)")
+        params.append(f"-{int(periodo_dias)} days")
+    sql = (
+        "SELECT t.*, u.nome AS solicitante_nome, u.email AS solicitante_email "
+        "FROM tickets t LEFT JOIN usuarios u ON t.criado_por = u.id"
+    )
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY t.criado_em DESC LIMIT ?"
+    params.append(limit)
+    return _rows(get_db().execute(sql, params).fetchall())
+
+
 def buscar_tickets(termo: str, limit: int = 50) -> list[dict]:
     """Busca tickets por ID (INC000123 ou 123), título, descrição, categoria,
     ou nome/e-mail do solicitante. Case-insensitive (ASCII)."""
@@ -248,6 +293,70 @@ def stats_tickets() -> dict:
     return dict(row) if row else {}
 
 
+# ── Seed de demonstração ────────────────────────────────────────────────────────
+
+def _dt_dias_atras(dias: int) -> str:
+    return (datetime.now(timezone.utc) - timedelta(days=dias)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _inserir_ticket_seed(t: dict) -> None:
+    """Insere um ticket de seed com criado_em/resolvido_em derivados de dias_atras."""
+    criado = _dt_dias_atras(t.get("dias_atras", 0))
+    status = t.get("status", "ABERTO")
+    encerrado = status in ("RESOLVIDO", "FECHADO")
+    resolvido_em = criado if encerrado else None
+    resolucao = t.get("sugestao_ia") if encerrado else None
+    usuario = buscar_usuario_por_email(t["email"]) if t.get("email") else None
+    criado_por = usuario["id"] if usuario else None
+    conn = get_db()
+    with conn:
+        conn.execute(
+            """INSERT INTO tickets
+               (titulo, descricao, status, nivel, categoria, confianca, criado_por,
+                resolucao, auto_resolvido, sugestao_ia, acao_ia, tempo_estimado,
+                criado_em, resolvido_em)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (t["titulo"], t["descricao"], status, t.get("nivel"), t.get("categoria"),
+             t.get("confianca"), criado_por, resolucao,
+             1 if t.get("auto_resolvido") else 0,
+             t.get("sugestao_ia"), t.get("acao_ia"), t.get("tempo_estimado"),
+             criado, resolvido_em),
+        )
+
+
+def seed_demo(force: bool = False) -> bool:
+    """Popula a massa de demonstração (banco efêmero).
+
+    Reseta para um estado conhecido (apaga tickets/usuários e recria) apenas
+    quando o total de tickets < 50, ou quando force=True. Idempotente depois:
+    chamadas seguintes não duplicam dados nem apagam chamados criados na demo.
+    """
+    import seed_data
+
+    total = stats_tickets().get("total") or 0
+    if total >= 50 and not force:
+        return False
+
+    conn = get_db()
+    with conn:
+        conn.execute("DELETE FROM tickets")
+        conn.execute("DELETE FROM usuarios")
+    # Reinicia os IDs (sqlite_sequence só existe após o 1º INSERT com AUTOINCREMENT)
+    try:
+        with conn:
+            conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('tickets','usuarios')")
+    except sqlite3.OperationalError:
+        pass
+
+    for u in seed_data.USUARIOS:
+        criar_usuario(u["nome"], u["email"], u["departamento"], u.get("ramal"))
+    for t in seed_data.TICKETS:
+        _inserir_ticket_seed(t)
+    return True
+
+
 if __name__ == "__main__":
     init_db()
+    inserido = seed_demo(force=True)
     print(f"DB inicializado em {DB_PATH}")
+    print(f"Seed aplicado: {inserido} | total de tickets: {stats_tickets().get('total')}")

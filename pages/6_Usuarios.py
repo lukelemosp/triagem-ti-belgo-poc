@@ -7,11 +7,31 @@ import ui_components as ui
 
 db.init_db()
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
-st.markdown(ui.header_html(
-    title="Gestão de Usuários",
-    subtitle="Cadastro de solicitantes para vinculação nos chamados",
-    tag="Admin",
-), unsafe_allow_html=True)
+
+# ── Sidebar dark (admin) + ajustes de layout ──────────────────────────────────
+ui.render_sidebar("usuarios")
+st.markdown("""
+<style>
+  [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }
+  div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Header compacto ───────────────────────────────────────────────────────────
+st.markdown(
+    '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">'
+    '<span style="display:inline-flex;align-items:center;justify-content:center;'
+    'background:#E6F4F1;color:#003B4A;border:2px solid #003B4A;border-radius:10px;'
+    'width:52px;height:52px;font-size:1.3rem;">\U0001f465</span>'
+    '<div>'
+    '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
+    'font-family:Montserrat,sans-serif;line-height:1.2;">Gest\xe3o de Usu\xe1rios</div>'
+    '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
+    'Cadastro de solicitantes para vincula\xe7\xe3o nos chamados</div>'
+    '</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
 
 # ── Inicializa states ─────────────────────────────────────────────────────────
 for k, v in [("editar_uid", None), ("confirmar_del", None), ("msg_ok", None), ("msg_err", None)]:

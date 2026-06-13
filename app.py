@@ -4,6 +4,7 @@ import plotly.express as px
 import streamlit as st
 import database as db
 import ui_components as ui
+import ai_agent as agent
 
 st.set_page_config(
     page_title="Belgo TI — Sistema de Chamados",
@@ -13,6 +14,7 @@ st.set_page_config(
 )
 
 db.init_db()
+db.seed_demo()  # popula massa de demonstração no banco efêmero (idempotente: só quando total < 50)
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 
 # ── Esconde sidebar ───────────────────────────────────────────────────────────
@@ -65,12 +67,12 @@ def _render_ticket_row(t, key_prefix):
 
 def _dashboard():
     st.markdown(ui.welcome_banner_html("Analista"), unsafe_allow_html=True)
-    st.markdown(ui.fab_html("Novo Chamado", "/novo"), unsafe_allow_html=True)
+    ui.render_fab("➕  Novo Chamado", "pages/2_Novo_Chamado.py")
 
     termo = st.text_input(
         "Busca",
         key="dash_busca",
-        placeholder="\U0001f50d  Buscar por ID (INC000007), t\xedtulo, categoria ou solicitante...",
+        placeholder="Pergunte em linguagem natural (ex.: chamados de VPN abertos) ou busque por ID...",
         label_visibility="collapsed",
     )
 
@@ -96,7 +98,19 @@ def _dashboard():
     # ── Modo busca: substitui gráficos + recentes pelos resultados ────────────
     termo_limpo = (termo or "").strip()
     if termo_limpo:
-        resultados = db.buscar_tickets(termo_limpo)
+        _key_ok = bool(agent.ANTHROPIC_KEY) and agent.ANTHROPIC_KEY != "cole_sua_chave_aqui"
+        usar_ia = _key_ok and agent.deve_usar_ia(termo_limpo)
+        explicacao = ""
+        if usar_ia:
+            with st.spinner("Interpretando sua busca com IA…"):
+                filtros = agent.interpretar_busca(termo_limpo)
+            explicacao = filtros.pop("explicacao", "")
+            resultados = db.buscar_tickets_avancado(**filtros)
+        else:
+            resultados = db.buscar_tickets(termo_limpo)
+
+        if explicacao:
+            st.markdown(ui.ai_search_chip_html(explicacao), unsafe_allow_html=True)
         _termo_safe = _html.escape(termo_limpo)
         st.markdown(
             '<div class="result-label" style="margin-bottom:10px;">'

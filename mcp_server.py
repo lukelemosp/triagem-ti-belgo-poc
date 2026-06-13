@@ -110,6 +110,41 @@ def consultar_chamado(ticket_id: int) -> dict:
 
 
 @mcp.tool()
+def buscar_chamados(consulta: str) -> dict:
+    """
+    Busca chamados a partir de uma consulta em LINGUAGEM NATURAL.
+
+    Uma IA (Claude Haiku) interpreta a intenção da consulta e a converte em
+    filtros estruturados (texto, categoria, nível, status, período, auto-resolução),
+    que são aplicados sobre a base de chamados. Ideal para perguntas como
+    "chamados de VPN ainda abertos", "tickets N2 resolvidos este mês" ou
+    "problemas de impressora da última semana".
+
+    Para busca por número de chamado (ex.: "INC000007"), prefira consultar_chamado.
+
+    Args:
+        consulta: Pergunta/descrição em linguagem natural do que se deseja encontrar.
+
+    Returns:
+        dict com: interpretacao (o que a IA entendeu), filtros (aplicados),
+        total (quantidade) e resultados (lista de tickets).
+    """
+    consulta = (consulta or "").strip()
+    if not consulta:
+        return {"erro": "Consulta não pode estar vazia."}
+
+    filtros = agent.interpretar_busca(consulta)
+    explicacao = filtros.pop("explicacao", "")
+    resultados = db.buscar_tickets_avancado(**filtros)
+    return {
+        "interpretacao": explicacao,
+        "filtros": filtros,
+        "total": len(resultados),
+        "resultados": resultados,
+    }
+
+
+@mcp.tool()
 def listar_fila(nivel: str) -> list[dict]:
     """
     Retorna os chamados pendentes (ABERTO ou EM_ATENDIMENTO) de uma fila.

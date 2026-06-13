@@ -340,11 +340,15 @@ BELGO_CSS = """
     header     { visibility: hidden; }
 
     [data-testid="stMainBlockContainer"] {
-        animation: belgo-fade-in 0.22s ease-out;
+        animation: belgo-fade-in 0.32s cubic-bezier(0.22,1,0.36,1);
     }
     @keyframes belgo-fade-in {
-        from { opacity: 0; transform: translateY(5px); }
+        from { opacity: 0; transform: translateY(8px); }
         to   { opacity: 1; transform: none; }
+    }
+    /* Resultados/cards entram com leve fade ao trocar de estado */
+    .result-card, .bq-table-header, [class*="st-key-qrow_"] {
+        animation: belgo-fade-in 0.3s cubic-bezier(0.22,1,0.36,1);
     }
 
     /* ── Botões de ID do dashboard (estilizados como links) ─────────────── */
@@ -509,13 +513,32 @@ BELGO_CSS = """
     }
     .st-key-dash_busca input {
         border-radius: 30px !important;
-        padding: 13px 20px !important;
+        padding: 13px 84px 13px 20px !important;
         font-family: 'Montserrat', sans-serif !important;
         font-size: 0.92rem !important;
         color: #1A2E33 !important;
     }
     .st-key-dash_busca input::placeholder {
         color: #7A9EA6 !important;
+    }
+    /* Selo "IA" indicando busca inteligente por linguagem natural */
+    .st-key-dash_busca::after {
+        content: "\2728 IA";
+        position: absolute;
+        top: 50%;
+        right: 14px;
+        transform: translateY(-50%);
+        background: linear-gradient(135deg, #7B1FA2 0%, #9C27B0 100%);
+        color: #FFFFFF;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        padding: 4px 10px;
+        border-radius: 20px;
+        pointer-events: none;
+        z-index: 6;
+        box-shadow: 0 2px 8px rgba(123,31,162,0.35);
     }
 
     /* ── Grid de categorias (cards estilo I Am Smart) ─────────────── */
@@ -720,31 +743,40 @@ BELGO_CSS = """
     }
 
     /* ── Botão CTA flutuante ──────────────────────────────────────── */
-    .belgo-fab {
+    /* ── FAB "Novo Chamado" — container fixo com page_link (SPA) ──── */
+    .st-key-belgo_fab {
         position: fixed;
         bottom: 28px; right: 28px;
-        background: #ED1C24;
-        color: white !important;
-        border: none;
-        border-radius: 28px;
-        padding: 14px 22px;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.88rem;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 4px 16px rgba(237,28,36,0.4);
-        display: flex;
-        align-items: center;
-        gap: 8px;
         z-index: 9980;
-        text-decoration: none !important;
-        transition: transform 0.15s, box-shadow 0.15s;
+        width: auto !important;
+        animation: belgo-fab-in 0.5s cubic-bezier(0.22,1,0.36,1) 0.15s both;
     }
-    .belgo-fab:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(237,28,36,0.5);
+    .st-key-belgo_fab [data-testid="stPageLink"] { margin: 0 !important; }
+    .st-key-belgo_fab [data-testid="stPageLink"] a {
+        background: #ED1C24 !important;
+        border-radius: 28px !important;
+        padding: 13px 24px !important;
+        box-shadow: 0 4px 16px rgba(237,28,36,0.42) !important;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease !important;
+        justify-content: center !important;
     }
-    .belgo-fab .fab-plus { font-size: 1.2rem; line-height: 1; }
+    .st-key-belgo_fab [data-testid="stPageLink"] a:hover {
+        background: #C8151C !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 10px 28px rgba(237,28,36,0.52) !important;
+    }
+    .st-key-belgo_fab [data-testid="stPageLink"] a p,
+    .st-key-belgo_fab [data-testid="stPageLink"] a span,
+    .st-key-belgo_fab [data-testid="stPageLink"] a div {
+        color: #FFFFFF !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+    }
+    @keyframes belgo-fab-in {
+        from { opacity: 0; transform: translateY(16px) scale(0.94); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
     /* ── Breadcrumb ───────────────────────────────────────────────── */
     .belgo-breadcrumb {
@@ -930,13 +962,28 @@ def breadcrumb_html(items: list) -> str:
     return '<div class="belgo-breadcrumb">' + "".join(parts) + '</div>'
 
 
-def fab_html(label: str, href: str) -> str:
-    """Botão de ação flutuante (canto inferior direito)."""
+def render_fab(label: str = "➕  Novo Chamado", page: str = "pages/2_Novo_Chamado.py") -> None:
+    """Botão de ação flutuante (canto inferior direito) com navegação SPA suave.
+
+    Usa st.page_link dentro de um container fixo (sem reload de página) e
+    animação de entrada (@keyframes belgo-fab-in).
+    """
+    with st.container(key="belgo_fab"):
+        st.page_link(page, label=label)
+
+
+def ai_search_chip_html(explicacao: str) -> str:
+    """Chip que mostra a interpretação da busca feita pela IA (gradiente roxo/IA)."""
+    safe = _html.escape((explicacao or "").strip())
+    txt = ("IA entendeu: " + safe) if safe else "Busca interpretada por IA"
     return (
-        '<a class="belgo-fab" href="' + href + '" target="_self">'
-        '<span class="fab-plus">+</span>'
-        + _html.escape(label) +
-        '</a>'
+        '<div style="display:inline-flex;align-items:center;gap:8px;'
+        'background:linear-gradient(135deg,#EDE7F6,#F3E5F5);'
+        'border:1px solid #CE93D8;border-radius:20px;padding:6px 15px;'
+        'margin-bottom:14px;font-family:Montserrat,sans-serif;font-size:0.8rem;'
+        'color:#6A1B9A;font-weight:600;">'
+        '<span>✨</span><span>' + txt + '</span>'
+        '</div>'
     )
 
 
@@ -1359,7 +1406,6 @@ def modal_arquitetura() -> None:
         unsafe_allow_html=True,
     )
     sk1, sk2, sk3 = st.columns(3, gap="small")
-    sk4, sk5, sk6 = st.columns(3, gap="small")
     with sk1:
         st.markdown(_skill_card(
             "Triagem Autom\xe1tica", "#003B4A", "IA Interna",
@@ -1378,6 +1424,7 @@ def modal_arquitetura() -> None:
             "10 presets de resolu\xe7\xe3o instant\xe2nea para categorias recorrentes — "
             "cria ticket resolvido sem chamar a IA, com SLA imediato.",
         ), unsafe_allow_html=True)
+    sk4, sk5, sk6, sk7 = st.columns(4, gap="small")
     with sk4:
         st.markdown(_skill_card(
             "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
@@ -1401,6 +1448,14 @@ def modal_arquitetura() -> None:
             "#7B1FA2", "MCP Skill",
             "Lista chamados pendentes na fila N1 ou N2 com status, confian\xe7a e "
             "categoria — permite orquestrar prioridades entre agentes.",
+        ), unsafe_allow_html=True)
+    with sk7:
+        st.markdown(_skill_card(
+            "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
+            "padding:1px 6px;font-size:0.8rem;\">buscar_chamados</code>",
+            "#7B1FA2", "MCP Skill \xb7 IA",
+            "Busca por linguagem natural: a IA (Claude Haiku) interpreta a inten\xe7\xe3o "
+            "e a converte em filtros de status, n\xedvel, categoria e per\xedodo.",
         ), unsafe_allow_html=True)
 
     st.markdown(
