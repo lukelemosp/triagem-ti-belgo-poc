@@ -61,16 +61,15 @@ _usuarios = db.listar_usuarios()
 _sol_opcoes = ["Todos"] + [u["nome"] for u in _usuarios]
 _sol_por_nome = {u["nome"]: u for u in _usuarios}
 
-_f1, _f2, _f3 = st.columns([2, 1, 1])
+_f1, _f2, _f3 = st.columns([2, 1, 1], vertical_alignment="bottom")
 with _f1:
-    _busca = st.text_input("Busca", placeholder="Buscar por título, descrição ou ID…",
-                           key="ch_busca", label_visibility="collapsed")
+    _busca = st.text_input("Buscar", placeholder="Título, descrição ou ID…", key="ch_busca")
 with _f2:
     _periodo = st.selectbox("Período", list(_DIAS_MAP.keys()), index=0, key="ch_periodo")
 with _f3:
     _solic = st.selectbox("Solicitante", _sol_opcoes, index=0, key="ch_solic")
 
-_f4, _f5, _f6 = st.columns(3)
+_f4, _f5, _f6 = st.columns(3, vertical_alignment="bottom")
 with _f4:
     _status_sel = st.multiselect("Status", _STATUS_OPC, default=[],
                                  format_func=lambda x: _STATUS_LBL[x], key="ch_status",

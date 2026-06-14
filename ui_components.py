@@ -1029,10 +1029,10 @@ def render_sidebar(active_page: str = "") -> None:
 def render_filtros_fila(tickets: list, key_prefix: str) -> list:
     """Renderiza filtros (busca, categoria, status, ordenação) e retorna a lista filtrada."""
     cats = sorted({t.get("categoria") for t in tickets if t.get("categoria")})
-    f1, f2, f3, f4 = st.columns([2, 1, 1, 1])
+    f1, f2, f3, f4 = st.columns([2, 1, 1, 1], vertical_alignment="bottom")
     with f1:
-        busca = st.text_input("Busca", placeholder="Buscar t\xedtulo ou ID…",
-                              key=key_prefix + "_busca", label_visibility="collapsed")
+        busca = st.text_input("Buscar", placeholder="T\xedtulo ou ID…",
+                              key=key_prefix + "_busca")
     with f2:
         cat = st.selectbox("Categoria", ["Todas"] + cats,
                            format_func=lambda x: "Todas" if x == "Todas" else fmt_categoria(x),

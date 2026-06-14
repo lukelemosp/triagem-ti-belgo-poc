@@ -144,6 +144,9 @@ def atualizar_usuario(uid: int, nome: str, email: str, departamento: str, ramal:
 def deletar_usuario(uid: int) -> bool:
     conn = get_db()
     with conn:
+        # Desvincula chamados do solicitante antes de remover (evita violação de FK)
+        conn.execute("UPDATE tickets SET criado_por=NULL WHERE criado_por=?", (uid,))
+        conn.execute("UPDATE tickets SET atribuido_para=NULL WHERE atribuido_para=?", (uid,))
         cur = conn.execute("DELETE FROM usuarios WHERE id=?", (uid,))
     return cur.rowcount > 0
 

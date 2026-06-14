@@ -45,6 +45,39 @@ for k, v in [("editar_uid", None), ("confirmar_del", None), ("msg_ok", None), ("
     if k not in st.session_state:
         st.session_state[k] = v
 
+
+@st.dialog("Editar usuário")
+def _editar_usuario_dialog(u):
+    with st.form("form_edit_dialog"):
+        nome = st.text_input("Nome completo *", value=u["nome"])
+        email = st.text_input("E-mail *", value=u["email"])
+        depto = st.text_input("Departamento *", value=u["departamento"])
+        ramal = st.text_input("Ramal", value=u.get("ramal") or "")
+        senha = st.text_input("Senha *", value=u.get("senha") or "",
+                              help="Vis\xedvel em texto (POC). Edite para alterar.")
+        admin = st.checkbox("Administrador", value=bool(u.get("is_admin")))
+        st.caption("\\* campos obrigat\xf3rios")
+        _cs, _cc = st.columns(2)
+        with _cs:
+            salvar = st.form_submit_button("Salvar", type="primary", use_container_width=True)
+        with _cc:
+            cancelar = st.form_submit_button("Cancelar", use_container_width=True)
+    if cancelar:
+        st.rerun()
+    if salvar:
+        _faltam = [c for c, v in [("Nome", nome), ("E-mail", email),
+                                  ("Departamento", depto), ("Senha", senha)] if not (v or "").strip()]
+        if _faltam:
+            st.warning("Preencha: " + ", ".join(_faltam) + ".")
+        else:
+            try:
+                db.atualizar_usuario(u["id"], nome.strip(), email.strip().lower(), depto.strip(),
+                                     ramal.strip() or None, senha=senha.strip(), is_admin=admin)
+                st.session_state.msg_ok = f"Usuário #{u['id']} atualizado."
+                st.rerun()
+            except Exception as e:
+                st.warning(f"Erro ao salvar (e-mail já existe?): {e}")
+
 # Exibe mensagem de feedback (sucesso/erro) e limpa logo depois
 if st.session_state.msg_ok:
     st.success(st.session_state.msg_ok)
@@ -84,8 +117,7 @@ with aba_lista:
                     )
                 with c_edit:
                     if st.button("✏️", key=f"edit_{uid}", help="Editar"):
-                        st.session_state.editar_uid = uid
-                        st.rerun()
+                        _editar_usuario_dialog(u)
                 with c_del:
                     if st.session_state.confirmar_del == uid:
                         if st.button("✅ Confirmar", key=f"del_ok_{uid}"):
@@ -97,44 +129,6 @@ with aba_lista:
                         if st.button("🗑️", key=f"del_{uid}", help="Remover"):
                             st.session_state.confirmar_del = uid
                             st.rerun()
-
-    # ── Painel de edição inline ──────────────────────────────────────────────
-    if st.session_state.editar_uid:
-        uid = st.session_state.editar_uid
-        u = db.buscar_usuario_por_id(uid)
-        if u:
-            st.markdown(f"### Editar usuário #{uid}")
-            with st.form(f"form_edit_{uid}"):
-                nome = st.text_input("Nome completo *", value=u["nome"])
-                email = st.text_input("E-mail *", value=u["email"])
-                depto = st.text_input("Departamento *", value=u["departamento"])
-                ramal = st.text_input("Ramal", value=u.get("ramal") or "")
-                senha = st.text_input("Senha *", value=u.get("senha") or "",
-                                      help="Vis\xedvel em texto (POC). Edite para alterar.")
-                admin = st.checkbox("Administrador", value=bool(u.get("is_admin")))
-                st.caption("* campos obrigat\xf3rios")
-                c_save, c_cancel = st.columns(2)
-                with c_save:
-                    salvar = st.form_submit_button("Salvar", type="primary", use_container_width=True)
-                with c_cancel:
-                    cancelar = st.form_submit_button("Cancelar", use_container_width=True)
-            if salvar:
-                _faltam = [c for c, v in [("Nome", nome), ("E-mail", email),
-                                          ("Departamento", depto), ("Senha", senha)] if not v.strip()]
-                if _faltam:
-                    st.session_state.msg_err = "Preencha: " + ", ".join(_faltam) + "."
-                else:
-                    try:
-                        db.atualizar_usuario(uid, nome.strip(), email.strip().lower(), depto.strip(),
-                                             ramal.strip() or None, senha=senha.strip(), is_admin=admin)
-                        st.session_state.editar_uid = None
-                        st.session_state.msg_ok = f"Usuário #{uid} atualizado."
-                        st.rerun()
-                    except Exception as e:
-                        st.session_state.msg_err = f"Erro ao salvar: {e}"
-            if cancelar:
-                st.session_state.editar_uid = None
-                st.rerun()
 
 # ── Aba: Novo usuário (sem st.form, para o olho funcionar ao vivo) ────────────
 with aba_novo:

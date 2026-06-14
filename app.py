@@ -59,6 +59,35 @@ _IS_ADMIN = bool(_USER.get("is_admin"))
 _PRIMEIRO_NOME = (_USER.get("nome") or "Usu\xe1rio").split()[0]
 
 
+# ── Modal do chat analítico (skill conversar_sobre_chamados) ──────────────────
+@st.dialog("💬 Assistente de IA — Chamados", width="large")
+def _chat_dialog():
+    st.caption("Pergunte sobre a base de chamados: contagens, \xfaltimo chamado, rankings, "
+               "por categoria/n\xedvel/status. Pressione Enter para enviar.")
+    with st.form("chat_form", clear_on_submit=True):
+        _ci, _cb = st.columns([5, 1], vertical_alignment="bottom")
+        with _ci:
+            _perg = st.text_input("Pergunta", label_visibility="collapsed",
+                                  placeholder="Ex.: quantos chamados N2 est\xe3o abertos?")
+        with _cb:
+            _enviar = st.form_submit_button("Enviar", type="primary", use_container_width=True)
+    if _enviar and _perg.strip():
+        with st.spinner("Consultando a base com IA…"):
+            _resp = agent.conversar_sobre_chamados(_perg.strip(), st.session_state.get("chat_hist", []))
+        st.session_state.chat_hist.append({"role": "user", "content": _perg.strip()})
+        st.session_state.chat_hist.append({"role": "assistant", "content": _resp})
+    if st.session_state.get("chat_hist"):
+        with st.container(height=360):
+            for _m in st.session_state.chat_hist:
+                with st.chat_message("user" if _m["role"] == "user" else "assistant"):
+                    st.markdown(_m["content"])
+        if st.button("🗑️ Limpar conversa"):
+            st.session_state.chat_hist = []
+            st.rerun()
+    else:
+        st.info("Nenhuma pergunta ainda. Experimente: \"qual o \xfaltimo chamado aberto?\"")
+
+
 # ── Definição das páginas ─────────────────────────────────────────────────────
 def _render_ticket_row(t, key_prefix):
     """Renderiza uma linha de chamado (id clicável, nível, título, status, data)."""
@@ -163,35 +192,18 @@ def _dashboard():
 
     # ── Seção de Gráficos (colapsável) ───────────────────────────────────────
     with st.expander("Análise de Chamados", expanded=False):
-        # ── Chat analítico (skill MCP: conversar_sobre_chamados) ──────────────
+        # ── Chat analítico (skill MCP: conversar_sobre_chamados) — em modal ────
         st.markdown(
             '<div class="result-label" style="margin-bottom:8px;">'
-            '💬 Pergunte à IA sobre os chamados</div>',
+            '💬 Assistente de IA sobre os chamados</div>',
             unsafe_allow_html=True,
         )
         if "chat_hist" not in st.session_state:
             st.session_state.chat_hist = []
-        _cg_in, _cg_btn, _cg_clr = st.columns([5, 1, 1])
-        with _cg_in:
-            _pergunta = st.text_input(
-                "Pergunta IA", key="chat_input",
-                placeholder="Ex.: qual o último chamado? quantos N2 estão abertos?",
-                label_visibility="collapsed",
-            )
-        with _cg_btn:
-            _perguntar = st.button("Perguntar", key="chat_ask", use_container_width=True, type="primary")
-        with _cg_clr:
-            if st.button("Limpar", key="chat_clear", use_container_width=True):
-                st.session_state.chat_hist = []
-                st.rerun()
-        if _perguntar and _pergunta.strip():
-            with st.spinner("Consultando a base com IA…"):
-                _resp = agent.conversar_sobre_chamados(_pergunta.strip(), st.session_state.chat_hist)
-            st.session_state.chat_hist.append({"role": "user", "content": _pergunta.strip()})
-            st.session_state.chat_hist.append({"role": "assistant", "content": _resp})
-        for _m in st.session_state.chat_hist[-8:]:
-            with st.chat_message("user" if _m["role"] == "user" else "assistant"):
-                st.markdown(_m["content"])
+        if st.button("💬  Abrir assistente de IA", key="chat_open", use_container_width=False):
+            _chat_dialog()
+        if st.session_state.chat_hist:
+            st.caption(str(len(st.session_state.chat_hist) // 2) + " pergunta(s) nesta sessão.")
         st.markdown("<hr style='border:none;border-top:1px solid #E2EEF0;margin:14px 0;'>", unsafe_allow_html=True)
 
         _DIAS_MAP = {
@@ -208,86 +220,40 @@ def _dashboard():
             "FECHADO": "Fechado",
         }
 
-        # ── Cliques nos gráficos alteram os filtros (via callbacks de on_select) ──
-        _STATUS_LABEL_TO_ENUM = {v: k for k, v in _STATUS_LABELS.items()}
-        _NIVEL_LABEL_TO_ENUM = {v: k for k, v in _NIVEL_LABELS.items()}
         _CAT_ENUMS = [
             "RESET_SENHA", "VPN_RECONEXAO", "IMPRESSORA_OFFLINE", "EMAIL_SYNC_CELULAR",
             "TEAMS_AUDIO", "OUTLOOK_CAIXA_CHEIA", "WIFI_RECONEXAO", "SAP_LOGIN_LENTO",
             "EXCEL_TRAVA", "WINDOWS_UPDATE_AVISO", "OUTRO",
         ]
-        _CAT_LABEL_TO_ENUM = {ui.fmt_categoria(c): c for c in _CAT_ENUMS}
 
-        def _pts(gkey):
-            sel = st.session_state.get(gkey)
-            if isinstance(sel, dict):
-                return sel.get("selection", {}).get("points", []) or []
-            return []
-
-        def _cb_cat_label():
-            p = _pts("g_cat")
-            if p:
-                lbl = p[0].get("label")
-                st.session_state["dash_cat_sel"] = (
-                    None if lbl in (None, "Sem categoria") else _CAT_LABEL_TO_ENUM.get(lbl)
-                )
-
-        def _cb_cat_y():
-            p = _pts("g_conf")
-            if p:
-                st.session_state["dash_cat_sel"] = _CAT_LABEL_TO_ENUM.get(p[0].get("y"))
-
-        def _cb_status():
-            p = _pts("g_status")
-            if p:
-                e = _STATUS_LABEL_TO_ENUM.get(p[0].get("x"))
-                if e:
-                    st.session_state["dash_status"] = [e]
-
-        def _cb_nivel():
-            p = _pts("g_nivel")
-            if p:
-                e = _NIVEL_LABEL_TO_ENUM.get(p[0].get("y"))
-                if e:
-                    st.session_state["dash_nivel"] = [e]
-
-        _fk1, _fk2, _fk3 = st.columns(3)
+        # Filtros (controlam todos os gráficos abaixo)
+        _fk1, _fk2 = st.columns(2)
         with _fk1:
             _periodo = st.selectbox(
                 "Período", list(_DIAS_MAP.keys()), index=1, key="dash_periodo"
             )
         with _fk2:
+            _cat_box = st.selectbox(
+                "Categoria", ["Todas"] + _CAT_ENUMS,
+                format_func=lambda x: "Todas" if x == "Todas" else ui.fmt_categoria(x),
+                key="dash_cat",
+            )
+        _fk3, _fk4 = st.columns(2)
+        with _fk3:
             _niveis_sel = st.multiselect(
                 "Nível", list(_NIVEL_LABELS.keys()),
                 default=list(_NIVEL_LABELS.keys()),
                 format_func=lambda x: _NIVEL_LABELS[x],
                 key="dash_nivel",
             )
-        with _fk3:
+        with _fk4:
             _status_sel = st.multiselect(
                 "Status", list(_STATUS_LABELS.keys()),
                 default=list(_STATUS_LABELS.keys()),
                 format_func=lambda x: _STATUS_LABELS[x],
                 key="dash_status",
             )
-
-        # Filtro de categoria vindo de clique no gráfico (chip com limpar)
-        _cat_sel = st.session_state.get("dash_cat_sel")
-        if _cat_sel:
-            _chip_c, _chip_b = st.columns([4, 1])
-            with _chip_c:
-                st.markdown(
-                    '<div style="display:inline-flex;align-items:center;gap:8px;'
-                    'background:#E6F4F1;border:1px solid #A8C8D0;border-radius:20px;'
-                    'padding:5px 14px;font-family:Montserrat,sans-serif;font-size:0.8rem;'
-                    'color:#003B4A;font-weight:600;margin:4px 0 8px;">'
-                    '\U0001f4ca Categoria: <strong>' + ui.fmt_categoria(_cat_sel) + '</strong></div>',
-                    unsafe_allow_html=True,
-                )
-            with _chip_b:
-                if st.button("✕ Limpar", key="clr_cat", use_container_width=True):
-                    st.session_state["dash_cat_sel"] = None
-                    st.rerun()
+        _cat_sel = None if _cat_box == "Todas" else _cat_box
 
         _raw = db.listar_tickets_graficos(_DIAS_MAP[_periodo])
         _df = pd.DataFrame(_raw) if _raw else pd.DataFrame()
@@ -334,7 +300,7 @@ def _dashboard():
                     hovertemplate="<b>%{label}</b><br>%{value} chamados (%{percent})<extra></extra>",
                 )
                 _fig1.update_layout(**_CHART_LAYOUT, showlegend=False)
-                st.plotly_chart(_fig1, use_container_width=True, on_select=_cb_cat_label, key="g_cat")
+                st.plotly_chart(_fig1, use_container_width=True)
 
             # Barras verticais — Chamados por Status
             with _gc2:
@@ -359,7 +325,7 @@ def _dashboard():
                     hovertemplate="<b>%{x}</b><br>%{y} chamados<extra></extra>",
                 )
                 _fig2.update_layout(**_CHART_LAYOUT, showlegend=False)
-                st.plotly_chart(_fig2, use_container_width=True, on_select=_cb_status, key="g_status")
+                st.plotly_chart(_fig2, use_container_width=True)
 
             _gc3, _gc4 = st.columns(2)
 
@@ -392,7 +358,7 @@ def _dashboard():
                         hovertemplate="<b>%{y}</b><br>Confiança: %{x:.1f}%<extra></extra>",
                     )
                     _fig3.update_layout(**_CHART_LAYOUT, coloraxis_showscale=False)
-                    st.plotly_chart(_fig3, use_container_width=True, on_select=_cb_cat_y, key="g_conf")
+                    st.plotly_chart(_fig3, use_container_width=True)
 
             # Barras horizontais empilhadas — Resolução por Nível
             with _gc4:
@@ -422,7 +388,7 @@ def _dashboard():
                     hovertemplate="<b>%{y}</b> — %{fullData.name}<br>%{x} chamados<extra></extra>",
                 )
                 _fig4.update_layout(**_CHART_LAYOUT)
-                st.plotly_chart(_fig4, use_container_width=True, on_select=_cb_nivel, key="g_nivel")
+                st.plotly_chart(_fig4, use_container_width=True)
 
     # ── Divisor antes da tabela ───────────────────────────────────────────────
     st.markdown(
