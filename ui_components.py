@@ -500,10 +500,10 @@ BELGO_CSS = """
     }
     /* Barra de busca real (st.text_input key=dash_busca), posicionada DENTRO do banner */
     .st-key-dash_busca {
-        margin-top: -56px;
+        margin-top: -70px;
         margin-left: 40px;
         margin-right: 40px;
-        margin-bottom: 28px;
+        margin-bottom: 30px;
         position: relative;
         z-index: 5;
         max-width: 520px;
