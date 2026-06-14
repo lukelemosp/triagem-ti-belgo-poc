@@ -263,7 +263,7 @@ with col_form:
 
     st.markdown(ui.section_header_html(2, "Descreva o problema"), unsafe_allow_html=True)
 
-    st.markdown("**T\xedtulo do chamado:**")
+    st.markdown("**T\xedtulo do chamado** <span style='color:#ED1C24;'>*</span>", unsafe_allow_html=True)
     titulo = st.text_input(
         "T\xedtulo",
         key="nc_titulo_" + str(st.session_state.nc_input_key),
@@ -272,7 +272,7 @@ with col_form:
         disabled=st.session_state.nc_processando,
     )
 
-    st.markdown("**Descri\xe7\xe3o detalhada:**")
+    st.markdown("**Descri\xe7\xe3o detalhada** <span style='color:#ED1C24;'>*</span>", unsafe_allow_html=True)
     descricao = st.text_area(
         "Descri\xe7\xe3o",
         key="nc_desc_" + str(st.session_state.nc_input_key),
@@ -292,7 +292,7 @@ with col_form:
     )
 
     st.markdown(ui.section_header_html(3, "Identifica\xe7\xe3o"), unsafe_allow_html=True)
-    st.markdown("**Solicitante:**")
+    st.markdown("**Solicitante** <span style='color:#7A9EA6;font-weight:400;'>(opcional)</span>", unsafe_allow_html=True)
     st.selectbox(
         "Solicitante",
         opcoes_usuario,
@@ -301,6 +301,11 @@ with col_form:
         disabled=st.session_state.nc_processando,
     )
 
+    st.markdown(
+        "<div style=\"font-size:0.74rem;color:#7A9EA6;font-family:Montserrat,sans-serif;margin:6px 0;\">"
+        "<span style='color:#ED1C24;'>*</span> campos obrigat\xf3rios</div>",
+        unsafe_allow_html=True,
+    )
     btn_abrir = st.button(
         "\U0001f4cb  Abrir chamado e classificar",
         type="primary",
@@ -319,6 +324,11 @@ with col_steps:
     ]), unsafe_allow_html=True)
 
 with col_result:
+    # Feedback de campos obrigatórios faltando
+    if btn_abrir and not (titulo.strip() and descricao.strip()) and not st.session_state.nc_processando:
+        _faltam = [c for c, v in [("T\xedtulo", titulo), ("Descri\xe7\xe3o", descricao)] if not v.strip()]
+        st.warning("Preencha os campos obrigat\xf3rios: " + ", ".join(_faltam) + ".")
+
     # Fase 1: captura clique
     if btn_abrir and titulo.strip() and descricao.strip() and not st.session_state.nc_processando:
         if len(descricao.strip()) > _MAX_LEN:

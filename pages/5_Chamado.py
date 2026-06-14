@@ -31,8 +31,13 @@ if not ticket:
 
 # ── Breadcrumb (origem dinâmica) ──────────────────────────────────────────────
 _origem = st.session_state.get("ticket_origin", "")
-_origin_label = "Fila N2" if _origem == "n2" else "Fila N1" if _origem == "n1" else "Dashboard"
-_origin_href = "/n2" if _origem == "n2" else "/n1" if _origem == "n1" else "/"
+_ORIG_MAP = {
+    "n2": ("Fila N2", "/n2"),
+    "n1": ("Fila N1", "/n1"),
+    "chamados": ("Chamados", "/chamados"),
+    "dashboard": ("Dashboard", "/"),
+}
+_origin_label, _origin_href = _ORIG_MAP.get(_origem, ("Dashboard", "/"))
 _inc_str = ui.inc_id(ticket_id)
 st.markdown(ui.breadcrumb_html([
     (_origin_label, _origin_href),
@@ -96,15 +101,15 @@ with col_acao:
 
 st.markdown("<br>", unsafe_allow_html=True)
 _origin = st.session_state.get("ticket_origin", "")
-_label = "← Voltar \xe0 Fila N2" if _origin == "n2" else "← Voltar \xe0 Fila N1" if _origin == "n1" else "← Voltar ao Dashboard"
+_VOLTA = {
+    "n2": ("← Voltar \xe0 Fila N2", "pages/4_Fila_N2.py"),
+    "n1": ("← Voltar \xe0 Fila N1", "pages/3_Fila_N1.py"),
+    "chamados": ("← Voltar aos Chamados", "pages/7_Chamados.py"),
+}
+_label, _destino = _VOLTA.get(_origin, ("← Voltar ao Dashboard", None))
 if st.button(_label):
     st.session_state.pop("ticket_origin", None)
     st.session_state.pop("current_ticket_id", None)
-    if _origin == "n2":
-        st.switch_page("pages/4_Fila_N2.py")
-    elif _origin == "n1":
-        st.switch_page("pages/3_Fila_N1.py")
-    else:
-        st.switch_page(st.session_state.get("_p_home", "pages/3_Fila_N1.py"))
+    st.switch_page(_destino or st.session_state.get("_p_home", "pages/3_Fila_N1.py"))
 
 ui.render_footer()

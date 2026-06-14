@@ -145,6 +145,30 @@ def buscar_chamados(consulta: str) -> dict:
 
 
 @mcp.tool()
+def conversar_sobre_chamados(pergunta: str) -> dict:
+    """
+    Responde uma pergunta em LINGUAGEM NATURAL exclusivamente sobre a base de
+    chamados (analítico/conversacional). Ex.: "qual o último chamado aberto?",
+    "quantos chamados N2 estão pendentes?", "quais categorias mais aparecem?".
+
+    Uma IA recebe um resumo estatístico + a lista de chamados e responde em texto.
+    Diferente de buscar_chamados (que retorna uma lista filtrada), esta tool
+    retorna uma resposta textual analítica.
+
+    Args:
+        pergunta: Pergunta em linguagem natural sobre os chamados.
+
+    Returns:
+        dict com a pergunta e a resposta textual da IA.
+    """
+    pergunta = (pergunta or "").strip()
+    if not pergunta:
+        return {"erro": "A pergunta não pode estar vazia."}
+    resposta = agent.conversar_sobre_chamados(pergunta)
+    return {"pergunta": pergunta, "resposta": resposta}
+
+
+@mcp.tool()
 def listar_fila(nivel: str) -> list[dict]:
     """
     Retorna os chamados pendentes (ABERTO ou EM_ATENDIMENTO) de uma fila.

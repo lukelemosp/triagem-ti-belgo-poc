@@ -67,7 +67,8 @@ tickets = db.listar_fila("N2")
 if not tickets:
     st.info("Nenhum chamado pendente na fila N2 no momento.")
 else:
-    st.caption(f"{len(tickets)} chamado(s) pendente(s)")
+    _filtrados = ui.render_filtros_fila(tickets, "fl_n2")
+    st.caption(f"{len(_filtrados)} de {len(tickets)} chamado(s) pendente(s)")
 
     st.markdown(
         '<div class="bq-table-header" style="grid-template-columns:' + _GRID_TPL + ';">'
@@ -81,7 +82,10 @@ else:
         unsafe_allow_html=True,
     )
 
-    for t in tickets:
+    if not _filtrados:
+        st.info("Nenhum chamado para os filtros selecionados.")
+
+    for t in _filtrados:
         tid = t["id"]
         confianca = t.get("confianca") or 0
         # N2 com baixa confiança merece destaque — pode ser escalação incerta

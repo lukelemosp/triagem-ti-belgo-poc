@@ -506,7 +506,7 @@ BELGO_CSS = """
         margin-bottom: 30px;
         position: relative;
         z-index: 5;
-        max-width: 520px;
+        max-width: 600px;
     }
     .st-key-dash_busca div[data-baseweb="input"] {
         border-radius: 30px !important;
@@ -799,8 +799,82 @@ BELGO_CSS = """
     }
     .belgo-breadcrumb a:hover { text-decoration: underline; }
     .belgo-breadcrumb-sep { color: #C5D8DC; }
+
+    /* ── Tela de login ────────────────────────────────────────────── */
+    .st-key-login_box {
+        background: #FFFFFF;
+        border-radius: 14px;
+        border-top: 5px solid #ED1C24;
+        box-shadow: 0 14px 44px rgba(0,59,74,0.20);
+        padding: 30px 34px 18px !important;
+        margin-top: 7vh;
+    }
+    .belgo-login-head { text-align: center; margin-bottom: 18px; }
+    .belgo-login-title {
+        font-size: 1.35rem; font-weight: 800; color: #003B4A;
+        font-family: 'Montserrat', sans-serif; margin-top: 14px; line-height: 1.2;
+    }
+    .belgo-login-sub {
+        font-size: 0.85rem; color: #5A7E88; font-family: 'Montserrat', sans-serif;
+        margin-top: 4px;
+    }
+    .belgo-login-hint {
+        text-align: center; font-size: 0.74rem; color: #7A9EA6;
+        font-family: 'Montserrat', sans-serif; margin-top: 6px;
+    }
+
+    /* ── Topbar de sessão (saudação + Sair) ───────────────────────── */
+    div[data-key="btn_logout"] > button {
+        background: transparent !important;
+        border: 1.5px solid #D6E2E5 !important;
+        color: #003B4A !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        padding: 4px 14px !important;
+    }
+    div[data-key="btn_logout"] > button:hover {
+        background: #FEE8E8 !important;
+        border-color: #ED1C24 !important;
+        color: #ED1C24 !important;
+    }
+    .belgo-userchip {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-family: 'Montserrat', sans-serif; font-size: 0.82rem;
+        color: #5A7E88; padding-top: 6px;
+    }
+    .belgo-userchip strong { color: #003B4A; font-weight: 700; }
+    .belgo-userchip .role-badge {
+        background: #E6F4F1; color: #003B4A; border: 1px solid #A8C8D0;
+        border-radius: 12px; padding: 1px 9px; font-size: 0.66rem; font-weight: 700;
+    }
+    .belgo-userchip .role-badge.admin { background: #FEE8E8; color: #ED1C24; border-color: #ED1C24; }
 </style>
 """
+
+
+def login_header_html() -> str:
+    logo = f'<div>{_LOGO_SVG}</div>' if _LOGO_SVG else ""
+    return (
+        '<div class="belgo-login-head">'
+        + logo +
+        '<div class="belgo-login-title">Sistema de Chamados TI</div>'
+        '<div class="belgo-login-sub">Belgo Arames &middot; acesso restrito</div>'
+        '</div>'
+    )
+
+
+def userchip_html(nome: str, is_admin: bool) -> str:
+    primeiro = _html.escape((nome or "").split()[0] if nome else "")
+    cls = "role-badge admin" if is_admin else "role-badge"
+    papel = "Admin" if is_admin else "Colaborador"
+    return (
+        '<div class="belgo-userchip">'
+        '\U0001f464 <strong>' + primeiro + '</strong>'
+        '<span class="' + cls + '">' + papel + '</span>'
+        '</div>'
+    )
 
 
 def header_html(title: str = "Agente de Triagem TI", subtitle: str = None, tag: str = None) -> str:
@@ -946,9 +1020,57 @@ def render_sidebar(active_page: str = "") -> None:
         st.markdown('<div class="belgo-sidebar-section">Filas</div>', unsafe_allow_html=True)
         st.page_link("pages/3_Fila_N1.py", label="\U0001f535  Fila N1")
         st.page_link("pages/4_Fila_N2.py", label="\U0001f534  Fila N2")
+        st.page_link("pages/7_Chamados.py", label="\U0001f4c2  Chamados")
         st.markdown('<div class="belgo-sidebar-section">Admin</div>', unsafe_allow_html=True)
         st.page_link("pages/6_Usuarios.py", label="\U0001f465  Usu\xe1rios")
         st.page_link("pages/1_Triagem.py", label="\U0001f916  Triagem IA")
+
+
+def render_filtros_fila(tickets: list, key_prefix: str) -> list:
+    """Renderiza filtros (busca, categoria, status, ordenação) e retorna a lista filtrada."""
+    cats = sorted({t.get("categoria") for t in tickets if t.get("categoria")})
+    f1, f2, f3, f4 = st.columns([2, 1, 1, 1])
+    with f1:
+        busca = st.text_input("Busca", placeholder="Buscar t\xedtulo ou ID…",
+                              key=key_prefix + "_busca", label_visibility="collapsed")
+    with f2:
+        cat = st.selectbox("Categoria", ["Todas"] + cats,
+                           format_func=lambda x: "Todas" if x == "Todas" else fmt_categoria(x),
+                           key=key_prefix + "_cat")
+    with f3:
+        _ST = {"Todos": "Todos", "ABERTO": "Aberto", "EM_ATENDIMENTO": "Em atendimento"}
+        st_opt = st.selectbox("Status", list(_ST.keys()), format_func=lambda x: _ST[x],
+                              key=key_prefix + "_st")
+    with f4:
+        ordem = st.selectbox("Ordenar",
+                             ["Mais recentes", "Mais antigos", "Maior confian\xe7a", "Menor confian\xe7a"],
+                             key=key_prefix + "_ord")
+
+    out = list(tickets)
+    if busca.strip():
+        q = busca.strip().lower()
+        digits = "".join(c for c in q if c.isdigit())
+
+        def _match(t):
+            if q in (t.get("titulo") or "").lower():
+                return True
+            return bool(digits) and str(t.get("id")) == str(int(digits))
+
+        out = [t for t in out if _match(t)]
+    if cat != "Todas":
+        out = [t for t in out if t.get("categoria") == cat]
+    if st_opt != "Todos":
+        out = [t for t in out if t.get("status") == st_opt]
+
+    if ordem == "Mais recentes":
+        out.sort(key=lambda t: t.get("criado_em") or "", reverse=True)
+    elif ordem == "Mais antigos":
+        out.sort(key=lambda t: t.get("criado_em") or "")
+    elif ordem == "Maior confian\xe7a":
+        out.sort(key=lambda t: t.get("confianca") or 0, reverse=True)
+    else:
+        out.sort(key=lambda t: t.get("confianca") or 0)
+    return out
 
 
 def breadcrumb_html(items: list) -> str:
@@ -1428,7 +1550,7 @@ def modal_arquitetura() -> None:
             "10 presets de resolu\xe7\xe3o instant\xe2nea para categorias recorrentes — "
             "cria ticket resolvido sem chamar a IA, com SLA imediato.",
         ), unsafe_allow_html=True)
-    sk4, sk5, sk6, sk7 = st.columns(4, gap="small")
+    sk4, sk5, sk6 = st.columns(3, gap="small")
     with sk4:
         st.markdown(_skill_card(
             "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
@@ -1453,6 +1575,7 @@ def modal_arquitetura() -> None:
             "Lista chamados pendentes na fila N1 ou N2 com status, confian\xe7a e "
             "categoria — permite orquestrar prioridades entre agentes.",
         ), unsafe_allow_html=True)
+    sk7, sk8 = st.columns(2, gap="small")
     with sk7:
         st.markdown(_skill_card(
             "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
@@ -1460,6 +1583,14 @@ def modal_arquitetura() -> None:
             "#7B1FA2", "MCP Skill \xb7 IA",
             "Busca por linguagem natural: a IA (Claude Haiku) interpreta a inten\xe7\xe3o "
             "e a converte em filtros de status, n\xedvel, categoria e per\xedodo.",
+        ), unsafe_allow_html=True)
+    with sk8:
+        st.markdown(_skill_card(
+            "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
+            "padding:1px 6px;font-size:0.8rem;\">conversar_sobre_chamados</code>",
+            "#7B1FA2", "MCP Skill \xb7 IA",
+            "Chat anal\xedtico: a IA (Claude Sonnet) responde perguntas sobre a base "
+            "(\xfaltimo chamado, contagens, rankings) usando os dados como contexto.",
         ), unsafe_allow_html=True)
 
     st.markdown(

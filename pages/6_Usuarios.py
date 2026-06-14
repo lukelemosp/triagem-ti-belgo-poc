@@ -62,16 +62,24 @@ with aba_lista:
     if not usuarios:
         st.info("Nenhum usuário cadastrado ainda.")
     else:
+        _mostrar_senhas = st.toggle("👁 Mostrar senhas", key="show_pwd_list")
         for u in usuarios:
             uid = u["id"]
             with st.container(key="urow_" + str(uid)):
                 c_info, c_edit, c_del = st.columns([6, 1, 1], vertical_alignment="center")
                 with c_info:
+                    _adm = ("&nbsp;<span style='background:#FEE8E8;color:#ED1C24;border:1px solid #ED1C24;"
+                            "border-radius:10px;padding:1px 8px;font-size:0.66rem;font-weight:700;'>Admin</span>"
+                            if u.get("is_admin") else "")
+                    _senha_val = u.get("senha") or "—"
+                    _senha_disp = _html.escape(_senha_val) if _mostrar_senhas else "•" * len(_senha_val)
                     st.markdown(
-                        f"**{_html.escape(u['nome'])}** &nbsp;·&nbsp; "
+                        f"**{_html.escape(u['nome'])}**" + _adm + " &nbsp;·&nbsp; "
                         f"<span style='color:#5A7E88;font-size:0.88rem;'>{_html.escape(u['email'])}</span> &nbsp;·&nbsp; "
                         f"{_html.escape(u['departamento'])}"
-                        + (f" &nbsp;·&nbsp; ramal {_html.escape(u['ramal'])}" if u.get("ramal") else ""),
+                        + (f" &nbsp;·&nbsp; ramal {_html.escape(u['ramal'])}" if u.get("ramal") else "")
+                        + f"  \n<span style='color:#7A9EA6;font-size:0.78rem;'>🔑 senha: "
+                        f"<code style='color:#003B4A;'>{_senha_disp}</code></span>",
                         unsafe_allow_html=True,
                     )
                 with c_edit:
@@ -97,21 +105,28 @@ with aba_lista:
         if u:
             st.markdown(f"### Editar usuário #{uid}")
             with st.form(f"form_edit_{uid}"):
-                nome = st.text_input("Nome completo", value=u["nome"])
-                email = st.text_input("E-mail", value=u["email"])
-                depto = st.text_input("Departamento", value=u["departamento"])
+                nome = st.text_input("Nome completo *", value=u["nome"])
+                email = st.text_input("E-mail *", value=u["email"])
+                depto = st.text_input("Departamento *", value=u["departamento"])
                 ramal = st.text_input("Ramal", value=u.get("ramal") or "")
+                senha = st.text_input("Senha *", value=u.get("senha") or "",
+                                      help="Vis\xedvel em texto (POC). Edite para alterar.")
+                admin = st.checkbox("Administrador", value=bool(u.get("is_admin")))
+                st.caption("* campos obrigat\xf3rios")
                 c_save, c_cancel = st.columns(2)
                 with c_save:
                     salvar = st.form_submit_button("Salvar", type="primary", use_container_width=True)
                 with c_cancel:
                     cancelar = st.form_submit_button("Cancelar", use_container_width=True)
             if salvar:
-                if not nome.strip() or not email.strip() or not depto.strip():
-                    st.session_state.msg_err = "Nome, e-mail e departamento são obrigatórios."
+                _faltam = [c for c, v in [("Nome", nome), ("E-mail", email),
+                                          ("Departamento", depto), ("Senha", senha)] if not v.strip()]
+                if _faltam:
+                    st.session_state.msg_err = "Preencha: " + ", ".join(_faltam) + "."
                 else:
                     try:
-                        db.atualizar_usuario(uid, nome.strip(), email.strip(), depto.strip(), ramal.strip() or None)
+                        db.atualizar_usuario(uid, nome.strip(), email.strip().lower(), depto.strip(),
+                                             ramal.strip() or None, senha=senha.strip(), is_admin=admin)
                         st.session_state.editar_uid = None
                         st.session_state.msg_ok = f"Usuário #{uid} atualizado."
                         st.rerun()
@@ -121,24 +136,45 @@ with aba_lista:
                 st.session_state.editar_uid = None
                 st.rerun()
 
-# ── Aba: Novo usuário ─────────────────────────────────────────────────────────
+# ── Aba: Novo usuário (sem st.form, para o olho funcionar ao vivo) ────────────
 with aba_novo:
-    with st.form("form_novo_usuario", clear_on_submit=True):
-        st.markdown("#### Cadastrar novo usuário")
-        nome = st.text_input("Nome completo *")
-        email = st.text_input("E-mail corporativo *")
-        depto = st.text_input("Departamento *")
-        ramal = st.text_input("Ramal (opcional)")
-        criar = st.form_submit_button("Cadastrar", type="primary", use_container_width=True)
+    # Reset dos campos após cadastro bem-sucedido (antes de instanciar os widgets)
+    if st.session_state.get("_reset_novo"):
+        for _k in ["nu_nome", "nu_email", "nu_depto", "nu_ramal", "nu_admin", "nu_show", "nu_senha"]:
+            st.session_state.pop(_k, None)
+        st.session_state._reset_novo = False
+    if "nu_senha" not in st.session_state:
+        st.session_state.nu_senha = db.gerar_senha()
 
-    if criar:
-        if not nome.strip() or not email.strip() or not depto.strip():
-            st.session_state.msg_err = "Nome, e-mail e departamento s\xe3o obrigat\xf3rios."
+    st.markdown("#### Cadastrar novo usuário")
+    nome = st.text_input("Nome completo *", key="nu_nome")
+    email = st.text_input("E-mail corporativo *", key="nu_email")
+    depto = st.text_input("Departamento *", key="nu_depto")
+    ramal = st.text_input("Ramal (opcional)", key="nu_ramal")
+
+    _cs, _co = st.columns([5, 1], vertical_alignment="bottom")
+    with _co:
+        _mostrar = st.toggle("👁", key="nu_show", help="Mostrar senha")
+    with _cs:
+        senha = st.text_input("Senha *", key="nu_senha",
+                              type="default" if _mostrar else "password",
+                              help="Senha aleat\xf3ria gerada automaticamente — edit\xe1vel.")
+    admin = st.checkbox("Administrador (v\xea dashboard, filas, usu\xe1rios e hist\xf3rico)", key="nu_admin")
+    st.caption("\\* campos obrigat\xf3rios")
+
+    if st.button("Cadastrar", type="primary", use_container_width=True, key="nu_criar"):
+        _faltam = [c for c, v in [("Nome", nome), ("E-mail", email),
+                                  ("Departamento", depto), ("Senha", senha)] if not (v or "").strip()]
+        if _faltam:
+            st.session_state.msg_err = "Preencha os campos obrigat\xf3rios: " + ", ".join(_faltam) + "."
             st.rerun()
         else:
             try:
-                novo = db.criar_usuario(nome.strip(), email.strip(), depto.strip(), ramal.strip() or None)
-                st.session_state.msg_ok = "Usu\xe1rio " + novo['nome'] + " cadastrado com sucesso (ID #" + str(novo['id']) + ")."
+                novo = db.criar_usuario(nome.strip(), email.strip().lower(), depto.strip(),
+                                        ramal.strip() or None, senha=senha.strip(), is_admin=admin)
+                st.session_state.msg_ok = ("Usu\xe1rio " + novo['nome'] + " cadastrado (ID #"
+                                           + str(novo['id']) + ", senha: " + (novo.get('senha') or '') + ").")
+                st.session_state._reset_novo = True
                 st.rerun()
             except Exception as e:
                 st.session_state.msg_err = "Erro ao cadastrar (e-mail j\xe1 existe?): " + str(e)

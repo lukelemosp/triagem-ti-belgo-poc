@@ -1,3 +1,4 @@
+import secrets
 import sqlite3
 import threading
 from datetime import datetime, timezone, timedelta
@@ -16,6 +17,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email        TEXT NOT NULL UNIQUE,
     departamento TEXT NOT NULL,
     ramal        TEXT,
+    senha        TEXT,
+    is_admin     INTEGER NOT NULL DEFAULT 0,
     criado_em    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
@@ -58,7 +61,21 @@ def get_db() -> sqlite3.Connection:
 def init_db():
     conn = get_db()
     conn.executescript(_DDL)
+    # Migração defensiva: bancos antigos não têm senha/is_admin
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(usuarios)").fetchall()}
+    if "senha" not in cols:
+        conn.execute("ALTER TABLE usuarios ADD COLUMN senha TEXT")
+    if "is_admin" not in cols:
+        conn.execute("ALTER TABLE usuarios ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
     conn.commit()
+
+
+# Sem caracteres ambíguos (0/O/1/l/I) para senhas legíveis no olhinho
+_SENHA_ALFABETO = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def gerar_senha(n: int = 8) -> str:
+    return "".join(secrets.choice(_SENHA_ALFABETO) for _ in range(n))
 
 
 def _row(row) -> dict | None:
@@ -75,14 +92,24 @@ def _now() -> str:
 
 # ── Usuários ──────────────────────────────────────────────────────────────────
 
-def criar_usuario(nome: str, email: str, departamento: str, ramal: str = None) -> dict:
+def criar_usuario(nome: str, email: str, departamento: str, ramal: str = None,
+                  senha: str = None, is_admin: bool = False) -> dict:
     conn = get_db()
     with conn:
         cur = conn.execute(
-            "INSERT INTO usuarios (nome, email, departamento, ramal) VALUES (?, ?, ?, ?)",
-            (nome, email, departamento, ramal),
+            "INSERT INTO usuarios (nome, email, departamento, ramal, senha, is_admin) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (nome, email, departamento, ramal, senha, 1 if is_admin else 0),
         )
     return buscar_usuario_por_id(cur.lastrowid)
+
+
+def autenticar(email: str, senha: str) -> dict | None:
+    row = get_db().execute(
+        "SELECT * FROM usuarios WHERE email = ? AND senha = ?",
+        ((email or "").strip().lower(), senha or ""),
+    ).fetchone()
+    return _row(row)
 
 
 def listar_usuarios() -> list[dict]:
@@ -97,13 +124,20 @@ def buscar_usuario_por_id(uid: int) -> dict | None:
     return _row(get_db().execute("SELECT * FROM usuarios WHERE id=?", (uid,)).fetchone())
 
 
-def atualizar_usuario(uid: int, nome: str, email: str, departamento: str, ramal: str = None) -> dict | None:
+def atualizar_usuario(uid: int, nome: str, email: str, departamento: str, ramal: str = None,
+                      senha: str = None, is_admin: bool = None) -> dict | None:
     conn = get_db()
+    sets = ["nome=?", "email=?", "departamento=?", "ramal=?"]
+    vals = [nome, email, departamento, ramal]
+    if senha is not None:
+        sets.append("senha=?")
+        vals.append(senha)
+    if is_admin is not None:
+        sets.append("is_admin=?")
+        vals.append(1 if is_admin else 0)
+    vals.append(uid)
     with conn:
-        conn.execute(
-            "UPDATE usuarios SET nome=?, email=?, departamento=?, ramal=? WHERE id=?",
-            (nome, email, departamento, ramal, uid),
-        )
+        conn.execute(f"UPDATE usuarios SET {', '.join(sets)} WHERE id=?", vals)
     return buscar_usuario_por_id(uid)
 
 
@@ -349,7 +383,11 @@ def seed_demo(force: bool = False) -> bool:
         pass
 
     for u in seed_data.USUARIOS:
-        criar_usuario(u["nome"], u["email"], u["departamento"], u.get("ramal"))
+        criar_usuario(
+            u["nome"], u["email"], u["departamento"], u.get("ramal"),
+            senha=u.get("senha") or gerar_senha(),
+            is_admin=u.get("is_admin", False),
+        )
     for t in seed_data.TICKETS:
         _inserir_ticket_seed(t)
     return True

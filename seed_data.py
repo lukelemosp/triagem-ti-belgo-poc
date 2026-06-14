@@ -8,8 +8,11 @@ com status, datas e solicitantes variados para alimentar busca, filas e gráfico
 """
 
 # ── Usuários (solicitantes) ────────────────────────────────────────────────────
+# senha None => o seed gera uma aleatória (visível na tela de Usuários via olhinho).
+# Lucas é admin; Ana tem senha fixa conhecida para facilitar teste do papel normal.
 USUARIOS = [
-    {"nome": "Ana Beatriz Souza",   "email": "ana.souza@belgo.com.br",     "departamento": "Comercial",  "ramal": "2101"},
+    {"nome": "Lucas Lemos",         "email": "lucas.lemos@belgo.com.br",   "departamento": "TI",         "ramal": "5000", "senha": "adminbelgo", "is_admin": True},
+    {"nome": "Ana Beatriz Souza",   "email": "ana.souza@belgo.com.br",     "departamento": "Comercial",  "ramal": "2101", "senha": "belgo123"},
     {"nome": "Carlos Mendes",       "email": "carlos.mendes@belgo.com.br", "departamento": "Produção",   "ramal": "3320"},
     {"nome": "Daniela Prado",       "email": "daniela.prado@belgo.com.br", "departamento": "Financeiro", "ramal": "2210"},
     {"nome": "Eduardo Lima",        "email": "eduardo.lima@belgo.com.br",  "departamento": "Logística",  "ramal": "4150"},

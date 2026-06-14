@@ -25,6 +25,40 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+# ── Gate de login ──────────────────────────────────────────────────────────────
+def _render_login():
+    _l, _c, _r = st.columns([1, 1.3, 1])
+    with _c:
+        with st.container(key="login_box"):
+            st.markdown(ui.login_header_html(), unsafe_allow_html=True)
+            with st.form("login_form"):
+                _email = st.text_input("E-mail", placeholder="seu.email@belgo.com.br")
+                _senha = st.text_input("Senha", type="password", placeholder="Sua senha")
+                _entrar = st.form_submit_button("Entrar", type="primary", use_container_width=True)
+            if _entrar:
+                _u = db.autenticar(_email, _senha)
+                if _u:
+                    st.session_state.auth_user = _u
+                    st.rerun()
+                else:
+                    st.error("E-mail ou senha inv\xe1lidos.")
+            st.markdown(
+                '<div class="belgo-login-hint">Demo · admin: '
+                'lucas.lemos@belgo.com.br / adminbelgo</div>',
+                unsafe_allow_html=True,
+            )
+
+
+if not st.session_state.get("auth_user"):
+    _render_login()
+    st.stop()
+
+_USER = st.session_state["auth_user"]
+_IS_ADMIN = bool(_USER.get("is_admin"))
+_PRIMEIRO_NOME = (_USER.get("nome") or "Usu\xe1rio").split()[0]
+
+
 # ── Definição das páginas ─────────────────────────────────────────────────────
 def _render_ticket_row(t, key_prefix):
     """Renderiza uma linha de chamado (id clicável, nível, título, status, data)."""
@@ -66,13 +100,14 @@ def _render_ticket_row(t, key_prefix):
 
 
 def _dashboard():
-    st.markdown(ui.welcome_banner_html("Analista"), unsafe_allow_html=True)
+    _nome = (st.session_state.get("auth_user", {}).get("nome") or "Analista").split()[0]
+    st.markdown(ui.welcome_banner_html(_nome), unsafe_allow_html=True)
     ui.render_fab("➕  Novo Chamado", "pages/2_Novo_Chamado.py")
 
     termo = st.text_input(
         "Busca",
         key="dash_busca",
-        placeholder="Pergunte em linguagem natural (ex.: chamados de VPN abertos) ou busque por ID...",
+        placeholder="Buscar ou perguntar \xe0 IA…",
         label_visibility="collapsed",
     )
 
@@ -128,6 +163,37 @@ def _dashboard():
 
     # ── Seção de Gráficos (colapsável) ───────────────────────────────────────
     with st.expander("Análise de Chamados", expanded=False):
+        # ── Chat analítico (skill MCP: conversar_sobre_chamados) ──────────────
+        st.markdown(
+            '<div class="result-label" style="margin-bottom:8px;">'
+            '💬 Pergunte à IA sobre os chamados</div>',
+            unsafe_allow_html=True,
+        )
+        if "chat_hist" not in st.session_state:
+            st.session_state.chat_hist = []
+        _cg_in, _cg_btn, _cg_clr = st.columns([5, 1, 1])
+        with _cg_in:
+            _pergunta = st.text_input(
+                "Pergunta IA", key="chat_input",
+                placeholder="Ex.: qual o último chamado? quantos N2 estão abertos?",
+                label_visibility="collapsed",
+            )
+        with _cg_btn:
+            _perguntar = st.button("Perguntar", key="chat_ask", use_container_width=True, type="primary")
+        with _cg_clr:
+            if st.button("Limpar", key="chat_clear", use_container_width=True):
+                st.session_state.chat_hist = []
+                st.rerun()
+        if _perguntar and _pergunta.strip():
+            with st.spinner("Consultando a base com IA…"):
+                _resp = agent.conversar_sobre_chamados(_pergunta.strip(), st.session_state.chat_hist)
+            st.session_state.chat_hist.append({"role": "user", "content": _pergunta.strip()})
+            st.session_state.chat_hist.append({"role": "assistant", "content": _resp})
+        for _m in st.session_state.chat_hist[-8:]:
+            with st.chat_message("user" if _m["role"] == "user" else "assistant"):
+                st.markdown(_m["content"])
+        st.markdown("<hr style='border:none;border-top:1px solid #E2EEF0;margin:14px 0;'>", unsafe_allow_html=True)
+
         _DIAS_MAP = {
             "Últimos 7 dias": 7,
             "Últimos 30 dias": 30,
@@ -141,6 +207,49 @@ def _dashboard():
             "RESOLVIDO": "Resolvido",
             "FECHADO": "Fechado",
         }
+
+        # ── Cliques nos gráficos alteram os filtros (via callbacks de on_select) ──
+        _STATUS_LABEL_TO_ENUM = {v: k for k, v in _STATUS_LABELS.items()}
+        _NIVEL_LABEL_TO_ENUM = {v: k for k, v in _NIVEL_LABELS.items()}
+        _CAT_ENUMS = [
+            "RESET_SENHA", "VPN_RECONEXAO", "IMPRESSORA_OFFLINE", "EMAIL_SYNC_CELULAR",
+            "TEAMS_AUDIO", "OUTLOOK_CAIXA_CHEIA", "WIFI_RECONEXAO", "SAP_LOGIN_LENTO",
+            "EXCEL_TRAVA", "WINDOWS_UPDATE_AVISO", "OUTRO",
+        ]
+        _CAT_LABEL_TO_ENUM = {ui.fmt_categoria(c): c for c in _CAT_ENUMS}
+
+        def _pts(gkey):
+            sel = st.session_state.get(gkey)
+            if isinstance(sel, dict):
+                return sel.get("selection", {}).get("points", []) or []
+            return []
+
+        def _cb_cat_label():
+            p = _pts("g_cat")
+            if p:
+                lbl = p[0].get("label")
+                st.session_state["dash_cat_sel"] = (
+                    None if lbl in (None, "Sem categoria") else _CAT_LABEL_TO_ENUM.get(lbl)
+                )
+
+        def _cb_cat_y():
+            p = _pts("g_conf")
+            if p:
+                st.session_state["dash_cat_sel"] = _CAT_LABEL_TO_ENUM.get(p[0].get("y"))
+
+        def _cb_status():
+            p = _pts("g_status")
+            if p:
+                e = _STATUS_LABEL_TO_ENUM.get(p[0].get("x"))
+                if e:
+                    st.session_state["dash_status"] = [e]
+
+        def _cb_nivel():
+            p = _pts("g_nivel")
+            if p:
+                e = _NIVEL_LABEL_TO_ENUM.get(p[0].get("y"))
+                if e:
+                    st.session_state["dash_nivel"] = [e]
 
         _fk1, _fk2, _fk3 = st.columns(3)
         with _fk1:
@@ -162,12 +271,32 @@ def _dashboard():
                 key="dash_status",
             )
 
+        # Filtro de categoria vindo de clique no gráfico (chip com limpar)
+        _cat_sel = st.session_state.get("dash_cat_sel")
+        if _cat_sel:
+            _chip_c, _chip_b = st.columns([4, 1])
+            with _chip_c:
+                st.markdown(
+                    '<div style="display:inline-flex;align-items:center;gap:8px;'
+                    'background:#E6F4F1;border:1px solid #A8C8D0;border-radius:20px;'
+                    'padding:5px 14px;font-family:Montserrat,sans-serif;font-size:0.8rem;'
+                    'color:#003B4A;font-weight:600;margin:4px 0 8px;">'
+                    '\U0001f4ca Categoria: <strong>' + ui.fmt_categoria(_cat_sel) + '</strong></div>',
+                    unsafe_allow_html=True,
+                )
+            with _chip_b:
+                if st.button("✕ Limpar", key="clr_cat", use_container_width=True):
+                    st.session_state["dash_cat_sel"] = None
+                    st.rerun()
+
         _raw = db.listar_tickets_graficos(_DIAS_MAP[_periodo])
         _df = pd.DataFrame(_raw) if _raw else pd.DataFrame()
         if not _df.empty and _niveis_sel:
             _df = _df[_df["nivel"].isin(_niveis_sel)]
         if not _df.empty and _status_sel:
             _df = _df[_df["status"].isin(_status_sel)]
+        if not _df.empty and _cat_sel:
+            _df = _df[_df["categoria"] == _cat_sel]
 
         if _df.empty:
             st.info("Nenhum dado para o período e filtros selecionados.")
@@ -205,7 +334,7 @@ def _dashboard():
                     hovertemplate="<b>%{label}</b><br>%{value} chamados (%{percent})<extra></extra>",
                 )
                 _fig1.update_layout(**_CHART_LAYOUT, showlegend=False)
-                st.plotly_chart(_fig1, use_container_width=True)
+                st.plotly_chart(_fig1, use_container_width=True, on_select=_cb_cat_label, key="g_cat")
 
             # Barras verticais — Chamados por Status
             with _gc2:
@@ -230,7 +359,7 @@ def _dashboard():
                     hovertemplate="<b>%{x}</b><br>%{y} chamados<extra></extra>",
                 )
                 _fig2.update_layout(**_CHART_LAYOUT, showlegend=False)
-                st.plotly_chart(_fig2, use_container_width=True)
+                st.plotly_chart(_fig2, use_container_width=True, on_select=_cb_status, key="g_status")
 
             _gc3, _gc4 = st.columns(2)
 
@@ -263,7 +392,7 @@ def _dashboard():
                         hovertemplate="<b>%{y}</b><br>Confiança: %{x:.1f}%<extra></extra>",
                     )
                     _fig3.update_layout(**_CHART_LAYOUT, coloraxis_showscale=False)
-                    st.plotly_chart(_fig3, use_container_width=True)
+                    st.plotly_chart(_fig3, use_container_width=True, on_select=_cb_cat_y, key="g_conf")
 
             # Barras horizontais empilhadas — Resolução por Nível
             with _gc4:
@@ -293,7 +422,7 @@ def _dashboard():
                     hovertemplate="<b>%{y}</b> — %{fullData.name}<br>%{x} chamados<extra></extra>",
                 )
                 _fig4.update_layout(**_CHART_LAYOUT)
-                st.plotly_chart(_fig4, use_container_width=True)
+                st.plotly_chart(_fig4, use_container_width=True, on_select=_cb_nivel, key="g_nivel")
 
     # ── Divisor antes da tabela ───────────────────────────────────────────────
     st.markdown(
@@ -427,31 +556,53 @@ def _dashboard():
     ui.render_footer()
 
 
-# ── Páginas registradas ───────────────────────────────────────────────────────
-p_home     = st.Page(_dashboard,                title="Dashboard",    default=True)
+# ── Páginas registradas (default depende do papel) ────────────────────────────
+p_home     = st.Page(_dashboard,                title="Dashboard",    default=_IS_ADMIN)
 st.session_state["_p_home"] = p_home
-p_novo     = st.Page("pages/2_Novo_Chamado.py", title="Novo Chamado", url_path="novo")
+p_novo     = st.Page("pages/2_Novo_Chamado.py", title="Novo Chamado", url_path="novo", default=not _IS_ADMIN)
 p_n1       = st.Page("pages/3_Fila_N1.py",      title="Fila N1",      url_path="n1")
 p_n2       = st.Page("pages/4_Fila_N2.py",      title="Fila N2",      url_path="n2")
 p_chamado  = st.Page("pages/5_Chamado.py",       title="Chamado",      url_path="chamado")
+p_chamados = st.Page("pages/7_Chamados.py",      title="Chamados",     url_path="chamados")
 p_usuarios = st.Page("pages/6_Usuarios.py",      title="Usu\xe1rios",  url_path="usuarios")
 p_triagem  = st.Page("pages/1_Triagem.py",       title="Triagem IA",   url_path="triagem")
 
-pg = st.navigation(
-    {
-        "Sistema": [p_home, p_novo, p_n1, p_n2, p_chamado, p_usuarios],
-        "Demo":    [p_triagem],
-    },
-    position="hidden",
-)
+if _IS_ADMIN:
+    pg = st.navigation(
+        {
+            "Sistema": [p_home, p_novo, p_n1, p_n2, p_chamados, p_chamado, p_usuarios],
+            "Demo":    [p_triagem],
+        },
+        position="hidden",
+    )
+else:
+    pg = st.navigation(
+        {"Atendimento": [p_novo], "Demo": [p_triagem]},
+        position="hidden",
+    )
 
-# ── Navbar nativa (st.page_link — sem iframe, sem JS) ────────────────────────
-_c1, _c2, _c3, _c4, _c5, _c6 = st.columns(6)
-with _c1: st.page_link(p_home,     label="\U0001f4ca Dashboard",    use_container_width=True)
-with _c2: st.page_link(p_novo,     label="\U0001f4cb Novo Chamado", use_container_width=True)
-with _c3: st.page_link(p_n1,       label="\U0001f535 Fila N1",      use_container_width=True)
-with _c4: st.page_link(p_n2,       label="\U0001f534 Fila N2",      use_container_width=True)
-with _c5: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
-with _c6: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
+# ── Topbar de sessão (saudação + Sair) — sem page_link, aparece em todas as telas
+_tb_l, _tb_r = st.columns([6, 1])
+with _tb_l:
+    st.markdown(ui.userchip_html(_USER.get("nome", ""), _IS_ADMIN), unsafe_allow_html=True)
+with _tb_r:
+    if st.button("Sair", key="btn_logout", use_container_width=True):
+        st.session_state.pop("auth_user", None)
+        st.rerun()
+
+# ── Navbar nativa (st.page_link) — itens conforme o papel ────────────────────
+if _IS_ADMIN:
+    _cols = st.columns(7)
+    with _cols[0]: st.page_link(p_home,     label="\U0001f4ca Dashboard",    use_container_width=True)
+    with _cols[1]: st.page_link(p_novo,     label="\U0001f4cb Novo Chamado", use_container_width=True)
+    with _cols[2]: st.page_link(p_n1,       label="\U0001f535 Fila N1",      use_container_width=True)
+    with _cols[3]: st.page_link(p_n2,       label="\U0001f534 Fila N2",      use_container_width=True)
+    with _cols[4]: st.page_link(p_chamados, label="\U0001f4c2 Chamados",     use_container_width=True)
+    with _cols[5]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
+    with _cols[6]: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
+else:
+    _cols = st.columns(2)
+    with _cols[0]: st.page_link(p_novo,    label="\U0001f4cb Novo Chamado", use_container_width=True)
+    with _cols[1]: st.page_link(p_triagem, label="\U0001f916 Triagem IA",   use_container_width=True)
 
 pg.run()

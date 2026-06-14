@@ -73,7 +73,8 @@ def _fila_page(nivel: str):
         st.info(f"Nenhum chamado pendente na fila {nivel} no momento.")
         return
 
-    st.caption(f"{len(tickets)} chamado(s) pendente(s)")
+    _filtrados = ui.render_filtros_fila(tickets, "fl_n1")
+    st.caption(f"{len(_filtrados)} de {len(tickets)} chamado(s) pendente(s)")
 
     # Cabeçalho do data grid
     st.markdown(
@@ -88,7 +89,10 @@ def _fila_page(nivel: str):
         unsafe_allow_html=True,
     )
 
-    for t in tickets:
+    if not _filtrados:
+        st.info("Nenhum chamado para os filtros selecionados.")
+
+    for t in _filtrados:
         tid = t["id"]
         confianca = t.get("confianca") or 0
         cor_conf = "#003B4A" if confianca >= 80 else "#F37021" if confianca >= 60 else "#ED1C24"
