@@ -6,6 +6,7 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "belgo_ti.db"
 _local = threading.local()
+_seed_lock = threading.Lock()
 
 _DDL = """
 PRAGMA journal_mode = WAL;
@@ -367,33 +368,40 @@ def seed_demo(force: bool = False) -> bool:
     Reseta para um estado conhecido (apaga tickets/usuários e recria) apenas
     quando o total de tickets < 50, ou quando force=True. Idempotente depois:
     chamadas seguintes não duplicam dados nem apagam chamados criados na demo.
+
+    O lock serializa execuções concorrentes: no Streamlit cada rerun/sessão roda
+    em uma thread própria (com conexão própria via threading.local). Sem o lock,
+    dois primeiros carregamentos simultâneos passavam juntos pelo check de total,
+    entrelaçavam os DELETE/INSERT e colidiam no UNIQUE de usuarios.email.
     """
     import seed_data
 
-    total = stats_tickets().get("total") or 0
-    if total >= 50 and not force:
-        return False
+    with _seed_lock:
+        # Reverifica dentro do lock: se outra thread já semeou, esta não repete.
+        total = stats_tickets().get("total") or 0
+        if total >= 50 and not force:
+            return False
 
-    conn = get_db()
-    with conn:
-        conn.execute("DELETE FROM tickets")
-        conn.execute("DELETE FROM usuarios")
-    # Reinicia os IDs (sqlite_sequence só existe após o 1º INSERT com AUTOINCREMENT)
-    try:
+        conn = get_db()
         with conn:
-            conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('tickets','usuarios')")
-    except sqlite3.OperationalError:
-        pass
+            conn.execute("DELETE FROM tickets")
+            conn.execute("DELETE FROM usuarios")
+        # Reinicia os IDs (sqlite_sequence só existe após o 1º INSERT com AUTOINCREMENT)
+        try:
+            with conn:
+                conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('tickets','usuarios')")
+        except sqlite3.OperationalError:
+            pass
 
-    for u in seed_data.USUARIOS:
-        criar_usuario(
-            u["nome"], u["email"], u["departamento"], u.get("ramal"),
-            senha=u.get("senha") or gerar_senha(),
-            is_admin=u.get("is_admin", False),
-        )
-    for t in seed_data.TICKETS:
-        _inserir_ticket_seed(t)
-    return True
+        for u in seed_data.USUARIOS:
+            criar_usuario(
+                u["nome"], u["email"], u["departamento"], u.get("ramal"),
+                senha=u.get("senha") or gerar_senha(),
+                is_admin=u.get("is_admin", False),
+            )
+        for t in seed_data.TICKETS:
+            _inserir_ticket_seed(t)
+        return True
 
 
 if __name__ == "__main__":
