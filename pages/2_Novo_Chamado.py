@@ -12,10 +12,9 @@ st.markdown(ui.header_html(
     title="Novo Chamado",
     subtitle="Abre chamado, classifica com IA e enfileira automaticamente",
 ), unsafe_allow_html=True)
-st.markdown(ui.breadcrumb_html([
-    ("Dashboard", "/"),
-    ("Novo Chamado", None),
-]), unsafe_allow_html=True)
+_is_admin = bool(st.session_state.get("auth_user", {}).get("is_admin"))
+_crumb = [("Dashboard", "/"), ("Novo Chamado", None)] if _is_admin else [("Novo Chamado", None)]
+st.markdown(ui.breadcrumb_html(_crumb), unsafe_allow_html=True)
 
 _MAX_LEN = 2000
 

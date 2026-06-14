@@ -108,10 +108,9 @@ if "placeholder_idx" not in st.session_state:
 st.markdown(ui.BELGO_CSS, unsafe_allow_html=True)
 st.markdown(ui.enter_to_submit_js(), unsafe_allow_html=True)
 st.markdown(ui.header_html(), unsafe_allow_html=True)
-st.markdown(ui.breadcrumb_html([
-    ("Dashboard", "/"),
-    ("Triagem IA", None),
-]), unsafe_allow_html=True)
+_is_admin = bool(st.session_state.get("auth_user", {}).get("is_admin"))
+_crumb = [("Dashboard", "/"), ("Triagem IA", None)] if _is_admin else [("Triagem IA", None)]
+st.markdown(ui.breadcrumb_html(_crumb), unsafe_allow_html=True)
 
 
 
