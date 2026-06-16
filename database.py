@@ -4,6 +4,9 @@ import threading
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+import analytics
+import kb_data
+
 DB_PATH = Path(__file__).parent / "belgo_ti.db"
 _local = threading.local()
 _seed_lock = threading.Lock()
@@ -40,13 +43,49 @@ CREATE TABLE IF NOT EXISTS tickets (
     auto_resolvido INTEGER NOT NULL DEFAULT 0,
     sugestao_ia    TEXT,
     acao_ia        TEXT,
-    tempo_estimado TEXT
+    tempo_estimado TEXT,
+    canal          TEXT DEFAULT 'PORTAL',
+    sla_horas      INTEGER,
+    sla_prazo      TEXT,
+    csat_nota      INTEGER,
+    csat_comentario TEXT,
+    feedback_humano TEXT,
+    kb_artigo      TEXT,
+    ia_nivel_sugerido     TEXT,
+    ia_categoria_sugerida TEXT
+);
+
+-- Registro do modo sombra (shadow mode): a IA classifica em paralelo ao humano
+-- sem atuar. Tabela própria para não poluir as filas/buscas/estatísticas reais.
+CREATE TABLE IF NOT EXISTS shadow_log (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    descricao        TEXT NOT NULL,
+    ia_nivel         TEXT,
+    ia_categoria     TEXT,
+    ia_confianca     INTEGER,
+    humano_nivel     TEXT,
+    humano_categoria TEXT,
+    criado_em        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_tickets_status    ON tickets(status);
 CREATE INDEX IF NOT EXISTS idx_tickets_nivel     ON tickets(nivel);
 CREATE INDEX IF NOT EXISTS idx_tickets_criado_em ON tickets(criado_em DESC);
 """
+
+# Colunas adicionadas à tabela tickets após a 1ª versão — migração defensiva
+# (bancos já existentes não recebem colunas via CREATE TABLE IF NOT EXISTS).
+_TICKETS_COLS_NOVAS = [
+    ("canal", "TEXT DEFAULT 'PORTAL'"),
+    ("sla_horas", "INTEGER"),
+    ("sla_prazo", "TEXT"),
+    ("csat_nota", "INTEGER"),
+    ("csat_comentario", "TEXT"),
+    ("feedback_humano", "TEXT"),
+    ("kb_artigo", "TEXT"),
+    ("ia_nivel_sugerido", "TEXT"),
+    ("ia_categoria_sugerida", "TEXT"),
+]
 
 
 def get_db() -> sqlite3.Connection:
@@ -68,6 +107,11 @@ def init_db():
         conn.execute("ALTER TABLE usuarios ADD COLUMN senha TEXT")
     if "is_admin" not in cols:
         conn.execute("ALTER TABLE usuarios ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+    # Migração defensiva: colunas novas de tickets (SLA, canal, CSAT, KB, etc.)
+    tcols = {r["name"] for r in conn.execute("PRAGMA table_info(tickets)").fetchall()}
+    for nome, tipo in _TICKETS_COLS_NOVAS:
+        if nome not in tcols:
+            conn.execute(f"ALTER TABLE tickets ADD COLUMN {nome} {tipo}")
     conn.commit()
 
 
@@ -154,6 +198,11 @@ def deletar_usuario(uid: int) -> bool:
 
 # ── Tickets ───────────────────────────────────────────────────────────────────
 
+def _add_horas(iso: str, horas: int) -> str:
+    base = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    return (base + timedelta(hours=horas)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def criar_ticket(
     titulo: str,
     descricao: str,
@@ -167,18 +216,40 @@ def criar_ticket(
     sugestao_ia: str = None,
     acao_ia: str = None,
     tempo_estimado: str = None,
+    canal: str = "PORTAL",
+    kb_artigo: str = None,
+    ia_nivel_sugerido: str = None,
+    ia_categoria_sugerida: str = None,
+    criado_em: str = None,
 ) -> dict:
-    resolvido_em = _now() if status == "RESOLVIDO" else None
+    criado_em = criado_em or _now()
+    resolvido_em = criado_em if status == "RESOLVIDO" else None
+    # SLA derivado do nível (auto-resolvidos pela IA = imediato).
+    sla_horas = analytics.sla_horas_para(nivel, categoria, auto_resolvido)
+    sla_prazo = _add_horas(criado_em, sla_horas) if sla_horas else criado_em
+    # KB sugerida pela categoria, quando não informada explicitamente.
+    if kb_artigo is None:
+        artigo = kb_data.sugerir_artigo(categoria)
+        kb_artigo = artigo["id"] if artigo else None
+    # Provenance: registra o que a IA sugeriu (default = a própria classificação).
+    if ia_nivel_sugerido is None:
+        ia_nivel_sugerido = nivel
+    if ia_categoria_sugerida is None:
+        ia_categoria_sugerida = categoria
     conn = get_db()
     with conn:
         cur = conn.execute(
             """INSERT INTO tickets
                (titulo, descricao, status, nivel, categoria, confianca, criado_por,
-                resolucao, auto_resolvido, sugestao_ia, acao_ia, tempo_estimado, resolvido_em)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                resolucao, auto_resolvido, sugestao_ia, acao_ia, tempo_estimado,
+                criado_em, resolvido_em, canal, sla_horas, sla_prazo, kb_artigo,
+                ia_nivel_sugerido, ia_categoria_sugerida)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (titulo, descricao, status, nivel, categoria, confianca, criado_por,
              resolucao, 1 if auto_resolvido else 0,
-             sugestao_ia, acao_ia, tempo_estimado, resolvido_em),
+             sugestao_ia, acao_ia, tempo_estimado, criado_em, resolvido_em,
+             canal, sla_horas, sla_prazo, kb_artigo,
+             ia_nivel_sugerido, ia_categoria_sugerida),
         )
     return buscar_ticket(cur.lastrowid)
 
@@ -331,14 +402,103 @@ def stats_tickets() -> dict:
     return dict(row) if row else {}
 
 
+def stats_roi() -> dict:
+    """Agregados crus para o painel de Valor/ROI (ver analytics.calcular_roi)."""
+    row = get_db().execute("""
+        SELECT
+            COUNT(*)                                                       AS total,
+            SUM(CASE WHEN auto_resolvido=1 THEN 1 ELSE 0 END)             AS auto_resolvidos,
+            SUM(CASE WHEN auto_resolvido=1
+                      AND criado_em >= datetime('now','-30 days')
+                     THEN 1 ELSE 0 END)                                   AS auto_resolvidos_30d,
+            SUM(CASE WHEN status IN ('RESOLVIDO','FECHADO') THEN 1 ELSE 0 END) AS resolvidos,
+            AVG(csat_nota)                                                AS csat_media,
+            SUM(CASE WHEN csat_nota IS NOT NULL THEN 1 ELSE 0 END)        AS csat_n,
+            AVG(CASE WHEN auto_resolvido=0 AND resolvido_em IS NOT NULL
+                     THEN (julianday(resolvido_em)-julianday(criado_em))*24 END) AS mttr_manual_horas
+        FROM tickets
+    """).fetchone()
+    return dict(row) if row else {}
+
+
+def stats_canais() -> dict:
+    """Contagem de chamados por canal de entrada (multicanal)."""
+    rows = get_db().execute(
+        "SELECT COALESCE(canal,'PORTAL') AS canal, COUNT(*) AS n "
+        "FROM tickets GROUP BY COALESCE(canal,'PORTAL') ORDER BY n DESC"
+    ).fetchall()
+    return {r["canal"]: r["n"] for r in rows}
+
+
+def stats_feedback() -> dict:
+    """Contagem de feedback humano (👍/👎) — acurácia percebida do agente."""
+    row = get_db().execute("""
+        SELECT
+            SUM(CASE WHEN feedback_humano='POSITIVO' THEN 1 ELSE 0 END) AS positivos,
+            SUM(CASE WHEN feedback_humano='NEGATIVO' THEN 1 ELSE 0 END) AS negativos
+        FROM tickets
+    """).fetchone()
+    d = dict(row) if row else {}
+    pos = int(d.get("positivos") or 0)
+    neg = int(d.get("negativos") or 0)
+    total = pos + neg
+    d["total"] = total
+    d["acuracia"] = (100.0 * pos / total) if total else None
+    return d
+
+
+def stats_shadow() -> dict:
+    """Concordância IA × humano no modo sombra (a partir de shadow_log)."""
+    row = get_db().execute("""
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN ia_nivel = humano_nivel THEN 1 ELSE 0 END)         AS conc_nivel,
+            SUM(CASE WHEN ia_categoria = humano_categoria THEN 1 ELSE 0 END) AS conc_categoria
+        FROM shadow_log
+    """).fetchone()
+    d = dict(row) if row else {}
+    total = int(d.get("total") or 0)
+    d["total"] = total
+    d["concordancia_nivel"] = (100.0 * int(d.get("conc_nivel") or 0) / total) if total else None
+    d["concordancia_categoria"] = (100.0 * int(d.get("conc_categoria") or 0) / total) if total else None
+    return d
+
+
+def listar_shadow(limit: int = 100) -> list[dict]:
+    return _rows(get_db().execute(
+        "SELECT * FROM shadow_log ORDER BY criado_em DESC LIMIT ?", (limit,)
+    ).fetchall())
+
+
+def registrar_feedback(ticket_id: int, valor: str) -> dict | None:
+    """Registra o feedback humano sobre a triagem ('POSITIVO' ou 'NEGATIVO')."""
+    if valor not in ("POSITIVO", "NEGATIVO"):
+        return buscar_ticket(ticket_id)
+    return atualizar_ticket(ticket_id, feedback_humano=valor)
+
+
+def registrar_csat(ticket_id: int, nota: int, comentario: str = None) -> dict | None:
+    """Registra a avaliação de satisfação (CSAT 1–5) do solicitante."""
+    nota = max(1, min(5, int(nota)))
+    return atualizar_ticket(ticket_id, csat_nota=nota, csat_comentario=comentario)
+
+
 # ── Seed de demonstração ────────────────────────────────────────────────────────
 
 def _dt_dias_atras(dias: int) -> str:
     return (datetime.now(timezone.utc) - timedelta(days=dias)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _inserir_ticket_seed(t: dict) -> None:
-    """Insere um ticket de seed com criado_em/resolvido_em derivados de dias_atras."""
+# Canais de entrada distribuídos de forma realista (maioria portal/e-mail).
+_CANAL_CICLO = ["PORTAL", "EMAIL", "PORTAL", "TEAMS", "PORTAL",
+                "WHATSAPP", "EMAIL", "PORTAL", "TEAMS", "EMAIL"]
+# Notas de CSAT (1–5) variadas, com viés positivo, para os chamados encerrados.
+_CSAT_CICLO = [5, 4, 5, 5, 4, 3, 5, 4, 5, 4, 5, 3]
+
+
+def _inserir_ticket_seed(t: dict, idx: int = 0) -> None:
+    """Insere um ticket de seed com criado_em/resolvido_em derivados de dias_atras
+    e os campos de SLA/canal/CSAT/feedback/KB preenchidos de forma realista."""
     criado = _dt_dias_atras(t.get("dias_atras", 0))
     status = t.get("status", "ABERTO")
     encerrado = status in ("RESOLVIDO", "FECHADO")
@@ -346,19 +506,52 @@ def _inserir_ticket_seed(t: dict) -> None:
     resolucao = t.get("sugestao_ia") if encerrado else None
     usuario = buscar_usuario_por_email(t["email"]) if t.get("email") else None
     criado_por = usuario["id"] if usuario else None
+    nivel = t.get("nivel")
+    categoria = t.get("categoria")
+    auto = bool(t.get("auto_resolvido"))
+
+    canal = t.get("canal") or _CANAL_CICLO[idx % len(_CANAL_CICLO)]
+    sla_horas = analytics.sla_horas_para(nivel, categoria, auto)
+    sla_prazo = _add_horas(criado, sla_horas) if sla_horas else criado
+    artigo = kb_data.sugerir_artigo(categoria) if auto else None
+    kb_artigo = artigo["id"] if artigo else None
+    # CSAT só nos chamados encerrados (e nem todos avaliam: ~75%).
+    csat = _CSAT_CICLO[idx % len(_CSAT_CICLO)] if (encerrado and idx % 4 != 3) else None
+    # Feedback humano sobre a triagem automática (amostra).
+    feedback = None
+    if auto:
+        feedback = "NEGATIVO" if idx % 9 == 0 else "POSITIVO"
+
     conn = get_db()
     with conn:
         conn.execute(
             """INSERT INTO tickets
                (titulo, descricao, status, nivel, categoria, confianca, criado_por,
                 resolucao, auto_resolvido, sugestao_ia, acao_ia, tempo_estimado,
-                criado_em, resolvido_em)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (t["titulo"], t["descricao"], status, t.get("nivel"), t.get("categoria"),
+                criado_em, resolvido_em, canal, sla_horas, sla_prazo, csat_nota,
+                feedback_humano, kb_artigo, ia_nivel_sugerido, ia_categoria_sugerida)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (t["titulo"], t["descricao"], status, nivel, categoria,
              t.get("confianca"), criado_por, resolucao,
-             1 if t.get("auto_resolvido") else 0,
+             1 if auto else 0,
              t.get("sugestao_ia"), t.get("acao_ia"), t.get("tempo_estimado"),
-             criado, resolvido_em),
+             criado, resolvido_em, canal, sla_horas, sla_prazo, csat,
+             feedback, kb_artigo, nivel, categoria),
+        )
+
+
+def _inserir_shadow_seed(s: dict) -> None:
+    criado = _dt_dias_atras(s.get("dias_atras", 0))
+    conn = get_db()
+    with conn:
+        conn.execute(
+            """INSERT INTO shadow_log
+               (descricao, ia_nivel, ia_categoria, ia_confianca,
+                humano_nivel, humano_categoria, criado_em)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (s["descricao"], s.get("ia_nivel"), s.get("ia_categoria"),
+             s.get("ia_confianca"), s.get("humano_nivel"),
+             s.get("humano_categoria"), criado),
         )
 
 
@@ -386,10 +579,14 @@ def seed_demo(force: bool = False) -> bool:
         with conn:
             conn.execute("DELETE FROM tickets")
             conn.execute("DELETE FROM usuarios")
+            conn.execute("DELETE FROM shadow_log")
         # Reinicia os IDs (sqlite_sequence só existe após o 1º INSERT com AUTOINCREMENT)
         try:
             with conn:
-                conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('tickets','usuarios')")
+                conn.execute(
+                    "DELETE FROM sqlite_sequence "
+                    "WHERE name IN ('tickets','usuarios','shadow_log')"
+                )
         except sqlite3.OperationalError:
             pass
 
@@ -399,8 +596,10 @@ def seed_demo(force: bool = False) -> bool:
                 senha=u.get("senha") or gerar_senha(),
                 is_admin=u.get("is_admin", False),
             )
-        for t in seed_data.TICKETS:
-            _inserir_ticket_seed(t)
+        for i, t in enumerate(seed_data.TICKETS):
+            _inserir_ticket_seed(t, i)
+        for s in getattr(seed_data, "SHADOW", []):
+            _inserir_shadow_seed(s)
         return True
 
 
