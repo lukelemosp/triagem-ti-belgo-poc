@@ -181,8 +181,8 @@ with aba_novo:
         st.session_state.kb_nu_codigo = db.proximo_codigo_kb()
 
     st.markdown("#### Cadastrar novo artigo")
-    codigo = st.text_input("Código *", key="kb_nu_codigo",
-                           help="Gerado automaticamente — editável.")
+    codigo = st.text_input("Código (automático)", key="kb_nu_codigo", disabled=True,
+                           help="Gerado automaticamente em sequência (KB0001, KB0002, …).")
     titulo = st.text_input("Título *", key="kb_nu_titulo")
     categoria = st.selectbox("Categoria", _CATEGORIAS, key="kb_nu_cat",
                              format_func=ui.fmt_categoria)

@@ -89,6 +89,72 @@ def _chat_dialog():
         st.info("Nenhuma pergunta ainda. Experimente: \"qual o \xfaltimo chamado aberto?\"")
 
 
+# ── Modal "como é calculado" dos indicadores de ROI ───────────────────────────
+@st.dialog("Como este indicador é calculado")
+def _roi_info_dialog(metric: str):
+    a = analytics
+    stats = db.stats_roi()
+    roi = a.calcular_roi(stats)
+    fb = db.stats_feedback()
+    auto = int(stats.get("auto_resolvidos") or 0)
+    auto30 = int(stats.get("auto_resolvidos_30d") or 0)
+    resolvidos = int(stats.get("resolvidos") or 0)
+    pos = int(fb.get("positivos") or 0)
+    neg = int(fb.get("negativos") or 0)
+    custo_h = ("R$ %.2f" % a.CUSTO_HORA_N1).replace(".", ",")
+
+    INFO = {
+        "deflexao": (
+            "Taxa de deflexão",
+            "Percentual de chamados **resolvidos sem intervenção humana** — "
+            "ou seja, tratados automaticamente pela IA.",
+            "**auto-resolvidos ÷ total de resolvidos × 100**",
+            "%d ÷ %d = **%s**" % (auto, resolvidos, roi["deflexao"]),
+        ),
+        "economia": (
+            "Economia / mês",
+            "Custo de mão de obra evitado pelas auto-resoluções dos **últimos 30 dias**, "
+            "descontando o custo de IA por chamado.",
+            "auto-resolvidos (30d) × (tempo manual × custo-hora do N1 − custo de IA)",
+            "%d × (%d min × %s/h − R$ 0,40) = **%s**"
+            % (auto30, a.TEMPO_MANUAL_N1_MIN, custo_h, roi["economia_mes"]),
+        ),
+        "horas": (
+            "Horas N1 poupadas",
+            "Tempo de analista N1 liberado pelas auto-resoluções da IA.",
+            "auto-resolvidos × tempo médio de uma resolução manual de N1",
+            "%d × %d min = **%s**" % (auto, a.TEMPO_MANUAL_N1_MIN, roi["horas_economizadas"]),
+        ),
+        "csat": (
+            "CSAT médio",
+            "Satisfação média dos solicitantes (nota de 1 a 5) coletada após a "
+            "resolução do chamado.",
+            "média das notas de CSAT registradas",
+            "média de %d avaliações = **%s / 5**" % (int(stats.get("csat_n") or 0), roi["csat_media"]),
+        ),
+        "acuracia": (
+            "Acurácia percebida",
+            "Quão certa a triagem da IA é, segundo o retorno humano (botões 👍/👎 "
+            "no detalhe do chamado).",
+            "feedback positivo ÷ (positivo + negativo) × 100",
+            "%d 👍 ÷ %d avaliações = **%s**" % (pos, pos + neg, _acuracia_txt(fb)),
+        ),
+    }
+    titulo, oque, formula, exemplo = INFO.get(metric, ("Indicador", "", "", ""))
+    st.markdown("### " + titulo)
+    st.markdown(oque)
+    st.markdown("**Fórmula**")
+    st.markdown(formula)
+    st.markdown("**Com os dados atuais**")
+    st.info(exemplo)
+    st.caption("Os parâmetros de negócio (custo-hora, tempo médio, custo de IA) são "
+               "premissas editáveis em `analytics.py`.")
+
+
+def _acuracia_txt(fb: dict) -> str:
+    return f"{fb['acuracia']:.0f}%" if fb.get("acuracia") is not None else "—"
+
+
 # ── Definição das páginas ─────────────────────────────────────────────────────
 def _render_ticket_row(t, key_prefix):
     """Renderiza uma linha de chamado (id clicável, nível, título, status, data)."""
@@ -200,22 +266,20 @@ def _dashboard():
         '\U0001f4b0 Valor para o neg\xf3cio</div>',
         unsafe_allow_html=True,
     )
-    r1, r2, r3, r4, r5 = st.columns(5)
-    with r1:
-        st.markdown(ui.stat_card_html(_roi["deflexao"], "Taxa de deflex\xe3o", "#7B1FA2"),
-                    unsafe_allow_html=True)
-    with r2:
-        st.markdown(ui.stat_card_html(_roi["economia_mes"], "Economia / m\xeas", "#2E7D32"),
-                    unsafe_allow_html=True)
-    with r3:
-        st.markdown(ui.stat_card_html(_roi["horas_economizadas"], "Horas N1 poupadas", "#003B4A"),
-                    unsafe_allow_html=True)
-    with r4:
-        st.markdown(ui.stat_card_html(_roi["csat_media"] + " / 5", "CSAT m\xe9dio", "#F37021"),
-                    unsafe_allow_html=True)
-    with r5:
-        st.markdown(ui.stat_card_html(_acuracia, "Acur\xe1cia percebida", "#1976D2"),
-                    unsafe_allow_html=True)
+    _roi_cols = st.columns(5)
+    _roi_cards = [
+        ("deflexao", _roi["deflexao"], "Taxa de deflex\xe3o", "#7B1FA2"),
+        ("economia", _roi["economia_mes"], "Economia / m\xeas", "#2E7D32"),
+        ("horas", _roi["horas_economizadas"], "Horas N1 poupadas", "#003B4A"),
+        ("csat", _roi["csat_media"] + " / 5", "CSAT m\xe9dio", "#F37021"),
+        ("acuracia", _acuracia, "Acur\xe1cia percebida", "#1976D2"),
+    ]
+    for _col, (_mid, _val, _lbl, _cor) in zip(_roi_cols, _roi_cards):
+        with _col:
+            st.markdown(ui.stat_card_html(_val, _lbl, _cor), unsafe_allow_html=True)
+            if st.button("ℹ️ Como \xe9 calculado", key="roi_info_" + _mid,
+                         use_container_width=True):
+                _roi_info_dialog(_mid)
 
     # Comparativo de tempo médio de resolução: IA vs manual
     _mttr_fig = px.bar(
@@ -609,17 +673,35 @@ with _tb_r:
 
 # ── Navbar nativa (st.page_link) — itens conforme o papel ────────────────────
 if _IS_ADMIN:
-    _cols = st.columns(10)
-    with _cols[0]: st.page_link(p_home,     label="\U0001f4ca Dashboard",    use_container_width=True)
-    with _cols[1]: st.page_link(p_novo,     label="\U0001f4cb Novo Chamado", use_container_width=True)
-    with _cols[2]: st.page_link(p_n1,       label="\U0001f535 Fila N1",      use_container_width=True)
-    with _cols[3]: st.page_link(p_n2,       label="\U0001f534 Fila N2",      use_container_width=True)
-    with _cols[4]: st.page_link(p_chamados, label="\U0001f4c2 Chamados",     use_container_width=True)
-    with _cols[5]: st.page_link(p_skills,   label="\U0001f9e9 Skills",       use_container_width=True)
-    with _cols[6]: st.page_link(p_shadow,   label="\U0001f311 Sombra",       use_container_width=True)
-    with _cols[7]: st.page_link(p_kb,       label="\U0001f4da KB",           use_container_width=True)
-    with _cols[8]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
-    with _cols[9]: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
+    # Rótulos de grupo: separa o que o usuário comum acessa do que é exclusivo do admin
+    _grp_user = ("<div style=\"font-size:0.64rem;font-weight:700;letter-spacing:0.08em;"
+                 "text-transform:uppercase;color:#5A7E88;font-family:Montserrat,sans-serif;"
+                 "padding:0 0 3px 8px;\">Atendimento</div>")
+    _grp_admin = ("<div style=\"font-size:0.64rem;font-weight:700;letter-spacing:0.08em;"
+                  "text-transform:uppercase;color:#003B4A;font-family:Montserrat,sans-serif;"
+                  "padding:0 0 3px 12px;border-left:2px solid #ED1C24;\">"
+                  "\U0001f512 Acesso administrativo</div>")
+    _lc1, _lc2 = st.columns([2.65, 8.0])
+    with _lc1: st.markdown(_grp_user, unsafe_allow_html=True)
+    with _lc2: st.markdown(_grp_admin, unsafe_allow_html=True)
+
+    _divisor = ("<div style=\"height:34px;border-left:2px solid rgba(255,255,255,0.35);"
+                "width:1px;margin:0 auto;\"></div>")
+    _cols = st.columns([1.2, 1.2, 0.25, 1, 1, 1, 1, 1, 1, 1, 1])
+    # Grupo do usuário comum
+    with _cols[0]: st.page_link(p_novo,    label="\U0001f4cb Novo Chamado", use_container_width=True)
+    with _cols[1]: st.page_link(p_triagem, label="\U0001f916 Triagem IA",   use_container_width=True)
+    # Divisor visual
+    with _cols[2]: st.markdown(_divisor, unsafe_allow_html=True)
+    # Grupo exclusivo do admin
+    with _cols[3]: st.page_link(p_home,     label="\U0001f4ca Dashboard",   use_container_width=True)
+    with _cols[4]: st.page_link(p_n1,       label="\U0001f535 Fila N1",     use_container_width=True)
+    with _cols[5]: st.page_link(p_n2,       label="\U0001f534 Fila N2",     use_container_width=True)
+    with _cols[6]: st.page_link(p_chamados, label="\U0001f4c2 Chamados",    use_container_width=True)
+    with _cols[7]: st.page_link(p_skills,   label="\U0001f9e9 Skills",      use_container_width=True)
+    with _cols[8]: st.page_link(p_shadow,   label="\U0001f311 Sombra",      use_container_width=True)
+    with _cols[9]: st.page_link(p_kb,       label="\U0001f4da KB",          use_container_width=True)
+    with _cols[10]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios", use_container_width=True)
 else:
     _cols = st.columns(2)
     with _cols[0]: st.page_link(p_novo,    label="\U0001f4cb Novo Chamado", use_container_width=True)
