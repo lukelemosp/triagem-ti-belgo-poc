@@ -1031,6 +1031,9 @@ def render_sidebar(active_page: str = "") -> None:
         st.page_link("pages/3_Fila_N1.py", label="\U0001f535  Fila N1")
         st.page_link("pages/4_Fila_N2.py", label="\U0001f534  Fila N2")
         st.page_link("pages/7_Chamados.py", label="\U0001f4c2  Chamados")
+        st.markdown('<div class="belgo-sidebar-section">Governan\xe7a</div>', unsafe_allow_html=True)
+        st.page_link("pages/8_Skills.py", label="\U0001f9e9  Cat\xe1logo de Skills")
+        st.page_link("pages/9_Shadow.py", label="\U0001f311  Modo Sombra")
         st.markdown('<div class="belgo-sidebar-section">Admin</div>', unsafe_allow_html=True)
         st.page_link("pages/6_Usuarios.py", label="\U0001f465  Usu\xe1rios")
         st.page_link("pages/1_Triagem.py", label="\U0001f916  Triagem IA")
@@ -1461,7 +1464,7 @@ _GITHUB_SVG = (
     '</svg>'
 )
 
-def _skill_card(title: str, color: str, badge: str, desc: str) -> str:
+def skill_card(title: str, color: str, badge: str, desc: str) -> str:
     return (
         "<div style=\"background:#F7FAFB;border:1px solid #D6E2E5;border-top:3px solid " + color + ";"
         "border-radius:8px;padding:12px 14px;\">"
@@ -1474,6 +1477,10 @@ def _skill_card(title: str, color: str, badge: str, desc: str) -> str:
         "line-height:1.6;\">" + desc + "</div>"
         "</div>"
     )
+
+
+# Alias interno mantido para o modal de arquitetura
+_skill_card = skill_card
 
 
 @st.dialog("\U0001f4d0 Arquitetura da Solu\xe7\xe3o", width="large")
