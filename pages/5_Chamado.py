@@ -69,6 +69,36 @@ with col_acao:
             unsafe_allow_html=True,
         )
 
+    # ── Feedback humano sobre a triagem da IA (HITL — alimenta o 70/30) ────────
+    if ticket.get("nivel") in ("N1", "N2", "FORA_DE_ESCOPO"):
+        st.markdown("---")
+        st.markdown("**A triagem da IA foi correta?**")
+        _fb = ticket.get("feedback_humano")
+        if _fb:
+            _txt = "\U0001f44d Marcada como correta" if _fb == "POSITIVO" else "\U0001f44e Marcada como incorreta"
+            st.caption(_txt + " — obrigado! Esse retorno treina o agente.")
+        else:
+            _sel = st.feedback("thumbs", key=f"fb_{ticket_id}")
+            if _sel is not None:
+                db.registrar_feedback(ticket_id, "POSITIVO" if _sel == 1 else "NEGATIVO")
+                st.query_params["id"] = str(ticket_id)
+                st.rerun()
+
+    # ── CSAT pós-resolução ────────────────────────────────────────────────────
+    if ticket.get("status") in ("RESOLVIDO", "FECHADO"):
+        st.markdown("---")
+        _nota = ticket.get("csat_nota")
+        if _nota:
+            st.markdown("**Satisfação do solicitante**")
+            st.caption("⭐" * int(_nota) + f"  ({int(_nota)}/5)")
+        else:
+            st.markdown("**Avalie o atendimento**")
+            _stars = st.feedback("stars", key=f"csat_{ticket_id}")
+            if _stars is not None:
+                db.registrar_csat(ticket_id, _stars + 1)
+                st.query_params["id"] = str(ticket_id)
+                st.rerun()
+
     # Formulário de ação (só para tickets não fechados)
     if ticket["status"] not in ("FECHADO",):
         st.markdown("---")
