@@ -266,7 +266,6 @@ def _dashboard():
         '\U0001f4b0 Valor para o neg\xf3cio</div>',
         unsafe_allow_html=True,
     )
-    _roi_cols = st.columns(5)
     _roi_cards = [
         ("deflexao", _roi["deflexao"], "Taxa de deflex\xe3o", "#7B1FA2"),
         ("economia", _roi["economia_mes"], "Economia / m\xeas", "#2E7D32"),
@@ -274,12 +273,27 @@ def _dashboard():
         ("csat", _roi["csat_media"] + " / 5", "CSAT m\xe9dio", "#F37021"),
         ("acuracia", _acuracia, "Acur\xe1cia percebida", "#1976D2"),
     ]
+    # "i" circular no canto superior direito de cada card (abre o modal explicativo)
+    st.markdown("""
+<style>
+  [class*="st-key-roicard_"] { position: relative; }
+  [class*="st-key-roicard_"] [class*="st-key-roi_info_"] {
+      position: absolute; top: 6px; right: 8px; width: auto; min-width: 0; margin: 0; z-index: 5; }
+  [class*="st-key-roicard_"] [class*="st-key-roi_info_"] button {
+      min-height: 0; height: 22px; width: 22px; padding: 0; border-radius: 50%;
+      border: 1px solid #CBD8DC; background: #FFFFFF; color: #5A7E88;
+      font-style: italic; font-weight: 700; font-size: 0.82rem; line-height: 1; }
+  [class*="st-key-roicard_"] [class*="st-key-roi_info_"] button:hover {
+      color: #003B4A; border-color: #003B4A; background: #F0F6F8; }
+</style>
+""", unsafe_allow_html=True)
+    _roi_cols = st.columns(5)
     for _col, (_mid, _val, _lbl, _cor) in zip(_roi_cols, _roi_cards):
         with _col:
-            st.markdown(ui.stat_card_html(_val, _lbl, _cor), unsafe_allow_html=True)
-            if st.button("ℹ️ Como \xe9 calculado", key="roi_info_" + _mid,
-                         use_container_width=True):
-                _roi_info_dialog(_mid)
+            with st.container(key="roicard_" + _mid):
+                st.markdown(ui.stat_card_html(_val, _lbl, _cor), unsafe_allow_html=True)
+                if st.button("i", key="roi_info_" + _mid, help="Como \xe9 calculado"):
+                    _roi_info_dialog(_mid)
 
     # Comparativo de tempo médio de resolução: IA vs manual
     _mttr_fig = px.bar(
