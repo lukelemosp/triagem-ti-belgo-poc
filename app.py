@@ -581,12 +581,13 @@ p_usuarios = st.Page("pages/6_Usuarios.py",      title="Usu\xe1rios",  url_path=
 p_triagem  = st.Page("pages/1_Triagem.py",       title="Triagem IA",   url_path="triagem")
 p_skills   = st.Page("pages/8_Skills.py",        title="Skills",       url_path="skills")
 p_shadow   = st.Page("pages/9_Shadow.py",        title="Modo Sombra",  url_path="shadow")
+p_kb       = st.Page("pages/10_Base_Conhecimento.py", title="Base de Conhecimento", url_path="kb")
 
 if _IS_ADMIN:
     pg = st.navigation(
         {
             "Sistema":     [p_home, p_novo, p_n1, p_n2, p_chamados, p_chamado, p_usuarios],
-            "Governan\xe7a": [p_skills, p_shadow],
+            "Governan\xe7a": [p_skills, p_shadow, p_kb],
             "Demo":        [p_triagem],
         },
         position="hidden",
@@ -608,7 +609,7 @@ with _tb_r:
 
 # ── Navbar nativa (st.page_link) — itens conforme o papel ────────────────────
 if _IS_ADMIN:
-    _cols = st.columns(9)
+    _cols = st.columns(10)
     with _cols[0]: st.page_link(p_home,     label="\U0001f4ca Dashboard",    use_container_width=True)
     with _cols[1]: st.page_link(p_novo,     label="\U0001f4cb Novo Chamado", use_container_width=True)
     with _cols[2]: st.page_link(p_n1,       label="\U0001f535 Fila N1",      use_container_width=True)
@@ -616,8 +617,9 @@ if _IS_ADMIN:
     with _cols[4]: st.page_link(p_chamados, label="\U0001f4c2 Chamados",     use_container_width=True)
     with _cols[5]: st.page_link(p_skills,   label="\U0001f9e9 Skills",       use_container_width=True)
     with _cols[6]: st.page_link(p_shadow,   label="\U0001f311 Sombra",       use_container_width=True)
-    with _cols[7]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
-    with _cols[8]: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
+    with _cols[7]: st.page_link(p_kb,       label="\U0001f4da KB",           use_container_width=True)
+    with _cols[8]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios",  use_container_width=True)
+    with _cols[9]: st.page_link(p_triagem,  label="\U0001f916 Triagem IA",   use_container_width=True)
 else:
     _cols = st.columns(2)
     with _cols[0]: st.page_link(p_novo,    label="\U0001f4cb Novo Chamado", use_container_width=True)
