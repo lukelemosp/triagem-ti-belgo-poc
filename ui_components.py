@@ -5,6 +5,7 @@ import pathlib as _pathlib
 from datetime import datetime, timezone, timedelta
 
 import analytics
+import kb_data
 
 _BRT = timezone(timedelta(hours=-3))
 
@@ -1163,6 +1164,31 @@ def canal_badge_html(canal: str) -> str:
     return '<span class="bq-canal">' + icon + ' ' + label + '</span>'
 
 
+def kb_artigo_html(categoria: str | None) -> str:
+    """Bloco expansível com o artigo de KB usado na resolução (explicabilidade).
+
+    Retorna "" quando a categoria não tem artigo associado (ex.: OUTRO).
+    """
+    artigo = kb_data.sugerir_artigo(categoria)
+    if not artigo:
+        return ""
+    passos = "".join(
+        "<li style=\"margin-bottom:3px;\">" + _html.escape(p) + "</li>"
+        for p in artigo["passos"]
+    )
+    return (
+        "<details style=\"margin-top:16px;background:#F3F8FA;border:1px solid #D6E2E5;"
+        "border-left:3px solid #1976D2;border-radius:0 8px 8px 0;padding:10px 14px;\">"
+        "<summary style=\"cursor:pointer;font-size:0.82rem;font-weight:700;color:#0D47A1;"
+        "font-family:'Montserrat',sans-serif;\">"
+        "\U0001f4da Resolvido via " + _html.escape(artigo["id"]) + " — "
+        + _html.escape(artigo["titulo"]) + "</summary>"
+        "<ol style=\"margin:10px 0 0;padding-left:20px;font-size:0.8rem;color:#5A7E88;"
+        "font-family:'Montserrat',sans-serif;line-height:1.5;\">" + passos + "</ol>"
+        "</details>"
+    )
+
+
 def ticket_detail_html(ticket: dict, nivel: str) -> str:
     """Painel completo de metadados do chamado (col_meta de 5_Chamado.py)."""
     cls = "result-card"
@@ -1244,6 +1270,7 @@ def ticket_detail_html(ticket: dict, nivel: str) -> str:
         + '</div>'
         + sugestao_html
         + acao_html
+        + kb_artigo_html(ticket.get("categoria"))
         + '</div>'
     )
 
@@ -1316,6 +1343,7 @@ def render_result_card(r: dict) -> str:
     <div class="result-value">{sugestao}</div>
   </div>
   <div class="{acao_cls}">⚡ {acao}</div>
+  {kb_artigo_html(r.get("categoria"))}
 </div>"""
 
 
