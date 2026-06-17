@@ -5,6 +5,7 @@ import streamlit as st
 import database as db
 import ui_components as ui
 import ai_agent as agent
+import analytics
 
 st.set_page_config(
     page_title="Belgo TI — Sistema de Chamados",
@@ -189,6 +190,52 @@ def _dashboard():
                 st.divider()
         ui.render_footer()
         return
+
+    # ── Painel de Valor / ROI ────────────────────────────────────────────────
+    _roi = analytics.calcular_roi(db.stats_roi())
+    _fb = db.stats_feedback()
+    _acuracia = f"{_fb['acuracia']:.0f}%" if _fb.get("acuracia") is not None else "—"
+    st.markdown(
+        '<div class="result-label" style="margin:6px 0 12px;">'
+        '\U0001f4b0 Valor para o neg\xf3cio</div>',
+        unsafe_allow_html=True,
+    )
+    r1, r2, r3, r4, r5 = st.columns(5)
+    with r1:
+        st.markdown(ui.stat_card_html(_roi["deflexao"], "Taxa de deflex\xe3o", "#7B1FA2"),
+                    unsafe_allow_html=True)
+    with r2:
+        st.markdown(ui.stat_card_html(_roi["economia_mes"], "Economia / m\xeas", "#2E7D32"),
+                    unsafe_allow_html=True)
+    with r3:
+        st.markdown(ui.stat_card_html(_roi["horas_economizadas"], "Horas N1 poupadas", "#003B4A"),
+                    unsafe_allow_html=True)
+    with r4:
+        st.markdown(ui.stat_card_html(_roi["csat_media"] + " / 5", "CSAT m\xe9dio", "#F37021"),
+                    unsafe_allow_html=True)
+    with r5:
+        st.markdown(ui.stat_card_html(_acuracia, "Acur\xe1cia percebida", "#1976D2"),
+                    unsafe_allow_html=True)
+
+    # Comparativo de tempo médio de resolução: IA vs manual
+    _mttr_fig = px.bar(
+        x=[analytics.TEMPO_IA_SEG / 60.0, analytics.TEMPO_MANUAL_N1_MIN],
+        y=["Resolu\xe7\xe3o IA", "Resolu\xe7\xe3o manual"],
+        orientation="h",
+        text=["~30 s", f"{analytics.TEMPO_MANUAL_N1_MIN} min"],
+        color=["IA", "Manual"],
+        color_discrete_map={"IA": "#2E7D32", "Manual": "#ED1C24"},
+        title="Tempo m\xe9dio de resolu\xe7\xe3o — IA vs. manual (min)",
+    )
+    _mttr_fig.update_layout(
+        font_family="Montserrat, sans-serif",
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=40, b=0, l=0, r=0), showlegend=False, height=200,
+        xaxis_title=None, yaxis_title=None,
+    )
+    _mttr_fig.update_traces(textposition="outside", cliponaxis=False)
+    st.plotly_chart(_mttr_fig, use_container_width=True)
+    st.markdown("<div style='margin-top:18px'></div>", unsafe_allow_html=True)
 
     # ── Seção de Gráficos (colapsável) ───────────────────────────────────────
     with st.expander("Análise de Chamados", expanded=False):
