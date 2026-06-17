@@ -100,10 +100,5 @@ KB_ARTIGOS = {
         ],
     },
 }
-
-
-def sugerir_artigo(categoria: str | None) -> dict | None:
-    """Retorna o artigo de KB associado à categoria, ou None (ex.: OUTRO)."""
-    if not categoria:
-        return None
-    return KB_ARTIGOS.get(categoria)
+# NOTA: este dict é apenas a SEMENTE inicial da KB. Em runtime os artigos vivem na
+# tabela kb_artigos (CRUD) — ver database.seed_kb / kb_por_categoria / listar_kb.

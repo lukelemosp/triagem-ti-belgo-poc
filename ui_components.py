@@ -5,7 +5,7 @@ import pathlib as _pathlib
 from datetime import datetime, timezone, timedelta
 
 import analytics
-import kb_data
+import database as _db
 
 _BRT = timezone(timedelta(hours=-3))
 
@@ -1167,9 +1167,9 @@ def canal_badge_html(canal: str) -> str:
 def kb_artigo_html(categoria: str | None) -> str:
     """Bloco expansível com o artigo de KB usado na resolução (explicabilidade).
 
-    Retorna "" quando a categoria não tem artigo associado (ex.: OUTRO).
+    Retorna "" quando a categoria não tem artigo ativo associado (ex.: OUTRO).
     """
-    artigo = kb_data.sugerir_artigo(categoria)
+    artigo = _db.kb_por_categoria(categoria)
     if not artigo:
         return ""
     passos = "".join(

@@ -1,3 +1,4 @@
+import json
 import secrets
 import sqlite3
 import threading
@@ -53,6 +54,19 @@ CREATE TABLE IF NOT EXISTS tickets (
     kb_artigo      TEXT,
     ia_nivel_sugerido     TEXT,
     ia_categoria_sugerida TEXT
+);
+
+-- Base de conhecimento (KB): artigos editáveis (CRUD). A citação automática no
+-- chamado usa kb_por_categoria(); os passos são guardados como JSON.
+CREATE TABLE IF NOT EXISTS kb_artigos (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo        TEXT UNIQUE,
+    titulo        TEXT NOT NULL,
+    categoria     TEXT,
+    passos        TEXT,
+    ativo         INTEGER NOT NULL DEFAULT 1,
+    criado_em     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    atualizado_em TEXT
 );
 
 -- Registro do modo sombra (shadow mode): a IA classifica em paralelo ao humano
@@ -113,6 +127,8 @@ def init_db():
         if nome not in tcols:
             conn.execute(f"ALTER TABLE tickets ADD COLUMN {nome} {tipo}")
     conn.commit()
+    # KB é dado de referência: garante os artigos-base mesmo sem o seed de demo.
+    seed_kb()
 
 
 # Sem caracteres ambíguos (0/O/1/l/I) para senhas legíveis no olhinho
@@ -229,7 +245,7 @@ def criar_ticket(
     sla_prazo = _add_horas(criado_em, sla_horas) if sla_horas else criado_em
     # KB sugerida pela categoria, quando não informada explicitamente.
     if kb_artigo is None:
-        artigo = kb_data.sugerir_artigo(categoria)
+        artigo = kb_por_categoria(categoria)
         kb_artigo = artigo["id"] if artigo else None
     # Provenance: registra o que a IA sugeriu (default = a própria classificação).
     if ia_nivel_sugerido is None:
@@ -483,6 +499,124 @@ def registrar_csat(ticket_id: int, nota: int, comentario: str = None) -> dict | 
     return atualizar_ticket(ticket_id, csat_nota=nota, csat_comentario=comentario)
 
 
+# ── Base de conhecimento (KB) — CRUD ─────────────────────────────────────────────
+
+def _kb_row(row) -> dict | None:
+    """Normaliza uma linha de kb_artigos, parseando os passos (JSON) para lista."""
+    if not row:
+        return None
+    d = dict(row)
+    try:
+        d["passos"] = json.loads(d.get("passos") or "[]")
+    except (json.JSONDecodeError, TypeError):
+        d["passos"] = []
+    return d
+
+
+def listar_kb(incluir_inativos: bool = True) -> list[dict]:
+    sql = "SELECT * FROM kb_artigos"
+    if not incluir_inativos:
+        sql += " WHERE ativo = 1"
+    sql += " ORDER BY codigo"
+    return [_kb_row(r) for r in get_db().execute(sql).fetchall()]
+
+
+def buscar_kb(pk: int) -> dict | None:
+    return _kb_row(get_db().execute("SELECT * FROM kb_artigos WHERE id=?", (pk,)).fetchone())
+
+
+def kb_por_categoria(categoria: str | None) -> dict | None:
+    """1º artigo ATIVO da categoria, no formato {id: codigo, titulo, passos}.
+
+    Mantém compatibilidade com os call-sites de citação (criar_ticket, ui).
+    """
+    if not categoria:
+        return None
+    row = get_db().execute(
+        "SELECT * FROM kb_artigos WHERE categoria=? AND ativo=1 ORDER BY codigo LIMIT 1",
+        (categoria,),
+    ).fetchone()
+    art = _kb_row(row)
+    if not art:
+        return None
+    return {"id": art["codigo"], "titulo": art["titulo"], "passos": art["passos"]}
+
+
+def proximo_codigo_kb() -> str:
+    """Próximo código KB sequencial (KB0001, KB0002, …)."""
+    rows = get_db().execute("SELECT codigo FROM kb_artigos").fetchall()
+    maxn = 0
+    for r in rows:
+        cod = (r["codigo"] or "").upper()
+        if cod.startswith("KB"):
+            try:
+                maxn = max(maxn, int(cod[2:]))
+            except ValueError:
+                pass
+    return f"KB{maxn + 1:04d}"
+
+
+def criar_kb(titulo: str, categoria: str = None, passos: list = None,
+             codigo: str = None, ativo: bool = True) -> dict:
+    codigo = (codigo or "").strip() or proximo_codigo_kb()
+    passos_json = json.dumps(passos or [], ensure_ascii=False)
+    conn = get_db()
+    with conn:
+        cur = conn.execute(
+            "INSERT INTO kb_artigos (codigo, titulo, categoria, passos, ativo) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (codigo, titulo, categoria, passos_json, 1 if ativo else 0),
+        )
+    return buscar_kb(cur.lastrowid)
+
+
+def atualizar_kb(pk: int, **kwargs) -> dict | None:
+    if "passos" in kwargs and isinstance(kwargs["passos"], list):
+        kwargs["passos"] = json.dumps(kwargs["passos"], ensure_ascii=False)
+    if "ativo" in kwargs:
+        kwargs["ativo"] = 1 if kwargs["ativo"] else 0
+    kwargs["atualizado_em"] = _now()
+    sets = ", ".join(f"{k}=?" for k in kwargs)
+    vals = list(kwargs.values()) + [pk]
+    conn = get_db()
+    with conn:
+        conn.execute(f"UPDATE kb_artigos SET {sets} WHERE id=?", vals)
+    return buscar_kb(pk)
+
+
+def deletar_kb(pk: int) -> bool:
+    conn = get_db()
+    with conn:
+        cur = conn.execute("DELETE FROM kb_artigos WHERE id=?", (pk,))
+    return cur.rowcount > 0
+
+
+def contar_resolvidos_por_kb() -> dict:
+    """{codigo: nº de chamados resolvidos citando este KB}."""
+    rows = get_db().execute(
+        "SELECT kb_artigo AS codigo, COUNT(*) AS n FROM tickets "
+        "WHERE kb_artigo IS NOT NULL GROUP BY kb_artigo"
+    ).fetchall()
+    return {r["codigo"]: r["n"] for r in rows}
+
+
+def seed_kb() -> bool:
+    """Popula os artigos-base de KB a partir de kb_data.KB_ARTIGOS (idempotente).
+
+    Só semeia quando a tabela está vazia, sob lock com recheck (mesma proteção de
+    concorrência do seed_demo). Assim, artigos editados/excluídos pelo admin não
+    ressurgem a cada init_db.
+    """
+    with _seed_lock:
+        total = get_db().execute("SELECT COUNT(*) AS n FROM kb_artigos").fetchone()["n"]
+        if total:
+            return False
+        for cat, art in kb_data.KB_ARTIGOS.items():
+            criar_kb(art["titulo"], categoria=cat, passos=art.get("passos"),
+                     codigo=art.get("id"), ativo=True)
+        return True
+
+
 # ── Seed de demonstração ────────────────────────────────────────────────────────
 
 def _dt_dias_atras(dias: int) -> str:
@@ -513,7 +647,7 @@ def _inserir_ticket_seed(t: dict, idx: int = 0) -> None:
     canal = t.get("canal") or _CANAL_CICLO[idx % len(_CANAL_CICLO)]
     sla_horas = analytics.sla_horas_para(nivel, categoria, auto)
     sla_prazo = _add_horas(criado, sla_horas) if sla_horas else criado
-    artigo = kb_data.sugerir_artigo(categoria) if auto else None
+    artigo = kb_por_categoria(categoria) if auto else None
     kb_artigo = artigo["id"] if artigo else None
     # CSAT só nos chamados encerrados (e nem todos avaliam: ~75%).
     csat = _CSAT_CICLO[idx % len(_CSAT_CICLO)] if (encerrado and idx % 4 != 3) else None
@@ -580,12 +714,13 @@ def seed_demo(force: bool = False) -> bool:
             conn.execute("DELETE FROM tickets")
             conn.execute("DELETE FROM usuarios")
             conn.execute("DELETE FROM shadow_log")
+            conn.execute("DELETE FROM kb_artigos")
         # Reinicia os IDs (sqlite_sequence só existe após o 1º INSERT com AUTOINCREMENT)
         try:
             with conn:
                 conn.execute(
                     "DELETE FROM sqlite_sequence "
-                    "WHERE name IN ('tickets','usuarios','shadow_log')"
+                    "WHERE name IN ('tickets','usuarios','shadow_log','kb_artigos')"
                 )
         except sqlite3.OperationalError:
             pass
@@ -596,6 +731,11 @@ def seed_demo(force: bool = False) -> bool:
                 senha=u.get("senha") or gerar_senha(),
                 is_admin=u.get("is_admin", False),
             )
+        # KB antes dos tickets: _inserir_ticket_seed cita via kb_por_categoria.
+        # (criar_kb não adquire _seed_lock, então é seguro chamar aqui dentro.)
+        for cat, art in kb_data.KB_ARTIGOS.items():
+            criar_kb(art["titulo"], categoria=cat, passos=art.get("passos"),
+                     codigo=art.get("id"), ativo=True)
         for i, t in enumerate(seed_data.TICKETS):
             _inserir_ticket_seed(t, i)
         for s in getattr(seed_data, "SHADOW", []):
