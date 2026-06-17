@@ -117,7 +117,7 @@ _resultados.sort(
 st.caption(f"{len(_resultados)} chamado(s) encontrado(s)")
 
 # ── Data grid ─────────────────────────────────────────────────────────────────
-_COLS = [1.0, 3.3, 0.8, 1.0, 1.5, 1.4, 0.9]
+_COLS = [0.9, 3.1, 0.75, 0.9, 1.35, 1.25, 1.3, 0.85]
 _GRID_TPL = " ".join(str(c) + "fr" for c in _COLS)
 st.markdown(
     '<div class="bq-table-header" style="grid-template-columns:' + _GRID_TPL + ';">'
@@ -126,6 +126,7 @@ st.markdown(
     '<div class="bq-table-header-cell">N\xedvel</div>'
     '<div class="bq-table-header-cell" style="text-align:center;">Confian\xe7a</div>'
     '<div class="bq-table-header-cell">Status</div>'
+    '<div class="bq-table-header-cell">SLA</div>'
     '<div class="bq-table-header-cell">Aberto em</div>'
     '<div class="bq-table-header-cell">Ver</div>'
     '</div>',
@@ -144,7 +145,7 @@ else:
         confianca = t.get("confianca") or 0
         cor_conf = "#003B4A" if confianca >= 80 else "#F37021" if confianca >= 60 else "#ED1C24"
         with st.container(key="crow_" + str(tid)):
-            c_id, c_info, c_niv, c_conf, c_status, c_dt, c_ver = st.columns(_COLS, gap="small")
+            c_id, c_info, c_niv, c_conf, c_status, c_sla, c_dt, c_ver = st.columns(_COLS, gap="small")
             with c_id:
                 st.markdown(
                     f'<div style="font-size:0.85rem;font-weight:800;color:#003B4A;'
@@ -153,9 +154,10 @@ else:
                 )
             with c_info:
                 cat = ui.fmt_categoria(t.get("categoria"))
+                canal = ui.canal_badge_html(t.get("canal"))
                 st.markdown(
                     f"**{t['titulo']}**  \n"
-                    f"<span style='font-size:0.78rem;color:#5A7E88;'>{cat}</span>",
+                    f"<span style='font-size:0.78rem;color:#5A7E88;'>{cat} · {canal}</span>",
                     unsafe_allow_html=True,
                 )
             with c_niv:
@@ -172,6 +174,11 @@ else:
             with c_status:
                 st.markdown(
                     '<div style="padding-top:6px;">' + ui.ticket_status_badge(t["status"]) + '</div>',
+                    unsafe_allow_html=True,
+                )
+            with c_sla:
+                st.markdown(
+                    '<div style="padding-top:6px;">' + ui.sla_badge_html(t) + '</div>',
                     unsafe_allow_html=True,
                 )
             with c_dt:

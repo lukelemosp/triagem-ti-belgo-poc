@@ -53,7 +53,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-_COLS = [1.05, 3.9, 1.2, 1.6, 1.25, 1.0]
+_COLS = [1.0, 3.5, 1.0, 1.45, 1.3, 1.2, 0.95]
 _GRID_TPL = " ".join(str(c) + "fr" for c in _COLS)
 
 if "msg_fila2" not in st.session_state:
@@ -76,6 +76,7 @@ else:
         '<div class="bq-table-header-cell">Chamado</div>'
         '<div class="bq-table-header-cell" style="text-align:center;">Confian\xe7a</div>'
         '<div class="bq-table-header-cell">Status</div>'
+        '<div class="bq-table-header-cell">SLA</div>'
         '<div class="bq-table-header-cell">A\xe7\xe3o</div>'
         '<div class="bq-table-header-cell">Ver</div>'
         '</div>',
@@ -92,7 +93,7 @@ else:
         incerto = confianca < 70
 
         with st.container(key="qrow_" + str(tid)):
-            c_id, c_info, c_conf, c_status, c_assumir, c_ver = st.columns(_COLS, gap="small")
+            c_id, c_info, c_conf, c_status, c_sla, c_assumir, c_ver = st.columns(_COLS, gap="small")
 
             with c_id:
                 st.markdown(
@@ -104,9 +105,10 @@ else:
             with c_info:
                 cat = ui.fmt_categoria(t.get("categoria"))
                 alerta = " · ⚠️ Confiança baixa" if incerto else ""
+                canal = ui.canal_badge_html(t.get("canal"))
                 st.markdown(
                     f"**{t['titulo']}**  \n"
-                    f"<span style='font-size:0.78rem;color:#5A7E88;'>{cat}{alerta}</span>",
+                    f"<span style='font-size:0.78rem;color:#5A7E88;'>{cat}{alerta} · {canal}</span>",
                     unsafe_allow_html=True,
                 )
 
@@ -122,6 +124,12 @@ else:
             with c_status:
                 st.markdown(
                     '<div style="padding-top:6px;">' + ui.ticket_status_badge(t["status"]) + '</div>',
+                    unsafe_allow_html=True,
+                )
+
+            with c_sla:
+                st.markdown(
+                    '<div style="padding-top:6px;">' + ui.sla_badge_html(t) + '</div>',
                     unsafe_allow_html=True,
                 )
 

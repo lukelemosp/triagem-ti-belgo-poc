@@ -4,6 +4,8 @@ import re as _re
 import pathlib as _pathlib
 from datetime import datetime, timezone, timedelta
 
+import analytics
+
 _BRT = timezone(timedelta(hours=-3))
 
 import streamlit as st
@@ -718,6 +720,14 @@ BELGO_CSS = """
     .bq-badge-em_atend  { background: #E3F2FD; color: #1565C0; border: 1px solid #90CAF9; }
     .bq-badge-resolvido { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
     .bq-badge-fechado   { background: #ECEFF1; color: #546E7A; border: 1px solid #CFD8DC; }
+    /* SLA */
+    .bq-badge-sla-ok    { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+    .bq-badge-sla-warn  { background: #FFF4E5; color: #B45309; border: 1px solid #FBBF77; }
+    .bq-badge-sla-late  { background: #FEE8E8; color: #C62828; border: 1px solid #EF9A9A; }
+    .bq-badge-sla-none  { background: #ECEFF1; color: #546E7A; border: 1px solid #CFD8DC; }
+    /* Canal de entrada */
+    .bq-canal { font-size: 0.72rem; font-weight: 600; color: #1A2E33;
+        font-family: 'Montserrat', sans-serif; white-space: nowrap; }
 
     /* ── Detalhe do chamado ───────────────────────────────────────── */
     .ticket-meta-row {
@@ -1125,6 +1135,31 @@ def ticket_status_badge(status: str) -> str:
     return '<span class="' + cls + '">' + lbl + '</span>'
 
 
+_SLA_ICON = {"ok": "\U0001f7e2", "warn": "\U0001f7e0", "late": "\U0001f534", "none": "➖"}
+
+
+def sla_badge_html(ticket: dict) -> str:
+    """Badge de SLA (No prazo / Estourando / Estourado) a partir de analytics.status_sla."""
+    classe, rotulo = analytics.status_sla(ticket)
+    icon = _SLA_ICON.get(classe, "")
+    return ('<span class="bq-badge bq-badge-sla-' + classe + '">'
+            + icon + ' ' + _html.escape(rotulo) + '</span>')
+
+
+_CANAL_INFO = {
+    "PORTAL":   ("\U0001f310", "Portal"),
+    "EMAIL":    ("✉️", "E-mail"),
+    "TEAMS":    ("\U0001f4ac", "Teams"),
+    "WHATSAPP": ("\U0001f4f1", "WhatsApp"),
+}
+
+
+def canal_badge_html(canal: str) -> str:
+    """Rótulo com ícone do canal de entrada do chamado (multicanal)."""
+    icon, label = _CANAL_INFO.get((canal or "PORTAL").upper(), ("\U0001f310", "Portal"))
+    return '<span class="bq-canal">' + icon + ' ' + label + '</span>'
+
+
 def ticket_detail_html(ticket: dict, nivel: str) -> str:
     """Painel completo de metadados do chamado (col_meta de 5_Chamado.py)."""
     cls = "result-card"
@@ -1189,6 +1224,14 @@ def ticket_detail_html(ticket: dict, nivel: str) -> str:
         '<div class="ticket-meta-item">'
         '<div class="ticket-meta-label">Categoria</div>'
         '<div class="ticket-meta-value">' + fmt_categoria(ticket.get("categoria")) + '</div>'
+        '</div>'
+        '<div class="ticket-meta-item">'
+        '<div class="ticket-meta-label">Canal</div>'
+        '<div class="ticket-meta-value">' + canal_badge_html(ticket.get("canal")) + '</div>'
+        '</div>'
+        '<div class="ticket-meta-item">'
+        '<div class="ticket-meta-label">SLA</div>'
+        '<div class="ticket-meta-value">' + sla_badge_html(ticket) + '</div>'
         '</div>'
         '</div>'
         '<div style="font-size:0.78rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'

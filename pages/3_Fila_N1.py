@@ -56,7 +56,7 @@ st.markdown(
 )
 
 # Proporções compartilhadas entre o cabeçalho HTML e as colunas das linhas
-_COLS = [1.05, 3.9, 1.2, 1.6, 1.25, 1.0]
+_COLS = [1.0, 3.5, 1.0, 1.45, 1.3, 1.2, 0.95]
 _GRID_TPL = " ".join(str(c) + "fr" for c in _COLS)
 
 
@@ -83,6 +83,7 @@ def _fila_page(nivel: str):
         '<div class="bq-table-header-cell">Chamado</div>'
         '<div class="bq-table-header-cell" style="text-align:center;">Confian\xe7a</div>'
         '<div class="bq-table-header-cell">Status</div>'
+        '<div class="bq-table-header-cell">SLA</div>'
         '<div class="bq-table-header-cell">A\xe7\xe3o</div>'
         '<div class="bq-table-header-cell">Ver</div>'
         '</div>',
@@ -98,7 +99,7 @@ def _fila_page(nivel: str):
         cor_conf = "#003B4A" if confianca >= 80 else "#F37021" if confianca >= 60 else "#ED1C24"
 
         with st.container(key="qrow_" + str(tid)):
-            c_id, c_info, c_conf, c_status, c_assumir, c_ver = st.columns(_COLS, gap="small")
+            c_id, c_info, c_conf, c_status, c_sla, c_assumir, c_ver = st.columns(_COLS, gap="small")
 
             with c_id:
                 st.markdown(
@@ -110,9 +111,10 @@ def _fila_page(nivel: str):
             with c_info:
                 cat = ui.fmt_categoria(t.get("categoria"))
                 auto = " · ✅ Auto-resolvido" if t.get("auto_resolvido") else ""
+                canal = ui.canal_badge_html(t.get("canal"))
                 st.markdown(
                     f"**{t['titulo']}**  \n"
-                    f"<span style='font-size:0.78rem;color:#5A7E88;'>{cat}{auto}</span>",
+                    f"<span style='font-size:0.78rem;color:#5A7E88;'>{cat}{auto} · {canal}</span>",
                     unsafe_allow_html=True,
                 )
 
@@ -127,6 +129,12 @@ def _fila_page(nivel: str):
             with c_status:
                 st.markdown(
                     '<div style="padding-top:6px;">' + ui.ticket_status_badge(t["status"]) + '</div>',
+                    unsafe_allow_html=True,
+                )
+
+            with c_sla:
+                st.markdown(
+                    '<div style="padding-top:6px;">' + ui.sla_badge_html(t) + '</div>',
                     unsafe_allow_html=True,
                 )
 

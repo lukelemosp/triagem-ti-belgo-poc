@@ -182,6 +182,15 @@ def _usuario_id():
         return None
 
 
+# Canal de entrada do chamado (multicanal)
+_CANAIS = {"PORTAL": "\U0001f310 Portal", "EMAIL": "✉️ E-mail",
+           "TEAMS": "\U0001f4ac Teams", "WHATSAPP": "\U0001f4f1 WhatsApp"}
+
+
+def _canal_sel():
+    return st.session_state.get("nc_canal", "PORTAL")
+
+
 # ── Processa preset clicado ────────────────────────────────────────────────────
 if st.session_state.nc_preset_idx is not None and not st.session_state.nc_resultado:
     _pi = st.session_state.nc_preset_idx
@@ -199,6 +208,7 @@ if st.session_state.nc_preset_idx is not None and not st.session_state.nc_result
         sugestao_ia=_pp["sugestao_ia"],
         acao_ia=_pp["acao_ia"],
         tempo_estimado="Imediato",
+        canal=_canal_sel(),
     )
     st.session_state.nc_resultado = {
         "nivel": "N1",
@@ -300,6 +310,16 @@ with col_form:
         disabled=st.session_state.nc_processando,
     )
 
+    st.markdown("**Canal de entrada**", unsafe_allow_html=True)
+    st.selectbox(
+        "Canal",
+        list(_CANAIS.keys()),
+        format_func=lambda c: _CANAIS[c],
+        key="nc_canal",
+        label_visibility="collapsed",
+        disabled=st.session_state.nc_processando,
+    )
+
     st.markdown(
         "<div style=\"font-size:0.74rem;color:#7A9EA6;font-family:Montserrat,sans-serif;margin:6px 0;\">"
         "<span style='color:#ED1C24;'>*</span> campos obrigat\xf3rios</div>",
@@ -340,6 +360,7 @@ with col_result:
                 "titulo": titulo.strip(),
                 "descricao": texto,
                 "usuario_id": _usuario_id(),
+                "canal": _canal_sel(),
             }
             st.session_state.nc_processando = True
             st.session_state.nc_resultado = None
@@ -394,6 +415,7 @@ with col_result:
                 sugestao_ia=resultado.get("sugestao"),
                 acao_ia=resultado.get("acao"),
                 tempo_estimado=resultado.get("tempo"),
+                canal=p.get("canal", "PORTAL"),
             )
 
         st.session_state.nc_resultado = resultado
