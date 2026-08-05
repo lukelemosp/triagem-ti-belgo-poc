@@ -23,6 +23,14 @@ Acesse `http://localhost:8501`. Defina `ANTHROPIC_API_KEY` no ambiente (ou em `.
 
 A base é populada automaticamente na primeira execução (banco efêmero): ~58 chamados de demonstração (N1/N2, variados, com SLA/canal/CSAT), ~26 registros de modo sombra, 10 artigos de KB e usuários de exemplo.
 
+### Deploy (Streamlit Community Cloud)
+
+O `requirements.txt` fixa `starlette<1.4.0`. A partir do Streamlit 1.57 o servidor passou a ser Starlette/Uvicorn (antes Tornado), e o Starlette 1.4.0 (05/08/2026) tornou `thread_minimum_size` obrigatório no `GZipMiddleware` — o que quebra a subclasse interna do Streamlit com `TypeError: GZipResponder.__init__() missing 1 required keyword-only argument: 'thread_minimum_size'` (500 em todos os health checks). O pin evita a regressão até Streamlit e Starlette se realinharem.
+
+Após atualizar dependências no deploy, use **Reboot app** no painel para forçar reinstalação limpa (o Cloud pode reaproveitar o venv em cache).
+
+> A versão do Python no Streamlit Community Cloud vem do dropdown em **Advanced settings** — `runtime.txt`/`.python-version` são ignorados. Recomenda-se **Python 3.12** para maior estabilidade de wheels.
+
 ### Credenciais de demonstração
 
 | Papel | E-mail | Senha |
