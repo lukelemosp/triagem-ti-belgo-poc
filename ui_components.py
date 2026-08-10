@@ -635,15 +635,23 @@ BELGO_CSS = """
         overflow-y: auto;
         gap: 1px !important;
     }
+    /* Mesma armadilha do data grid: o logo e os rotulos de secao sao HTML cru,
+       entao o margin-bottom:-1rem que o Streamlit poe no stMarkdownContainer
+       (assumindo um <p> final) deixa a caixa 16px menor que o texto - o rotulo
+       invade o item de menu seguinte. Visivel com zoom alto, quando os paddings
+       encolhem e some o respiro que disfarcava o transbordo. */
+    .st-key-belgo_nav [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+    /* Sem isto os itens sao espremidos pelo flex (o container tem height:100vh)
+       e o texto vaza, em vez de a sidebar rolar. */
+    .st-key-belgo_nav > div { flex-shrink: 0 !important; }
     .st-key-belgo_nav .belgo-sidebar-logo {
-        padding: 22px 18px 16px;
+        padding: 18px 18px 14px;
         border-bottom: 1px solid rgba(255,255,255,0.10);
         font-size: 1.05rem;
         font-weight: 800;
         color: #FFFFFF;
         font-family: 'Montserrat', sans-serif;
         letter-spacing: 0.02em;
-        margin-bottom: 6px;
     }
     .st-key-belgo_nav .belgo-sidebar-section {
         font-size: 0.62rem;
@@ -651,9 +659,9 @@ BELGO_CSS = """
         color: rgba(255,255,255,0.38);
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        padding: 18px 18px 9px;
-        margin-top: 4px;
+        padding: 14px 18px 5px;
         font-family: 'Montserrat', sans-serif;
+        line-height: 1.3;
     }
     /* page_link dentro da sidebar dark */
     .st-key-belgo_nav [data-testid="stPageLink"] { margin: 0 !important; }
@@ -953,15 +961,22 @@ BELGO_CSS = """
     }
     .st-key-belgo_nav [data-testid="stPageLink"] a { align-items: center !important; }
     @media (max-height: 780px) {
-        .st-key-belgo_nav .belgo-sidebar-logo { padding: 15px 16px 11px !important; }
-        .st-key-belgo_nav .belgo-sidebar-section { padding: 11px 16px 6px !important; }
+        .st-key-belgo_nav .belgo-sidebar-logo { padding: 14px 16px 11px !important; }
+        .st-key-belgo_nav .belgo-sidebar-section { padding: 11px 16px 4px !important; }
         .st-key-belgo_nav [data-testid="stPageLink"] a { padding: 8px 16px !important; }
     }
     @media (max-height: 620px) {
-        .st-key-belgo_nav .belgo-sidebar-logo { padding: 11px 16px 8px !important; }
-        .st-key-belgo_nav .belgo-sidebar-section { padding: 8px 16px 4px !important; }
+        .st-key-belgo_nav .belgo-sidebar-logo { padding: 10px 16px 8px !important; }
+        .st-key-belgo_nav .belgo-sidebar-section { padding: 9px 16px 3px !important; }
         .st-key-belgo_nav [data-testid="stPageLink"] a { padding: 6px 16px !important; }
     }
+    /* Zoom bem alto: a sidebar rola (flex-shrink:0 acima garante isso) e a
+       barra de rolagem fica discreta sobre o fundo escuro. */
+    .st-key-belgo_nav::-webkit-scrollbar { width: 6px; }
+    .st-key-belgo_nav::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.22); border-radius: 3px;
+    }
+    .st-key-belgo_nav::-webkit-scrollbar-track { background: transparent; }
 </style>
 """
 
