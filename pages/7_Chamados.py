@@ -15,7 +15,7 @@ st.markdown("""
   div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
   [class*="st-key-crow_"] {
     border-bottom: 1px solid #EEF3F5;
-    padding: 2px 8px;
+    padding: 8px;
     transition: background 0.1s;
   }
   [class*="st-key-crow_"]:hover { background: #EFF7F9; }
@@ -35,7 +35,7 @@ st.markdown(
     'width:52px;height:52px;font-size:1.4rem;">\U0001f4c2</span>'
     '<div>'
     '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
-    'font-family:Montserrat,sans-serif;line-height:1.2;">Chamados &mdash; Hist\xf3rico</div>'
+    'font-family:Montserrat,sans-serif;line-height:1.2;">Chamados &middot; Hist\xf3rico</div>'
     '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
     'Todos os chamados, com filtros e ordena\xe7\xe3o avan\xe7ados</div>'
     '</div>'
@@ -140,7 +140,7 @@ if not _resultados:
 else:
     for t in _resultados[:200]:
         tid = t["id"]
-        nivel = t.get("nivel") or "—"
+        nivel = t.get("nivel") or "-"
         emoji = _NIVEL_EMOJI.get(nivel, "⚪")
         confianca = t.get("confianca") or 0
         cor_conf = "#003B4A" if confianca >= 80 else "#F37021" if confianca >= 60 else "#ED1C24"

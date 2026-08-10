@@ -13,7 +13,8 @@ st.markdown("""
 <style>
   [data-testid="stMainBlockContainer"] { padding-left: 252px !important; }
   div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
-  [class*="st-key-shrow_"] { border-bottom: 1px solid #EEF3F5; padding: 2px 8px; }
+  [class*="st-key-shrow_"] { border-bottom: 1px solid #EEF3F5; padding: 8px;
+    transition: background 0.1s; }
   [class*="st-key-shrow_"]:hover { background: #F5F2FA; }
 </style>
 """, unsafe_allow_html=True)
@@ -28,7 +29,7 @@ st.markdown(
     '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
     'font-family:Montserrat,sans-serif;line-height:1.2;">Modo Sombra (Shadow Mode)</div>'
     '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
-    'A IA classifica em paralelo ao analista, sem atuar &mdash; medindo concord\xe2ncia antes de promover</div>'
+    'A IA classifica em paralelo ao analista, sem atuar &middot; medindo concord\xe2ncia antes de promover</div>'
     '</div>'
     '</div>',
     unsafe_allow_html=True,
@@ -53,7 +54,7 @@ if not _sh.get("total"):
 
 # ── KPIs de concordância ──────────────────────────────────────────────────────
 def _pct(v):
-    return f"{v:.1f}%".replace(".", ",") if v is not None else "—"
+    return f"{v:.1f}%".replace(".", ",") if v is not None else "-"
 
 k1, k2, k3 = st.columns(3)
 with k1:
@@ -96,7 +97,7 @@ st.plotly_chart(_fig, use_container_width=True)
 
 st.markdown(
     '<div class="result-label" style="margin:18px 0 10px;">'
-    'Compara\xe7\xf5es recentes &mdash; IA sugeriu \xd7 humano decidiu</div>',
+    'Compara\xe7\xf5es recentes &middot; IA sugeriu \xd7 humano decidiu</div>',
     unsafe_allow_html=True,
 )
 
@@ -117,8 +118,8 @@ for r in _regs[:80]:
     ok = (r["ia_nivel"] == r["humano_nivel"]) and (r["ia_categoria"] == r["humano_categoria"])
     marca = ('<span style="color:#2E7D32;font-weight:800;">✓ concordou</span>' if ok
              else '<span style="color:#C62828;font-weight:800;">✗ divergiu</span>')
-    ia_txt = (r["ia_nivel"] or "—") + " · " + ui.fmt_categoria(r["ia_categoria"])
-    hu_txt = (r["humano_nivel"] or "—") + " · " + ui.fmt_categoria(r["humano_categoria"])
+    ia_txt = (r["ia_nivel"] or "-") + " · " + ui.fmt_categoria(r["ia_categoria"])
+    hu_txt = (r["humano_nivel"] or "-") + " · " + ui.fmt_categoria(r["humano_categoria"])
     with st.container(key="shrow_" + str(r["id"])):
         c_desc, c_ia, c_hu, c_res = st.columns(_COLS, gap="small")
         with c_desc:

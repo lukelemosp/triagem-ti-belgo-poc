@@ -861,6 +861,107 @@ BELGO_CSS = """
         border-radius: 12px; padding: 1px 9px; font-size: 0.66rem; font-weight: 700;
     }
     .belgo-userchip .role-badge.admin { background: #FEE8E8; color: #ED1C24; border-color: #ED1C24; }
+
+    /* ── Linhas do data grid (st.container(key="…row_<id>")) ──────────
+       O Streamlit aplica margin-bottom:-1rem no stMarkdownContainer
+       assumindo que o markdown termina num <p> (que traz margin-bottom:1rem).
+       As linhas injetam <div> cru, entao nada cancela: a caixa da linha fica
+       16px MENOR que o texto. Resultado: o border-bottom cruza o conteudo e o
+       realce de hover pinta a faixa de cima. Zerar a margem dentro das linhas
+       devolve a caixa ao tamanho real do conteudo. */
+    [class*="st-key-qrow_"]  [data-testid="stMarkdownContainer"],
+    [class*="st-key-crow_"]  [data-testid="stMarkdownContainer"],
+    [class*="st-key-shrow_"] [data-testid="stMarkdownContainer"],
+    [class*="st-key-urow_"]  [data-testid="stMarkdownContainer"],
+    [class*="st-key-kbrow_"] [data-testid="stMarkdownContainer"] {
+        margin-bottom: 0 !important;
+    }
+    /* O padding-top das celulas existia so para compensar o desalinhamento
+       acima; com a caixa correta ele passa a empurrar o texto para baixo. */
+    [class*="st-key-qrow_"]  [data-testid="stMarkdownContainer"] > div,
+    [class*="st-key-crow_"]  [data-testid="stMarkdownContainer"] > div,
+    [class*="st-key-shrow_"] [data-testid="stMarkdownContainer"] > div,
+    [class*="st-key-urow_"]  [data-testid="stMarkdownContainer"] > div,
+    [class*="st-key-kbrow_"] [data-testid="stMarkdownContainer"] > div {
+        padding-top: 0 !important;
+    }
+    /* Celulas alinhadas pelo centro vertical: linhas com botao ficam no eixo
+       do texto em vez de ancoradas no topo. */
+    [class*="st-key-qrow_"]  [data-testid="stHorizontalBlock"],
+    [class*="st-key-crow_"]  [data-testid="stHorizontalBlock"],
+    [class*="st-key-shrow_"] [data-testid="stHorizontalBlock"],
+    [class*="st-key-urow_"]  [data-testid="stHorizontalBlock"],
+    [class*="st-key-kbrow_"] [data-testid="stHorizontalBlock"] {
+        align-items: center !important;
+    }
+
+    /* ── Responsividade da navbar horizontal ──────────────────────────
+       Em telas estreitas (ou zoom alto) as 10 colunas espremem os rotulos e o
+       texto era cortado no meio ("Novo C", "Usua"). Fonte fluida + quebra em
+       varias linhas com colunas do tamanho do conteudo. */
+    [data-testid="stPageLink"] a p,
+    [data-testid="stPageLink"] a span,
+    [data-testid="stPageLink"] a div {
+        font-size: clamp(0.72rem, 0.42vw + 0.42rem, 0.95rem) !important;
+    }
+    @media (max-width: 1500px) {
+        div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) {
+            flex-wrap: wrap !important;
+            row-gap: 2px !important;
+            justify-content: flex-start !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"])
+        > [data-testid="stColumn"] {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+        }
+        [data-testid="stPageLink"] a { padding: 7px 9px !important; }
+        [data-testid="stPageLink"] a p,
+        [data-testid="stPageLink"] a span,
+        [data-testid="stPageLink"] a div {
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+    }
+    /* Abaixo de ~1000px a barra passa a ocupar duas linhas: os rotulos de grupo
+       e o divisor deixariam de corresponder aos itens abaixo deles. */
+    @media (max-width: 1000px) {
+        div[data-testid="stHorizontalBlock"]:has(.belgo-navgroup) { display: none !important; }
+        [data-testid="stColumn"]:has(.belgo-navdivider) { display: none !important; }
+    }
+    /* O FAB tambem usa stPageLink: preserva a largura propria dele. */
+    .st-key-belgo_fab [data-testid="stPageLink"] a p,
+    .st-key-belgo_fab [data-testid="stPageLink"] a span,
+    .st-key-belgo_fab [data-testid="stPageLink"] a div {
+        font-size: 0.88rem !important;
+    }
+
+    /* ── Responsividade da sidebar dark ───────────────────────────────
+       Rotulos longos ("Base de Conhecimento") passam a quebrar em duas linhas
+       em vez de serem cortados; em telas baixas o respiro vertical encolhe
+       para os 10 itens caberem sem depender de scroll. */
+    .st-key-belgo_nav [data-testid="stPageLink"] a p,
+    .st-key-belgo_nav [data-testid="stPageLink"] a span,
+    .st-key-belgo_nav [data-testid="stPageLink"] a div {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        line-height: 1.25 !important;
+        font-size: clamp(0.76rem, 0.3vw + 0.6rem, 0.86rem) !important;
+    }
+    .st-key-belgo_nav [data-testid="stPageLink"] a { align-items: center !important; }
+    @media (max-height: 780px) {
+        .st-key-belgo_nav .belgo-sidebar-logo { padding: 15px 16px 11px !important; }
+        .st-key-belgo_nav .belgo-sidebar-section { padding: 11px 16px 6px !important; }
+        .st-key-belgo_nav [data-testid="stPageLink"] a { padding: 8px 16px !important; }
+    }
+    @media (max-height: 620px) {
+        .st-key-belgo_nav .belgo-sidebar-logo { padding: 11px 16px 8px !important; }
+        .st-key-belgo_nav .belgo-sidebar-section { padding: 8px 16px 4px !important; }
+        .st-key-belgo_nav [data-testid="stPageLink"] a { padding: 6px 16px !important; }
+    }
 </style>
 """
 
@@ -889,7 +990,7 @@ def userchip_html(nome: str, is_admin: bool) -> str:
 
 
 def header_html(title: str = "Agente de Triagem TI", subtitle: str = None, tag: str = None) -> str:
-    sub = subtitle or "Agente de triagem exposto via MCP — classifica chamados N1/N2 em tempo real"
+    sub = subtitle or "Agente de triagem exposto via MCP · classifica chamados N1/N2 em tempo real"
     tag_html = f'<span class="header-tag">{_html.escape(tag)}</span>' if tag else ""
     logo = f'<div style="flex-shrink:0;">{_LOGO_SVG}</div>'
     return f"""
@@ -1038,7 +1139,9 @@ def render_sidebar(active_page: str = "") -> None:
         st.page_link("pages/10_Base_Conhecimento.py", label="\U0001f4da  Base de Conhecimento")
         st.markdown('<div class="belgo-sidebar-section">Admin</div>', unsafe_allow_html=True)
         st.page_link("pages/6_Usuarios.py", label="\U0001f465  Usu\xe1rios")
-        st.page_link("pages/1_Triagem.py", label="\U0001f916  Triagem IA")
+        # A pagina de Triagem (demo isolado) continua registrada e acessivel por
+        # URL, mas saiu do menu: o fluxo real de triagem ja acontece na abertura
+        # do chamado.
 
 
 def render_filtros_fila(tickets: list, key_prefix: str) -> list:
@@ -1182,7 +1285,7 @@ def kb_artigo_html(categoria: str | None) -> str:
         "border-left:3px solid #1976D2;border-radius:0 8px 8px 0;padding:10px 14px;\">"
         "<summary style=\"cursor:pointer;font-size:0.82rem;font-weight:700;color:#0D47A1;"
         "font-family:'Montserrat',sans-serif;\">"
-        "\U0001f4da Resolvido via " + _html.escape(artigo["id"]) + " — "
+        "\U0001f4da Resolvido via " + _html.escape(artigo["id"]) + " · "
         + _html.escape(artigo["titulo"]) + "</summary>"
         "<ol style=\"margin:10px 0 0;padding-left:20px;font-size:0.8rem;color:#5A7E88;"
         "font-family:'Montserrat',sans-serif;line-height:1.5;\">" + passos + "</ol>"
@@ -1226,7 +1329,7 @@ def ticket_detail_html(ticket: dict, nivel: str) -> str:
         email = ticket.get("solicitante_email", "")
         solicitante_html = (
             '<br>Solicitante: <strong>' + _html.escape(ticket["solicitante_nome"]) + '</strong>'
-            + (' &mdash; ' + _html.escape(email) if email else "")
+            + (' &middot; ' + _html.escape(email) if email else "")
         )
 
     resolvido_html = ""
@@ -1312,7 +1415,7 @@ def render_result_card(r: dict) -> str:
     badge = "badge-n1" if nivel == "N1" else "badge-n2"
     bar = "conf-bar-fill-n1" if nivel == "N1" else "conf-bar-fill-n2"
     acao_cls = "acao-n1" if nivel == "N1" else "acao-n2"
-    label = "N1 — Helpdesk" if nivel == "N1" else "N2 — Especialista"
+    label = "N1 · Helpdesk" if nivel == "N1" else "N2 · Especialista"
     tempo_html = f"""
   <div style="margin-top:18px;">
     <div class="result-label">Tempo estimado de resolução</div>
@@ -1379,7 +1482,7 @@ def recent_tickets_html(recentes: list) -> str:
     }
     rows = ""
     for t in recentes:
-        nivel = t.get("nivel") or "—"
+        nivel = t.get("nivel") or "-"
         emoji = NIVEL_EMOJI.get(nivel, "⚪")
         iid = inc_id(t["id"])
         tid = int(t["id"])
@@ -1453,13 +1556,13 @@ _CAT_LABELS: dict[str, str] = {
 def fmt_categoria(cat: str | None) -> str:
     # Robusto a NaN/float vindos do pandas (NaN é truthy, escaparia de "if not cat")
     if not cat or not isinstance(cat, str):
-        return "—"
+        return "-"
     return _CAT_LABELS.get(cat, cat.replace("_", " ").title())
 
 
 def fmt_dt(iso: str) -> str:
     if not iso:
-        return "—"
+        return "-"
     try:
         dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
         return dt.astimezone(_BRT).strftime("%d/%m/%Y %H:%M")
@@ -1539,33 +1642,57 @@ def modal_arquitetura() -> None:
                letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">A Solu&ccedil;&atilde;o</div>
           <p style="font-size:0.93rem;color:#1A2E33;line-height:1.65;font-family:'Montserrat',sans-serif;">
             Um <strong>agente de IA</strong> que l&ecirc; a descri&ccedil;&atilde;o do chamado assim que ele &eacute; aberto,
-            classifica automaticamente como N1 ou N2 e sugere a resolu&ccedil;&atilde;o &mdash; tudo em menos de 3 segundos.
+            classifica automaticamente como N1 ou N2 e sugere a resolu&ccedil;&atilde;o - tudo em menos de 3 segundos.
           </p>
         </div>
-        <div>
-          <div style="font-size:0.72rem;font-weight:700;color:#003B4A;text-transform:uppercase;
-               letter-spacing:0.08em;font-family:'Montserrat',sans-serif;margin-bottom:8px;">Stack T&eacute;cnica</div>
-          <table style="width:100%;border-collapse:collapse;font-family:'Montserrat',sans-serif;font-size:0.85rem;">
-            <thead><tr style="background:#003B4A;color:white;">
-              <th style="padding:8px 12px;text-align:left;">Componente</th>
-              <th style="padding:8px 12px;text-align:left;">Tecnologia</th>
-              <th style="padding:8px 12px;text-align:left;">Por qu&ecirc;</th>
-            </tr></thead>
-            <tbody>
-              <tr style="background:#F7FAFB;"><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">LLM</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">Claude Sonnet 4.6</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Melhor reasoning em portugu&ecirc;s; custo previs&iacute;vel</td></tr>
-              <tr><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">Banco</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">SQLite + WAL</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Zero infra; acesso concorrente com Streamlit e MCP</td></tr>
-              <tr style="background:#F7FAFB;"><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;font-weight:600;color:#003B4A;">MCP</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;">FastMCP (stdio)</td><td style="padding:8px 12px;border-bottom:1px solid #E2EEF0;color:#5A7E88;">Skill exposta no Cat&aacute;logo MCP Belgo</td></tr>
-              <tr><td style="padding:8px 12px;font-weight:600;color:#003B4A;">Prompts</td><td style="padding:8px 12px;">Azure DevOps (Git)</td><td style="padding:8px 12px;color:#5A7E88;">Rastreabilidade; revis&atilde;o por Pull Request</td></tr>
-            </tbody>
-          </table>
-        </div>
         """, unsafe_allow_html=True)
-        with st.expander("Conhe\xe7a o prompt deste Agente", expanded=False):
-            st.code(_agent._SYSTEM_PROMPT, language=None)
+
+        # Stack montada a partir das constantes reais do modulo: se o modelo de
+        # um agente mudar em ai_agent.py, a tela acompanha sozinha.
+        _td = "padding:8px 12px;border-bottom:1px solid #E2EEF0;"
+        _td1 = _td + "font-weight:600;color:#003B4A;"
+        _td3 = _td + "color:#5A7E88;"
+        _linhas = [
+            ("LLM \xb7 Triagem", _agent.MODEL_TRIAGEM,
+             "Reasoning em portugu\xeas com CoT vis\xedvel; decide N1/N2"),
+            ("LLM \xb7 Busca NL", _agent.MODEL_BUSCA,
+             "Modelo r\xe1pido e barato: s\xf3 converte texto em filtros"),
+            ("LLM \xb7 Chat anal\xedtico", _agent.MODEL_CHAT,
+             "Responde sobre a base usando agregados pr\xe9-calculados"),
+            ("Front-end", "Streamlit (Python puro)",
+             "UI e backend no mesmo runtime; zero build de front"),
+            ("Banco", "SQLite + WAL",
+             "Zero infra; acesso concorrente com Streamlit e MCP"),
+            ("MCP", "FastMCP (stdio)",
+             "6 skills expostas no Cat\xe1logo MCP Belgo"),
+            ("Prompts", "Azure DevOps (Git)",
+             "Rastreabilidade; revis\xe3o por Pull Request"),
+        ]
+        _corpo = ""
+        for _i, (_c, _t, _p) in enumerate(_linhas):
+            _bg = ' style="background:#F7FAFB;"' if _i % 2 == 0 else ""
+            _corpo += ("<tr" + _bg + '><td style="' + _td1 + '">' + _c + "</td>"
+                       '<td style="' + _td + 'font-family:monospace;font-size:0.8rem;">'
+                       + _t + "</td>"
+                       '<td style="' + _td3 + '">' + _p + "</td></tr>")
+        st.markdown(
+            '<div style="font-size:0.72rem;font-weight:700;color:#003B4A;'
+            "text-transform:uppercase;letter-spacing:0.08em;"
+            "font-family:'Montserrat',sans-serif;margin-bottom:8px;\">Stack T\xe9cnica</div>"
+            '<table style="width:100%;border-collapse:collapse;'
+            "font-family:'Montserrat',sans-serif;font-size:0.85rem;\">"
+            '<thead><tr style="background:#003B4A;color:white;">'
+            '<th style="padding:8px 12px;text-align:left;">Componente</th>'
+            '<th style="padding:8px 12px;text-align:left;">Tecnologia</th>'
+            '<th style="padding:8px 12px;text-align:left;">Por qu\xea</th>'
+            "</tr></thead><tbody>" + _corpo + "</tbody></table>",
+            unsafe_allow_html=True,
+        )
+
     with c2:
         st.markdown('<div class="result-label" style="margin-bottom:10px;">Fluxo da Solu\xe7\xe3o</div>', unsafe_allow_html=True)
         st.code("""\
-  Usu\xe1rio abre chamado
+  Portal \xb7 E-mail \xb7 Teams \xb7 Telefone
          │
          ▼
   ┌─────────────────────┐
@@ -1578,30 +1705,54 @@ def modal_arquitetura() -> None:
   └──────────┬──────────┘
              │ MCP Tool
              ▼
-  ┌─────────────────────┐
-  │   Agente Claude     │
-  │  \xb7 classifica N1/N2 │
-  │  \xb7 gera sugest\xe3o    │
-  │  \xb7 auto-resolve     │
-  └──────────┬──────────┘
-             │ resultado
+  ┌─────────────────────┐        ┌──────────────┐
+  │  Agente de Triagem  │◀──────▶│ Base de      │
+  │  (Sonnet 4.6 + CoT) │  cita  │ Conhecimento │
+  │  \xb7 classifica N1/N2 │        └──────────────┘
+  │  \xb7 define SLA       │
+  │  \xb7 auto-resolve     │        ┌──────────────┐
+  │    se confian\xe7a≥90% ├───────▶│ Shadow log   │
+  └──────────┬──────────┘ compara│ (IA x humano)│
+             │ resultado         └──────────────┘
              ▼
   ┌─────────────────────┐
-  │     ServiceNow      │
-  │  (atualiza ticket)  │
-  └─────────────────────┘\
+  │     ServiceNow      │──▶ fila N1/N2 ou resolvido
+  │  (atualiza ticket)  │──▶ CSAT + 👍/👎 do analista
+  └─────────────────────┘
+
+  Skills de apoio (MCP):
+   \xb7 buscar_chamados          (Haiku 4.5)
+   \xb7 conversar_sobre_chamados (Sonnet 4.6)\
 """, language=None)
-        st.markdown('<div class="result-label" style="margin:20px 0 10px;">M\xe9tricas de Sucesso (30 dias)</div>', unsafe_allow_html=True)
-        m1, m2 = st.columns(2)
-        m3, m4 = st.columns(2)
-        with m1:
-            st.markdown("""<div style="background:#E6F4F1;border-left:3px solid #003B4A;padding:12px 14px;border-radius:0 8px 8px 0;"><div style="font-size:1.5rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">&ge; 80%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Acur&aacute;cia N1/N2</div></div>""", unsafe_allow_html=True)
-        with m2:
-            st.markdown("""<div style="background:#E6F4F1;border-left:3px solid #003B4A;padding:12px 14px;border-radius:0 8px 8px 0;"><div style="font-size:1.5rem;font-weight:800;color:#003B4A;font-family:'Montserrat',sans-serif;">&lt; R$ 0,50</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Custo/chamado</div></div>""", unsafe_allow_html=True)
-        with m3:
-            st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">&lt; 3s</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Tempo de resposta</div></div>""", unsafe_allow_html=True)
-        with m4:
-            st.markdown("""<div style="background:#FEE8E8;border-left:3px solid #ED1C24;padding:12px 14px;border-radius:0 8px 8px 0;margin-top:8px;"><div style="font-size:1.5rem;font-weight:800;color:#ED1C24;font-family:'Montserrat',sans-serif;">100%</div><div style="font-size:0.78rem;color:#3D5A62;font-family:'Montserrat',sans-serif;">Prompts em Git</div></div>""", unsafe_allow_html=True)
+
+    # Prompts em largura total: as caixas de codigo sao largas e ficariam
+    # ilegiveis espremidas dentro de uma das colunas.
+    st.markdown(
+        "<div style=\"margin-top:28px;border-top:2px solid #E2EEF0;padding-top:14px;"
+        "margin-bottom:6px;font-size:0.72rem;font-weight:700;color:#003B4A;"
+        "text-transform:uppercase;letter-spacing:0.08em;"
+        "font-family:'Montserrat',sans-serif;\">Prompts dos agentes</div>"
+        '<p style="font-size:0.85rem;color:#5A7E88;line-height:1.6;'
+        "font-family:'Montserrat',sans-serif;margin:0 0 10px;\">"
+        "Cada agente tem seu <em>system prompt</em> versionado no Git "
+        "(<strong>prompt como c\xf3digo</strong>): muda por Pull Request, "
+        "com revis\xe3o e hist\xf3rico.</p>",
+        unsafe_allow_html=True,
+    )
+    _t1, _t2, _t3 = st.tabs(["Triagem N1/N2", "Busca em linguagem natural",
+                             "Chat anal\xedtico"])
+    with _t1:
+        st.caption("Modelo: `" + _agent.MODEL_TRIAGEM
+                   + "` \xb7 sa\xedda JSON com racioc\xednio encadeado")
+        st.code(_agent._SYSTEM_PROMPT, language=None)
+    with _t2:
+        st.caption("Modelo: `" + _agent.MODEL_BUSCA
+                   + "` \xb7 converte a busca do usu\xe1rio em filtros estruturados")
+        st.code(_agent._SEARCH_PROMPT, language=None)
+    with _t3:
+        st.caption("Modelo: `" + _agent.MODEL_CHAT
+                   + "` \xb7 responde s\xf3 sobre a base de chamados")
+        st.code(_agent._CHAT_PROMPT, language=None)
 
     st.markdown(
         "<div style=\"margin-top:28px;border-top:2px solid #E2EEF0;padding-top:14px;"
@@ -1626,7 +1777,7 @@ def modal_arquitetura() -> None:
     with sk3:
         st.markdown(_skill_card(
             "Atendimento Autom\xe1tico", "#F37021", "Interface",
-            "10 presets de resolu\xe7\xe3o instant\xe2nea para categorias recorrentes — "
+            "10 presets de resolu\xe7\xe3o instant\xe2nea para categorias recorrentes - "
             "cria ticket resolvido sem chamar a IA, com SLA imediato.",
         ), unsafe_allow_html=True)
     sk4, sk5, sk6 = st.columns(3, gap="small")
@@ -1635,7 +1786,7 @@ def modal_arquitetura() -> None:
             "<code style=\"background:#EDE7F6;color:#7B1FA2;border-radius:3px;"
             "padding:1px 6px;font-size:0.8rem;\">criar_chamado</code>",
             "#7B1FA2", "MCP Skill",
-            "Cria novo chamado no ServiceNow via protocolo MCP — exposta no "
+            "Cria novo chamado no ServiceNow via protocolo MCP - exposta no "
             "Cat\xe1logo do Azure DevOps para outros agentes consumirem.",
         ), unsafe_allow_html=True)
     with sk5:
@@ -1644,7 +1795,7 @@ def modal_arquitetura() -> None:
             "padding:1px 6px;font-size:0.8rem;\">consultar_chamado</code>",
             "#7B1FA2", "MCP Skill",
             "Retorna estado, n\xedvel IA, confian\xe7a, sugest\xe3o e resolu\xe7\xe3o "
-            "de qualquer chamado por ID — permite auditoria e integra\xe7\xe3o.",
+            "de qualquer chamado por ID - permite auditoria e integra\xe7\xe3o.",
         ), unsafe_allow_html=True)
     with sk6:
         st.markdown(_skill_card(
@@ -1652,7 +1803,7 @@ def modal_arquitetura() -> None:
             "padding:1px 6px;font-size:0.8rem;\">listar_fila</code>",
             "#7B1FA2", "MCP Skill",
             "Lista chamados pendentes na fila N1 ou N2 com status, confian\xe7a e "
-            "categoria — permite orquestrar prioridades entre agentes.",
+            "categoria - permite orquestrar prioridades entre agentes.",
         ), unsafe_allow_html=True)
     sk7, sk8 = st.columns(2, gap="small")
     with sk7:
@@ -1692,7 +1843,7 @@ def render_footer() -> None:
         st.markdown(
             "<span style=\"background:#FEE8E8;border:1px solid #ED1C24;color:#B8000A;border-radius:4px;"
             "padding:3px 10px;font-size:0.72rem;font-weight:700;font-family:'Montserrat',sans-serif;"
-            "letter-spacing:0.06em;text-transform:uppercase;\">⚠ Uso Interno — N\xe3o Divulgar</span>",
+            "letter-spacing:0.06em;text-transform:uppercase;\">⚠ Uso Interno · N\xe3o Divulgar</span>",
             unsafe_allow_html=True,
         )
     with ft_r:

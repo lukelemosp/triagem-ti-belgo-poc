@@ -1,5 +1,5 @@
 """
-Página de triagem — demo interativo do agente.
+Página de triagem - demo interativo do agente.
 Funcionalidade idêntica ao agente_triagem.py standalone.
 """
 import html as _html
@@ -16,42 +16,42 @@ _PLACEHOLDERS = [
     "Não consigo acessar o SAP com meu usuário desde esta manhã...",
     "A transação MB51 do SAP está travando ao gerar relatório de movimentações...",
     "Erro 'RFC connection failed' ao tentar abrir o SAP GUI na minha estação...",
-    "Não estou conseguindo lançar nota fiscal no SAP — autorização negada...",
+    "Não estou conseguindo lançar nota fiscal no SAP - autorização negada...",
     "SAP está lento demais no setor de compras, travando a cada 2 minutos...",
     "Preciso de acesso ao módulo PP do SAP para acompanhar ordens de produção...",
     "A impressão de etiquetas via SAP parou de funcionar na linha 3...",
-    "Erro ao executar a transação ME23N — 'Object not found' no SAP...",
-    "Não consigo fazer login no SAP Logon — tela fica carregando indefinidamente...",
+    "Erro ao executar a transação ME23N - 'Object not found' no SAP...",
+    "Não consigo fazer login no SAP Logon - tela fica carregando indefinidamente...",
     "Relatório de estoque MB52 no SAP está gerando valores incorretos...",
-    "Não consigo acessar o Salesforce — tela de login retorna erro 401...",
+    "Não consigo acessar o Salesforce - tela de login retorna erro 401...",
     "Dados de oportunidades do Salesforce não estão sincronizando com o SAP...",
     "Preciso de acesso de edição nos registros de conta do Salesforce para meu perfil...",
     "Fluxo de aprovação de pedido no Salesforce está rejeitando automaticamente...",
     "Relatórios de pipeline do Salesforce estão gerando dados duplicados...",
     "Sem conexão de rede no ramal B2, todos os computadores do setor offline...",
-    "VPN não conecta fora do escritório — erro 'Network timeout' após atualização...",
+    "VPN não conecta fora do escritório - erro 'Network timeout' após atualização...",
     "Wi-Fi do escritório cai constantemente, especialmente na sala de reunião 204...",
     "Switch do andar 3 parece ter reiniciado sozinho, setor inteiro sem rede...",
-    "Link de internet da fábrica caiu — produção parada aguardando reconexão...",
+    "Link de internet da fábrica caiu - produção parada aguardando reconexão...",
     "Monitor do computador ficou com tela preta e não responde...",
     "Teclado e mouse USB pararam de funcionar após reiniciar o Windows...",
-    "Bateria do notebook não carrega mais — fica em 4% mesmo plugado na tomada...",
-    "Headset não funciona no Teams — áudio saindo pelo alto-falante do computador...",
-    "Senha expirou e o sistema não permite criar nova — link de redefinição falha...",
-    "Conta do AD bloqueada por excesso de tentativas — preciso de reset urgente...",
-    "VPN não conecta fora do escritório — erro 'Network timeout' após atualização...",
+    "Bateria do notebook não carrega mais - fica em 4% mesmo plugado na tomada...",
+    "Headset não funciona no Teams - áudio saindo pelo alto-falante do computador...",
+    "Senha expirou e o sistema não permite criar nova - link de redefinição falha...",
+    "Conta do AD bloqueada por excesso de tentativas - preciso de reset urgente...",
+    "VPN não conecta fora do escritório - erro 'Network timeout' após atualização...",
     "E-mail corporativo não sincroniza no celular após troca de senha...",
     "Teams trava ao iniciar videoconferência com mais de 5 participantes...",
-    "Caixa de entrada do Outlook cheia — não consigo receber novos e-mails...",
-    "Impressora do setor de expedição offline — fila há 3 horas sem imprimir...",
+    "Caixa de entrada do Outlook cheia - não consigo receber novos e-mails...",
+    "Impressora do setor de expedição offline - fila há 3 horas sem imprimir...",
     "Impressora HP 4525 não conecta na rede após ser movida de sala...",
     "Sistema de supervisão SCADA perdeu comunicação com CLP da linha 4...",
     "Computador de controle da prensa 7 não inicializa o software de automação...",
     "Rede OT da fábrica sem comunicação com servidor de historiador de dados...",
-    "Antivírus bloqueando instalação de software homologado pela TI — como liberar...",
-    "Computador com Windows 7 precisa ser atualizado — aviso de suporte encerrado...",
-    "Backup noturno falhou — log indica espaço insuficiente no servidor...",
-    "Power BI não atualiza dados automaticamente — relatório de vendas desatualizado...",
+    "Antivírus bloqueando instalação de software homologado pela TI - como liberar...",
+    "Computador com Windows 7 precisa ser atualizado - aviso de suporte encerrado...",
+    "Backup noturno falhou - log indica espaço insuficiente no servidor...",
+    "Power BI não atualiza dados automaticamente - relatório de vendas desatualizado...",
 ]
 
 _COOLDOWN_S = 12
@@ -169,7 +169,7 @@ with col_dir:
     # Fase 1: captura clique
     if btn_analisar and ticket_input.strip() and not st.session_state.processando:
         if len(ticket_input.strip()) > _MAX_INPUT_LEN:
-            st.warning(f"Descrição muito longa — limite de {_MAX_INPUT_LEN} caracteres.")
+            st.warning(f"Descrição muito longa - limite de {_MAX_INPUT_LEN} caracteres.")
         else:
             ok, reason = _check_rate_limit()
             if not ok:

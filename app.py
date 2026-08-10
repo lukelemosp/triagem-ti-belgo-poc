@@ -8,7 +8,7 @@ import ai_agent as agent
 import analytics
 
 st.set_page_config(
-    page_title="Belgo TI — Sistema de Chamados",
+    page_title="Belgo TI · Sistema de Chamados",
     page_icon="favicon.ico",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -61,7 +61,7 @@ _PRIMEIRO_NOME = (_USER.get("nome") or "Usu\xe1rio").split()[0]
 
 
 # ── Modal do chat analítico (skill conversar_sobre_chamados) ──────────────────
-@st.dialog("💬 Assistente de IA — Chamados", width="large")
+@st.dialog("💬 Assistente de IA · Chamados", width="large")
 def _chat_dialog():
     st.caption("Pergunte sobre a base de chamados: contagens, \xfaltimo chamado, rankings, "
                "por categoria/n\xedvel/status. Pressione Enter para enviar.")
@@ -90,6 +90,16 @@ def _chat_dialog():
 
 
 # ── Modal "como é calculado" dos indicadores de ROI ───────────────────────────
+def _num(v: float, casas: int = 2) -> str:
+    """Número no padrão pt-BR (vírgula decimal)."""
+    return ("%.*f" % (casas, v)).replace(".", ",")
+
+
+def _md(texto: str) -> str:
+    """Escapa o cifrão para o Markdown do Streamlit não ler 'R$ …$' como LaTeX."""
+    return texto.replace("R$", "R\\$")
+
+
 @st.dialog("Como este indicador é calculado")
 def _roi_info_dialog(metric: str):
     a = analytics
@@ -103,34 +113,112 @@ def _roi_info_dialog(metric: str):
     neg = int(fb.get("negativos") or 0)
     custo_h = ("R$ %.2f" % a.CUSTO_HORA_N1).replace(".", ",")
 
+    custo_ia = ("R$ %.2f" % a.CUSTO_CHAMADO_IA).replace(".", ",")
+    csat_n = int(stats.get("csat_n") or 0)
+    horas_por_chamado = a.TEMPO_MANUAL_N1_MIN / 60.0
+
+    # (titulo, o que e, formula, exemplo com os dados atuais, passo a passo,
+    #  variaveis: (nome, valor atual, de onde vem))
     INFO = {
         "deflexao": (
             "Taxa de deflexão",
-            "Percentual de chamados **resolvidos sem intervenção humana** — "
+            "Percentual de chamados **resolvidos sem intervenção humana** - "
             "ou seja, tratados automaticamente pela IA.",
             "**auto-resolvidos ÷ total de resolvidos × 100**",
             "%d ÷ %d = **%s**" % (auto, resolvidos, roi["deflexao"]),
+            [
+                "Conta os chamados marcados como `auto_resolvido` (a IA fechou "
+                "sozinha, sem passar por analista): **%d**." % auto,
+                "Conta a base de comparação - todos os chamados já encerrados "
+                "(`RESOLVIDO` ou `FECHADO`): **%d**." % resolvidos,
+                "Divide um pelo outro e multiplica por 100: **%s**." % roi["deflexao"],
+                "Se ainda não houver chamados encerrados, o total de chamados "
+                "entra como base para o indicador não ficar indefinido.",
+            ],
+            [
+                ("auto-resolvidos", str(auto), "`tickets.auto_resolvido = 1`"),
+                ("resolvidos", str(resolvidos),
+                 "`tickets.status` em RESOLVIDO ou FECHADO"),
+            ],
         ),
         "economia": (
             "Economia / mês",
             "Custo de mão de obra evitado pelas auto-resoluções dos **últimos 30 dias**, "
             "descontando o custo de IA por chamado.",
             "auto-resolvidos (30d) × (tempo manual × custo-hora do N1 − custo de IA)",
-            "%d × (%d min × %s/h − R$ 0,40) = **%s**"
-            % (auto30, a.TEMPO_MANUAL_N1_MIN, custo_h, roi["economia_mes"]),
+            "%d × (%d min × %s/h − %s) = **%s**"
+            % (auto30, a.TEMPO_MANUAL_N1_MIN, custo_h, custo_ia, roi["economia_mes"]),
+            [
+                "Considera só os auto-resolvidos da janela de %d dias, para o "
+                "número ser uma taxa mensal e não um acumulado: **%d**."
+                % (a.DIAS_JANELA, auto30),
+                "Converte o tempo de um atendimento manual em fração de hora: "
+                "%d min ÷ 60 = **%s h**."
+                % (a.TEMPO_MANUAL_N1_MIN, _num(horas_por_chamado)),
+                "Multiplica pelo custo-hora do analista N1 para achar quanto "
+                "custaria atender um desses chamados na mão: %s h × %s = "
+                "**R$ %s**." % (_num(horas_por_chamado), custo_h,
+                                _num(horas_por_chamado * a.CUSTO_HORA_N1)),
+                "Desconta o custo de API/infra do chamado tratado pela IA (%s), "
+                "porque a automação não é de graça." % custo_ia,
+                "Multiplica a economia líquida por chamado pelo volume do mês: "
+                "**%s**." % roi["economia_mes"],
+            ],
+            [
+                ("auto-resolvidos (30d)", str(auto30),
+                 "`tickets` auto-resolvidos nos últimos %d dias" % a.DIAS_JANELA),
+                ("CUSTO_HORA_N1", custo_h + "/h",
+                 "premissa em `analytics.py` (salário + encargos)"),
+                ("TEMPO_MANUAL_N1_MIN", "%d min" % a.TEMPO_MANUAL_N1_MIN,
+                 "premissa em `analytics.py` (tempo médio de um N1 manual)"),
+                ("CUSTO_CHAMADO_IA", custo_ia,
+                 "premissa em `analytics.py` (API + infra por chamado)"),
+                ("DIAS_JANELA", "%d dias" % a.DIAS_JANELA,
+                 "premissa em `analytics.py` (janela da projeção mensal)"),
+            ],
         ),
         "horas": (
             "Horas N1 poupadas",
             "Tempo de analista N1 liberado pelas auto-resoluções da IA.",
             "auto-resolvidos × tempo médio de uma resolução manual de N1",
             "%d × %d min = **%s**" % (auto, a.TEMPO_MANUAL_N1_MIN, roi["horas_economizadas"]),
+            [
+                "Toma todos os chamados que a IA resolveu sozinha (acumulado, "
+                "não só o mês): **%d**." % auto,
+                "Assume que cada um deles consumiria %d min de um analista N1 "
+                "se fosse tratado manualmente." % a.TEMPO_MANUAL_N1_MIN,
+                "Multiplica e converte para horas: **%s**." % roi["horas_economizadas"],
+                "É capacidade devolvida ao time, não redução de quadro: as horas "
+                "voltam para atividades que exigem julgamento humano.",
+            ],
+            [
+                ("auto-resolvidos", str(auto), "`tickets.auto_resolvido = 1`"),
+                ("TEMPO_MANUAL_N1_MIN", "%d min" % a.TEMPO_MANUAL_N1_MIN,
+                 "premissa em `analytics.py`"),
+                ("tempo da IA", "~%d s" % a.TEMPO_IA_SEG,
+                 "premissa em `analytics.py` (referência do comparativo)"),
+            ],
         ),
         "csat": (
             "CSAT médio",
             "Satisfação média dos solicitantes (nota de 1 a 5) coletada após a "
             "resolução do chamado.",
             "média das notas de CSAT registradas",
-            "média de %d avaliações = **%s / 5**" % (int(stats.get("csat_n") or 0), roi["csat_media"]),
+            "média de %d avaliações = **%s / 5**" % (csat_n, roi["csat_media"]),
+            [
+                "Cada chamado encerrado pode receber uma nota de 1 a 5 do "
+                "solicitante, gravada em `tickets.csat_nota`.",
+                "Soma as notas e divide pela quantidade de avaliações: "
+                "**%d avaliação(ões)** hoje." % csat_n,
+                "Chamados sem nota não entram na conta - não contam como zero.",
+                "É a única métrica do painel que vem direto do usuário final; "
+                "as demais são medidas do sistema.",
+            ],
+            [
+                ("csat_nota", "1 a 5", "estrelas no detalhe do chamado"),
+                ("nº de avaliações", str(csat_n), "chamados com `csat_nota` preenchida"),
+                ("média atual", str(roi["csat_media"]), "calculado em `analytics.calcular_roi`"),
+            ],
         ),
         "acuracia": (
             "Acurácia percebida",
@@ -138,21 +226,50 @@ def _roi_info_dialog(metric: str):
             "no detalhe do chamado).",
             "feedback positivo ÷ (positivo + negativo) × 100",
             "%d 👍 ÷ %d avaliações = **%s**" % (pos, pos + neg, _acuracia_txt(fb)),
+            [
+                "No detalhe do chamado, o analista responde se a classificação da "
+                "IA estava certa (👍) ou errada (👎).",
+                "Conta os positivos (**%d**) e os negativos (**%d**)." % (pos, neg),
+                "Divide os positivos pelo total avaliado e multiplica por 100: "
+                "**%s**." % _acuracia_txt(fb),
+                "É *percebida* porque mede a concordância do humano com a IA, não "
+                "uma verdade absoluta - a medida cega e sem viés de tela está na "
+                "página **Modo Sombra**.",
+            ],
+            [
+                ("👍 positivos", str(pos), "`tickets.feedback_humano = 1`"),
+                ("👎 negativos", str(neg), "`tickets.feedback_humano = -1`"),
+                ("total avaliado", str(pos + neg), "chamados com feedback registrado"),
+            ],
         ),
     }
-    titulo, oque, formula, exemplo = INFO.get(metric, ("Indicador", "", "", ""))
+    titulo, oque, formula, exemplo, passos, variaveis = INFO.get(
+        metric, ("Indicador", "", "", "", [], []))
     st.markdown("### " + titulo)
-    st.markdown(oque)
+    st.markdown(_md(oque))
     st.markdown("**Fórmula**")
-    st.markdown(formula)
+    st.markdown(_md(formula))
     st.markdown("**Com os dados atuais**")
-    st.info(exemplo)
+    st.info(_md(exemplo))
+
+    if passos:
+        st.markdown("---")
+        st.markdown("#### Como o cálculo é feito, passo a passo")
+        st.markdown(_md("\n".join("%d. %s" % (i, p) for i, p in enumerate(passos, 1))))
+
+    if variaveis:
+        st.markdown("#### Variáveis usadas")
+        linhas = ["| Variável | Valor atual | De onde vem |", "|---|---|---|"]
+        linhas += ["| `%s` | %s | %s |" % v for v in variaveis]
+        st.markdown(_md("\n".join(linhas)))
+
     st.caption("Os parâmetros de negócio (custo-hora, tempo médio, custo de IA) são "
-               "premissas editáveis em `analytics.py`.")
+               "premissas editáveis em `analytics.py`. Os volumes vêm do banco em "
+               "tempo real, então os números acompanham o uso da aplicação.")
 
 
 def _acuracia_txt(fb: dict) -> str:
-    return f"{fb['acuracia']:.0f}%" if fb.get("acuracia") is not None else "—"
+    return f"{fb['acuracia']:.0f}%" if fb.get("acuracia") is not None else "-"
 
 
 # ── Definição das páginas ─────────────────────────────────────────────────────
@@ -166,7 +283,7 @@ def _render_ticket_row(t, key_prefix):
     }
     _NIVEL_EMOJI = {"N1": "\U0001f535", "N2": "\U0001f534", "FORA_DE_ESCOPO": "\U0001f7e0"}
     tid = int(t["id"])
-    nivel = t.get("nivel") or "—"
+    nivel = t.get("nivel") or "-"
     emoji = _NIVEL_EMOJI.get(nivel, "⚪")
     auto_badge = " ✅" if t.get("auto_resolvido") else ""
     c1, c2, c3, c4, c5 = st.columns([1.2, 0.7, 4.5, 1.8, 2])
@@ -260,7 +377,7 @@ def _dashboard():
     # ── Painel de Valor / ROI ────────────────────────────────────────────────
     _roi = analytics.calcular_roi(db.stats_roi())
     _fb = db.stats_feedback()
-    _acuracia = f"{_fb['acuracia']:.0f}%" if _fb.get("acuracia") is not None else "—"
+    _acuracia = f"{_fb['acuracia']:.0f}%" if _fb.get("acuracia") is not None else "-"
     st.markdown(
         '<div class="result-label" style="margin:6px 0 12px;">'
         '\U0001f4b0 Valor para o neg\xf3cio</div>',
@@ -303,7 +420,7 @@ def _dashboard():
         text=["~30 s", f"{analytics.TEMPO_MANUAL_N1_MIN} min"],
         color=["IA", "Manual"],
         color_discrete_map={"IA": "#2E7D32", "Manual": "#ED1C24"},
-        title="Tempo m\xe9dio de resolu\xe7\xe3o — IA vs. manual (min)",
+        title="Tempo m\xe9dio de resolu\xe7\xe3o · IA vs. manual (min)",
     )
     _mttr_fig.update_layout(
         font_family="Montserrat, sans-serif",
@@ -510,7 +627,7 @@ def _dashboard():
                     barmode="stack",
                 )
                 _fig4.update_traces(
-                    hovertemplate="<b>%{y}</b> — %{fullData.name}<br>%{x} chamados<extra></extra>",
+                    hovertemplate="<b>%{y}</b> · %{fullData.name}<br>%{x} chamados<extra></extra>",
                 )
                 _fig4.update_layout(**_CHART_LAYOUT)
                 st.plotly_chart(_fig4, use_container_width=True)
@@ -610,7 +727,7 @@ def _dashboard():
 
         for t in recentes:
             tid = int(t["id"])
-            nivel = t.get("nivel") or "—"
+            nivel = t.get("nivel") or "-"
             emoji = _NIVEL_EMOJI.get(nivel, "⚪")
             auto_badge = " ✅" if t.get("auto_resolvido") else ""
             c1, c2, c3, c4, c5 = st.columns([1.2, 0.7, 4.5, 1.8, 2])
@@ -688,37 +805,44 @@ with _tb_r:
 # ── Navbar nativa (st.page_link) — itens conforme o papel ────────────────────
 if _IS_ADMIN:
     # Rótulos de grupo: separa o que o usuário comum acessa do que é exclusivo do admin
-    _grp_user = ("<div style=\"font-size:0.64rem;font-weight:700;letter-spacing:0.08em;"
+    # A classe belgo-navgroup permite ao CSS ocultar os rotulos quando a navbar
+    # quebra em varias linhas (telas estreitas): o agrupamento por coluna deixa
+    # de valer e os rotulos passariam a apontar para os itens errados.
+    _grp_user = ("<div class=\"belgo-navgroup\" style=\"font-size:0.64rem;font-weight:700;"
+                 "letter-spacing:0.08em;"
                  "text-transform:uppercase;color:#5A7E88;font-family:Montserrat,sans-serif;"
                  "padding:0 0 3px 8px;\">Atendimento</div>")
-    _grp_admin = ("<div style=\"font-size:0.64rem;font-weight:700;letter-spacing:0.08em;"
+    _grp_admin = ("<div class=\"belgo-navgroup\" style=\"font-size:0.64rem;font-weight:700;"
+                  "letter-spacing:0.08em;"
                   "text-transform:uppercase;color:#003B4A;font-family:Montserrat,sans-serif;"
                   "padding:0 0 3px 12px;border-left:2px solid #ED1C24;\">"
                   "\U0001f512 Acesso administrativo</div>")
-    _lc1, _lc2 = st.columns([2.65, 8.0])
+    # Proporcoes espelham as colunas da barra abaixo (1.4 + divisor 0.25 + 8 itens)
+    _lc1, _lc2 = st.columns([1.525, 8.125])
     with _lc1: st.markdown(_grp_user, unsafe_allow_html=True)
     with _lc2: st.markdown(_grp_admin, unsafe_allow_html=True)
 
-    _divisor = ("<div style=\"height:34px;border-left:2px solid rgba(255,255,255,0.35);"
+    _divisor = ("<div class=\"belgo-navdivider\" style=\"height:34px;"
+                "border-left:2px solid rgba(255,255,255,0.35);"
                 "width:1px;margin:0 auto;\"></div>")
-    _cols = st.columns([1.2, 1.2, 0.25, 1, 1, 1, 1, 1, 1, 1, 1])
+    # A pagina de Triagem (demo isolado) segue registrada e acessivel por URL,
+    # mas saiu do menu: a triagem real acontece na abertura do chamado.
+    _cols = st.columns([1.4, 0.25, 1, 1, 1, 1, 1, 1, 1, 1])
     # Grupo do usuário comum
     with _cols[0]: st.page_link(p_novo,    label="\U0001f4cb Novo Chamado", use_container_width=True)
-    with _cols[1]: st.page_link(p_triagem, label="\U0001f916 Triagem IA",   use_container_width=True)
     # Divisor visual
-    with _cols[2]: st.markdown(_divisor, unsafe_allow_html=True)
+    with _cols[1]: st.markdown(_divisor, unsafe_allow_html=True)
     # Grupo exclusivo do admin
-    with _cols[3]: st.page_link(p_home,     label="\U0001f4ca Dashboard",   use_container_width=True)
-    with _cols[4]: st.page_link(p_n1,       label="\U0001f535 Fila N1",     use_container_width=True)
-    with _cols[5]: st.page_link(p_n2,       label="\U0001f534 Fila N2",     use_container_width=True)
-    with _cols[6]: st.page_link(p_chamados, label="\U0001f4c2 Chamados",    use_container_width=True)
-    with _cols[7]: st.page_link(p_skills,   label="\U0001f9e9 Skills",      use_container_width=True)
-    with _cols[8]: st.page_link(p_shadow,   label="\U0001f311 Sombra",      use_container_width=True)
-    with _cols[9]: st.page_link(p_kb,       label="\U0001f4da KB",          use_container_width=True)
-    with _cols[10]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios", use_container_width=True)
+    with _cols[2]: st.page_link(p_home,     label="\U0001f4ca Dashboard",   use_container_width=True)
+    with _cols[3]: st.page_link(p_n1,       label="\U0001f535 Fila N1",     use_container_width=True)
+    with _cols[4]: st.page_link(p_n2,       label="\U0001f534 Fila N2",     use_container_width=True)
+    with _cols[5]: st.page_link(p_chamados, label="\U0001f4c2 Chamados",    use_container_width=True)
+    with _cols[6]: st.page_link(p_skills,   label="\U0001f9e9 Skills",      use_container_width=True)
+    with _cols[7]: st.page_link(p_shadow,   label="\U0001f311 Sombra",      use_container_width=True)
+    with _cols[8]: st.page_link(p_kb,       label="\U0001f4da KB",          use_container_width=True)
+    with _cols[9]: st.page_link(p_usuarios, label="\U0001f465 Usu\xe1rios", use_container_width=True)
 else:
-    _cols = st.columns(2)
+    _cols = st.columns([1.4, 6])
     with _cols[0]: st.page_link(p_novo,    label="\U0001f4cb Novo Chamado", use_container_width=True)
-    with _cols[1]: st.page_link(p_triagem, label="\U0001f916 Triagem IA",   use_container_width=True)
 
 pg.run()

@@ -34,7 +34,7 @@ st.markdown(
     '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
     'font-family:Montserrat,sans-serif;line-height:1.2;">Cat\xe1logo de Skills MCP</div>'
     '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
-    'Agentes publicados no Cat\xe1logo do Azure DevOps &mdash; dono, SLA, custo e uso</div>'
+    'Agentes publicados no Cat\xe1logo do Azure DevOps &middot; dono, SLA, custo e uso</div>'
     '</div>'
     '</div>',
     unsafe_allow_html=True,

@@ -102,7 +102,7 @@ _PRESETS = [
         "categoria": "WIFI_RECONEXAO",
         "emoji": "\U0001f4f6",
         "label": "Wi-Fi Inst\xe1vel",
-        "titulo": "Conex\xe3o Wi-Fi inst\xe1vel — queda frequente",
+        "titulo": "Conex\xe3o Wi-Fi inst\xe1vel · queda frequente",
         "descricao": "Conex\xe3o Wi-Fi cai frequentemente ou apresenta lat\xeancia elevada.",
         "sugestao_ia": (
             "Esquecer a rede Wi-Fi atual;\n"
@@ -166,7 +166,7 @@ if st.session_state.nc_processando and not st.session_state.nc_pending:
 
 # ── Dados de solicitantes (necessário antes dos presets) ──────────────────────
 usuarios = db.listar_usuarios()
-opcoes_usuario = ["— N\xe3o informado —"] + [
+opcoes_usuario = ["- N\xe3o informado -"] + [
     u["nome"] + " (" + u["email"] + ")" for u in usuarios
 ]
 
@@ -351,7 +351,7 @@ with col_result:
     # Fase 1: captura clique
     if btn_abrir and titulo.strip() and descricao.strip() and not st.session_state.nc_processando:
         if len(descricao.strip()) > _MAX_LEN:
-            st.warning("Descri\xe7\xe3o muito longa — m\xe1ximo " + str(_MAX_LEN) + " caracteres.")
+            st.warning("Descri\xe7\xe3o muito longa - m\xe1ximo " + str(_MAX_LEN) + " caracteres.")
         elif not agent.ANTHROPIC_KEY or agent.ANTHROPIC_KEY == "cole_sua_chave_aqui":
             st.warning("⚠ Chave da API Anthropic n\xe3o configurada.")
         else:
@@ -473,8 +473,8 @@ with col_result:
             )
         elif t:
             nivel_label = {
-                "N1": "Fila N1 — Helpdesk",
-                "N2": "Fila N2 — Especialistas",
+                "N1": "Fila N1 · Helpdesk",
+                "N2": "Fila N2 · Especialistas",
             }.get(t.get("nivel", ""), t.get("nivel", ""))
             st.markdown(
                 "<div style=\"background:#E3F2FD;border:1px solid #1976D2;border-radius:10px;"
