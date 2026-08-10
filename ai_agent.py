@@ -28,6 +28,12 @@ AUTO_RESOLVABLE = {
 }
 AUTO_RESOLVE_THRESHOLD = 90
 
+# Modelos por agente. Centralizados aqui para que o modal de arquitetura leia o
+# que está de fato em uso, em vez de repetir o nome do modelo na tela.
+MODEL_TRIAGEM = "claude-sonnet-4-6"   # classificação N1/N2 com CoT
+MODEL_BUSCA = "claude-haiku-4-5"      # busca em linguagem natural -> filtros
+MODEL_CHAT = "claude-sonnet-4-6"      # chat analítico sobre a base
+
 # Prompt de sistema versionado — "prompt como código" no Azure DevOps.
 # Qualquer alteração passa por Pull Request. Definido como constante de módulo
 # para exibição no modal de arquitetura e auditabilidade via Git.
@@ -190,7 +196,7 @@ def analisar(descricao: str, cot_slot=None) -> dict:
     steps_html = ""
 
     with client.messages.stream(
-        model="claude-sonnet-4-6",
+        model=MODEL_TRIAGEM,
         max_tokens=1024,
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": descricao}],
@@ -342,7 +348,7 @@ def interpretar_busca(consulta: str) -> dict:
         import anthropic
         client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
         msg = client.messages.create(
-            model="claude-haiku-4-5",
+            model=MODEL_BUSCA,
             max_tokens=400,
             system=_SEARCH_PROMPT,
             messages=[{"role": "user", "content": consulta}],
@@ -471,7 +477,7 @@ def conversar_sobre_chamados(pergunta: str, historico: list = None) -> str:
             "content": "CONTEXTO DA BASE DE CHAMADOS:\n" + contexto + "\n\nPERGUNTA: " + pergunta,
         })
         msg = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=MODEL_CHAT,
             max_tokens=600,
             system=_CHAT_PROMPT,
             messages=mensagens,

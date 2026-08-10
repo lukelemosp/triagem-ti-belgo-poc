@@ -104,7 +104,7 @@ with aba_lista:
                     _adm = ("&nbsp;<span style='background:#FEE8E8;color:#ED1C24;border:1px solid #ED1C24;"
                             "border-radius:10px;padding:1px 8px;font-size:0.66rem;font-weight:700;'>Admin</span>"
                             if u.get("is_admin") else "")
-                    _senha_val = u.get("senha") or "—"
+                    _senha_val = u.get("senha") or "-"
                     _senha_disp = _html.escape(_senha_val) if _mostrar_senhas else "•" * len(_senha_val)
                     st.markdown(
                         f"**{_html.escape(u['nome'])}**" + _adm + " &nbsp;·&nbsp; "
@@ -152,7 +152,7 @@ with aba_novo:
     with _cs:
         senha = st.text_input("Senha *", key="nu_senha",
                               type="default" if _mostrar else "password",
-                              help="Senha aleat\xf3ria gerada automaticamente — edit\xe1vel.")
+                              help="Senha aleat\xf3ria gerada automaticamente - edit\xe1vel.")
     admin = st.checkbox("Administrador (v\xea dashboard, filas, usu\xe1rios e hist\xf3rico)", key="nu_admin")
     st.caption("\\* campos obrigat\xf3rios")
 

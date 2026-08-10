@@ -58,10 +58,12 @@ fastmcp dev mcp_server.py
 
 | Papel | O que vê |
 |---|---|
-| **Administrador** | Dashboard (com painel de ROI), Novo Chamado, Fila N1, Fila N2, Chamados (histórico), Skills, Modo Sombra, Base de Conhecimento, Usuários, Triagem IA |
-| **Colaborador** | Novo Chamado e Triagem IA |
+| **Administrador** | Dashboard (com painel de ROI), Novo Chamado, Fila N1, Fila N2, Chamados (histórico), Skills, Modo Sombra, Base de Conhecimento, Usuários |
+| **Colaborador** | Novo Chamado |
 
 A navegação (navbar e rotas) é montada conforme o papel; a saudação no topo reflete o primeiro nome do usuário logado. Na navbar do admin, os itens são agrupados visualmente em **Atendimento** (o que o colaborador também acessa) e **Acesso administrativo** (o restante).
+
+> A página **Triagem IA** (demo isolado do agente) continua registrada e acessível pela URL `/triagem`, mas saiu do menu: a triagem real já acontece na abertura do chamado.
 
 ## Funcionalidades
 
@@ -76,7 +78,7 @@ A navegação (navbar e rotas) é montada conforme o papel; a saudação no topo
 | **Histórico de chamados** | Página "Chamados" (admin) com todos os chamados e filtros avançados (busca, período, solicitante, status, nível, categoria) + ordenação |
 | **Filas N1 e N2** | Assumir, liberar e resolver; filtros (busca, categoria, status) e ordenação |
 | **Dashboard com métricas** | Total, fila N1/N2, resolvidos, % auto-resolvidos; seção de Análise colapsável; tabela de recentes ordenável por coluna |
-| **Painel de Valor / ROI** | KPIs de negócio no dashboard: taxa de deflexão, economia/mês, horas N1 poupadas, CSAT médio e acurácia percebida; cada card tem um "i" que abre modal com a fórmula e o cálculo atual; gráfico IA vs. manual. Premissas editáveis em `analytics.py` |
+| **Painel de Valor / ROI** | KPIs de negócio no dashboard: taxa de deflexão, economia/mês, horas N1 poupadas, CSAT médio e acurácia percebida; cada card tem um "i" que abre modal com a fórmula, o cálculo com os dados atuais, o **passo a passo** do cálculo e a tabela de **variáveis** (valor atual e origem de cada uma); gráfico IA vs. manual. Premissas editáveis em `analytics.py` |
 | **SLA + Multicanal** | Cada chamado tem prazo de SLA (badge No prazo/Estourando/Estourado) e canal de entrada (Portal/E-mail/Teams/WhatsApp), exibidos nas filas, histórico e detalhe |
 | **Catálogo de Skills (governança)** | Página admin com as skills publicadas — dono, SLA, custo/mês, status (Ativo/Shadow) e nº de execuções |
 | **Modo Sombra (shadow mode)** | Página admin que mede a concordância IA × humano (nível e categoria) antes de promover o agente à atuação autônoma |
@@ -86,9 +88,10 @@ A navegação (navbar e rotas) é montada conforme o papel; a saudação no topo
 | **IDs no formato ServiceNow** | Chamados identificados como INC000001, INC000002… |
 | **Detalhe do chamado** | Sugestão IA, ação, solicitante, datas, formulário de atualização de status; breadcrumb conforme a origem |
 | **Gestão de usuários** | CRUD em modal — nome, e-mail, departamento, ramal, **senha (com olho)** e **flag de administrador**; senha aleatória no cadastro; toggle "Mostrar senhas" |
-| **Modal de Arquitetura** | Botão 📐 abre modal com problema, solução, stack, fluxo, métricas e catálogo de 8 skills |
+| **Modal de Arquitetura** | Botão 📐 abre modal com problema, solução, stack, fluxo e catálogo de 8 skills; a stack é montada a partir das constantes `MODEL_*` de `ai_agent.py` (acompanha o modelo em uso) e os **system prompts dos três agentes** ficam em abas, em largura total |
 | **Skeleton loading + fade-in** | Shimmer enquanto a IA processa; transição suave entre páginas |
 | **Navegação SPA** | `st.page_link()` / `st.switch_page()` — sem iframe, sem reload; sidebar dark nas telas administrativas |
+| **Responsividade (monitor pequeno / zoom alto)** | Navbar com fonte fluida que quebra em várias linhas em vez de cortar rótulos (os rótulos de grupo e o divisor somem quando ela quebra); sidebar com paddings adaptativos por altura, que rola em vez de espremer os itens |
 | **MCP Server** | Expõe `criar_chamado`, `consultar_chamado`, `listar_fila`, `buscar_chamados` e `conversar_sobre_chamados` |
 | **Identidade visual Belgo** | Montserrat, teal `#003B4A`, vermelho `#ED1C24`, dourado `#FDB913`; favicon oficial |
 
@@ -123,7 +126,7 @@ A navegação (navbar e rotas) é montada conforme o papel; a saudação no topo
 | Componente | Tecnologia |
 |---|---|
 | Interface | Python + Streamlit (multi-page com `st.navigation()`) |
-| LLM | Claude Sonnet (triagem/chat) e Haiku (busca) — Anthropic API |
+| LLM | `claude-sonnet-4-6` (triagem e chat analítico) e `claude-haiku-4-5` (busca em linguagem natural) — Anthropic API. Definidos em `ai_agent.MODEL_TRIAGEM` / `MODEL_BUSCA` / `MODEL_CHAT` |
 | Banco de dados | SQLite (`sqlite3` nativo — WAL mode) |
 | MCP Server | FastMCP stdio |
 | ITSM (produção) | ServiceNow REST API via webhook |
@@ -136,7 +139,7 @@ A navegação (navbar e rotas) é montada conforme o papel; a saudação no topo
 ```
 app.py                  # Entry point — login, navbar/rotas por papel, dashboard + ROI, busca
 agente_triagem.py       # Demo standalone original (intocado)
-ai_agent.py             # Triagem IA, busca NL e chat analítico (prompts versionados)
+ai_agent.py             # Triagem IA, busca NL e chat analítico (prompts versionados + MODEL_*)
 analytics.py            # Premissas de negócio + cálculo de ROI e status de SLA
 kb_data.py              # Semente da base de conhecimento (10 artigos iniciais)
 skills_data.py          # Metadados de governança das skills (catálogo)
@@ -146,7 +149,7 @@ ui_components.py        # BELGO_CSS, login, sidebar, modais, badges SLA/canal, K
 mcp_server.py           # MCP Server (FastMCP stdio) — 5 tools
 favicon.ico             # Favicon oficial Belgo Arames
 pages/
-  1_Triagem.py          # Demo de triagem isolada
+  1_Triagem.py          # Demo de triagem isolada (fora do menu; acessível por /triagem)
   2_Novo_Chamado.py     # Abertura de chamado + presets automáticos + canal
   3_Fila_N1.py          # Fila helpdesk (com filtros, SLA e canal)
   4_Fila_N2.py          # Fila especialistas (com filtros, SLA e canal)

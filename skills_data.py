@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Catálogo de Skills — Belgo Triagem TI.
+Catálogo de Skills - Belgo Triagem TI.
 
 Metadados de governança de cada skill/agente publicado no Catálogo MCP
 (Azure DevOps): dono, SLA, custo/mês, status (Ativo / Shadow) e contagem de
@@ -32,7 +32,7 @@ SKILLS = [
     {
         "nome": "criar_chamado", "code": True, "tipo": "MCP Skill",
         "color": "#7B1FA2",
-        "desc": "Cria novo chamado via protocolo MCP — exposta no Catálogo do "
+        "desc": "Cria novo chamado via protocolo MCP - exposta no Catálogo do "
                 "Azure DevOps para outros agentes consumirem.",
         "dono": "Plataforma de Agentes", "sla": "≤ 5 s",
         "custo": "R$ 0,40 / chamado", "status": "Ativo", "metric": "total",
@@ -41,7 +41,7 @@ SKILLS = [
         "nome": "consultar_chamado", "code": True, "tipo": "MCP Skill",
         "color": "#7B1FA2",
         "desc": "Retorna estado, nível IA, confiança, sugestão e resolução de "
-                "qualquer chamado por ID — permite auditoria e integração.",
+                "qualquer chamado por ID - permite auditoria e integração.",
         "dono": "Plataforma de Agentes", "sla": "≤ 2 s",
         "custo": "R$ 0,02 / consulta", "status": "Ativo",
         "metric": None, "execucoes": 312,
@@ -50,7 +50,7 @@ SKILLS = [
         "nome": "listar_fila", "code": True, "tipo": "MCP Skill",
         "color": "#7B1FA2",
         "desc": "Lista chamados pendentes na fila N1 ou N2 com status, confiança "
-                "e categoria — permite orquestrar prioridades entre agentes.",
+                "e categoria - permite orquestrar prioridades entre agentes.",
         "dono": "Plataforma de Agentes", "sla": "≤ 2 s",
         "custo": "R$ 0,02 / consulta", "status": "Ativo",
         "metric": None, "execucoes": 184,
@@ -79,7 +79,7 @@ SKILLS = [
         "desc": "Estima risco de estouro de SLA por chamado a partir de histórico e "
                 "carga das filas. Em modo sombra (shadow), ainda sem atuar.",
         "dono": "Squad IA & Automação", "sla": "≤ 30 s",
-        "custo": "—", "status": "Shadow",
+        "custo": "-", "status": "Shadow",
         "metric": None, "execucoes": 26,
     },
 ]

@@ -108,7 +108,7 @@ def run():
             for suffix, nome in [("novo", "novo"), ("n1", "fila_n1"), ("n2", "fila_n2"),
                                  ("chamados", "chamados"), ("skills", "skills"),
                                  ("shadow", "shadow"), ("kb", "kb"),
-                                 ("usuarios", "usuarios"), ("triagem", "triagem")]:
+                                 ("usuarios", "usuarios")]:
                 try:
                     _goto_href(page, suffix)
                     _scan_errors(page, nome)
@@ -116,6 +116,12 @@ def run():
                     check("navegou para " + nome, True)
                 except Exception as e:  # noqa: BLE001
                     check("navegou para " + nome, False, repr(e))
+
+            # Triagem saiu do menu (mas a página segue registrada): nenhum link
+            # para /triagem deve existir na navbar nem na sidebar.
+            hrefs_tri = page.locator("a[href$='triagem']").count()
+            check("Triagem IA fora do menu", hrefs_tri == 0,
+                  "ainda ha %d link(s)" % hrefs_tri)
 
             # KB visível
             _goto_href(page, "kb")

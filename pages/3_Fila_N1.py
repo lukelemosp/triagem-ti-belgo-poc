@@ -17,7 +17,7 @@ st.markdown("""
   /* Linhas do data grid (apenas containers com key qrow_) */
   [class*="st-key-qrow_"] {
     border-bottom: 1px solid #EEF3F5;
-    padding: 2px 8px;
+    padding: 8px;
     transition: background 0.1s;
   }
   [class*="st-key-qrow_"]:hover { background: #EFF7F9; }
@@ -47,7 +47,7 @@ st.markdown(
     'font-family:Montserrat,sans-serif;">N1</span>'
     '<div>'
     '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
-    'font-family:Montserrat,sans-serif;line-height:1.2;">Fila N1 &mdash; Helpdesk</div>'
+    'font-family:Montserrat,sans-serif;line-height:1.2;">Fila N1 &middot; Helpdesk</div>'
     '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
     'Chamados aguardando atendimento do n\xedvel 1</div>'
     '</div>'

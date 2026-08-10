@@ -15,7 +15,7 @@ st.markdown("""
   div[data-testid="stHorizontalBlock"]:has([data-testid="stPageLink"]) { display: none !important; }
   [class*="st-key-qrow_"] {
     border-bottom: 1px solid #EEF3F5;
-    padding: 2px 8px;
+    padding: 8px;
     transition: background 0.1s;
   }
   [class*="st-key-qrow_"]:hover { background: #FFF5F5; }
@@ -45,7 +45,7 @@ st.markdown(
     'font-family:Montserrat,sans-serif;">N2</span>'
     '<div>'
     '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
-    'font-family:Montserrat,sans-serif;line-height:1.2;">Fila N2 &mdash; Especialistas</div>'
+    'font-family:Montserrat,sans-serif;line-height:1.2;">Fila N2 &middot; Especialistas</div>'
     '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
     'Chamados que requerem interven\xe7\xe3o de especialista</div>'
     '</div>'

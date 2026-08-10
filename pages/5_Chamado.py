@@ -45,10 +45,10 @@ st.markdown(ui.breadcrumb_html([
 ]), unsafe_allow_html=True)
 
 # ── Header ────────────────────────────────────────────────────────────────────
-nivel = ticket.get("nivel") or "—"
-nivel_label = {"N1": "N1 — Helpdesk", "N2": "N2 — Especialistas", "FORA_DE_ESCOPO": "Fora do Escopo"}.get(nivel, nivel)
+nivel = ticket.get("nivel") or "-"
+nivel_label = {"N1": "N1 · Helpdesk", "N2": "N2 · Especialistas", "FORA_DE_ESCOPO": "Fora do Escopo"}.get(nivel, nivel)
 st.markdown(ui.header_html(
-    title=f"INC{ticket_id:06d} — {ticket['titulo']}",
+    title=f"INC{ticket_id:06d} · {ticket['titulo']}",
     subtitle=nivel_label,
     tag=ticket.get("status", ""),
 ), unsafe_allow_html=True)
@@ -76,7 +76,7 @@ with col_acao:
         _fb = ticket.get("feedback_humano")
         if _fb:
             _txt = "\U0001f44d Marcada como correta" if _fb == "POSITIVO" else "\U0001f44e Marcada como incorreta"
-            st.caption(_txt + " — obrigado! Esse retorno treina o agente.")
+            st.caption(_txt + " - obrigado! Esse retorno treina o agente.")
         else:
             _sel = st.feedback("thumbs", key=f"fb_{ticket_id}")
             if _sel is not None:

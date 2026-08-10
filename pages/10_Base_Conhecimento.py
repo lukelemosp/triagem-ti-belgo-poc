@@ -36,7 +36,7 @@ st.markdown(
     '<div style="font-size:1.25rem;font-weight:800;color:#1A2E33;'
     'font-family:Montserrat,sans-serif;line-height:1.2;">Base de Conhecimento</div>'
     '<div style="font-size:0.84rem;color:#5A7E88;font-family:Montserrat,sans-serif;">'
-    'Artigos de KB que o agente cita ao resolver chamados &mdash; um por categoria</div>'
+    'Artigos de KB que o agente cita ao resolver chamados &middot; um por categoria</div>'
     '</div>'
     '</div>',
     unsafe_allow_html=True,
@@ -145,7 +145,7 @@ with aba_lista:
                               else '<span class="kb-badge kb-badge-off">Inativo</span>')
                     _n = _resolv.get(a["codigo"], 0)
                     st.markdown(
-                        f"<code style='color:#0D47A1;'>{_html.escape(a['codigo'] or '—')}</code> "
+                        f"<code style='color:#0D47A1;'>{_html.escape(a['codigo'] or '-')}</code> "
                         f"&nbsp;**{_html.escape(a['titulo'])}**&nbsp; {_badge}  \n"
                         f"<span style='color:#5A7E88;font-size:0.82rem;'>"
                         f"{ui.fmt_categoria(a['categoria'])} &nbsp;·&nbsp; {_n} resolvido(s) via este KB</span>",

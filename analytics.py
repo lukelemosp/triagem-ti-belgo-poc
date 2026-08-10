@@ -2,7 +2,7 @@
 """
 Lógica de negócio para métricas de valor (ROI), SLA e indicadores.
 
-Sem dependência de Streamlit nem do banco — recebe dados já agregados
+Sem dependência de Streamlit nem do banco - recebe dados já agregados
 (`database.stats_roi()`) e devolve números prontos para exibição. Os parâmetros
 de negócio ficam em constantes editáveis no topo: ajuste aqui um único lugar
 para refletir os números reais da Belgo.
@@ -57,7 +57,7 @@ def status_sla(ticket: dict, agora: datetime | None = None) -> tuple[str, str]:
     if horas == 0:
         return ("ok", "Imediato")
     if prazo is None:
-        return ("none", "—")
+        return ("none", "-")
 
     if status in ("RESOLVIDO", "FECHADO"):
         resolvido = _parse(ticket.get("resolvido_em"))
@@ -136,7 +136,7 @@ def calcular_roi(stats: dict) -> dict:
         "mttr_ia": "~30 s",
         "mttr_manual": _horas_legivel(mttr_manual_h),
         "mttr_manual_num": mttr_manual_h,
-        "csat_media": (f"{csat_media:.1f}".replace(".", ",") if csat_media else "—"),
+        "csat_media": (f"{csat_media:.1f}".replace(".", ",") if csat_media else "-"),
         "csat_media_num": float(csat_media) if csat_media else 0.0,
         "csat_n": csat_n,
     }
