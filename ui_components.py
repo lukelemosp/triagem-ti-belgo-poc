@@ -1136,7 +1136,9 @@ def render_sidebar(active_page: str = "") -> None:
         st.markdown('<div class="belgo-sidebar-section">Governan\xe7a</div>', unsafe_allow_html=True)
         st.page_link("pages/8_Skills.py", label="\U0001f9e9  Cat\xe1logo de Skills")
         st.page_link("pages/9_Shadow.py", label="\U0001f311  Modo Sombra")
-        st.page_link("pages/10_Base_Conhecimento.py", label="\U0001f4da  Base de Conhecimento")
+        # Rotulo curto ("KB", como na navbar): o nome inteiro quebrava em duas
+        # linhas na largura da sidebar.
+        st.page_link("pages/10_Base_Conhecimento.py", label="\U0001f4da  KB")
         st.markdown('<div class="belgo-sidebar-section">Admin</div>', unsafe_allow_html=True)
         st.page_link("pages/6_Usuarios.py", label="\U0001f465  Usu\xe1rios")
         # A pagina de Triagem (demo isolado) continua registrada e acessivel por
